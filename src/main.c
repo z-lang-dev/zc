@@ -108,9 +108,9 @@ static void codegen(CallExpr *expr) {
     // prolog
     fprintf(fp, "    push rbp\n");
     fprintf(fp, "    mov rbp, rsp\n");
-    // 调用expr->fn函数
+    // 调用puts函数。注：这里还没有做好内置函数print和C标准库函数puts的映射，所以先直接用puts。未来会在内置函数功能中添加这种映射。
     fprintf(fp, "    lea rdi, [rip+msg]\n");
-    fprintf(fp, "    call %s\n", expr->fn);
+    fprintf(fp, "    call %s\n", "puts");
     // epilog
     fprintf(fp, "    pop rbp\n");
     // 返回
@@ -134,7 +134,7 @@ static void build(char *file) {
     // 输出汇编代码
     codegen(expr);
     // 调用clang生成可执行文件
-    system("clang -o app.exe *.s");
+    system("clang -o app.exe app.s");
 }
 
 static void run(char *file) {

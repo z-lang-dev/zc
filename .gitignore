@@ -58,6 +58,6 @@ build/
 # MacOS Cache
 .DS_Store
 
-# res
-res/*.exe
-res/app.s
+# work
+work/*.exe
+work/app.s

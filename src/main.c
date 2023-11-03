@@ -181,6 +181,76 @@ static void build(char *file) {
 #endif
 }
 
+// 将AST编译成C代码
+static void codegen_c(CallExpr *expr) {
+    // 打开输出文件
+    FILE *fp = fopen("app.c", "w");
+    // 引入标准库
+    fprintf(fp, "#include <stdio.h>\n");
+    // main函数
+    fprintf(fp, "int main(void) {\n");
+    // 调用printf函数
+    fprintf(fp, "    printf(\"%s\");\n", expr->arg);
+    // 返回
+    fprintf(fp, "    return 0;\n");
+    // 结束
+    fprintf(fp, "}\n");
+    // 保存并关闭文件
+    fclose(fp);
+}
+
+// 将AST编译成Python代码
+static void codegen_py(CallExpr *expr) {
+    // 打开输出文件
+    FILE *fp = fopen("app.py", "w");
+    // main函数
+    fprintf(fp, "print(\"%s\")\n", expr->arg);
+    // 保存并关闭文件
+    fclose(fp);
+}
+
+// 将AST编译成JS代码
+static void codegen_js(CallExpr *expr) {
+    // 打开输出文件
+    FILE *fp = fopen("app.js", "w");
+    // main函数
+    fprintf(fp, "console.log(\"%s\")\n", expr->arg);
+    // 保存并关闭文件
+    fclose(fp);
+}
+
+static void trans_c(char *file) {
+    printf("Transpiling %s to C\n", file);
+    // 读取源码文件内容
+    char *code = read_src(file);
+    // 解析出AST
+    CallExpr *expr = parse_expr(code);
+    // 输出C代码
+    codegen_c(expr);
+}
+
+static void trans_py(char *file) {
+    printf("Transpiling %s to Python\n", file);
+    // 读取源码文件内容
+    char *code = read_src(file);
+    // 解析出AST
+    CallExpr *expr = parse_expr(code);
+    // 输出Python代码
+    codegen_py(expr);
+}
+
+static void trans_js(char *file) {
+    printf("Transpiling %s to JS\n", file);
+    // 读取源码文件内容
+    char *code = read_src(file);
+    // 解析出AST
+    CallExpr *expr = parse_expr(code);
+    // 输出JS代码
+    codegen_js(expr);
+}
+
+
+
 static void run(char *file) {
     printf("TODO: run %s\n", file);
 }
@@ -214,6 +284,12 @@ int main(int argc, char** argv) {
         build(argv[2]);
     } else if (strcmp(cmd, "run") == 0) {
         run(argv[2]);
+    } else if (strcmp(cmd, "c") == 0) {
+        trans_c(argv[2]);
+    } else if (strcmp(cmd, "py") == 0) {
+        trans_py(argv[2]);
+    } else if (strcmp(cmd, "js") == 0) {
+        trans_js(argv[2]);
     } else {
         help();
     }

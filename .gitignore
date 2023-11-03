@@ -60,4 +60,5 @@ build/
 
 # work
 work/*.exe
-work/app.s
+work/*.lnk
+work/app.*

@@ -96,8 +96,8 @@ static char *read_src(char *file) {
     return code;
 }
 
-// 将AST编译成汇编代码
-static void codegen(CallExpr *expr) {
+// 将AST编译成汇编代码：linux/gas
+static void codegen_linux(CallExpr *expr) {
     // 打开输出文件
     FILE *fp = fopen("app.s", "w");
     // 首行配置
@@ -124,6 +124,48 @@ static void codegen(CallExpr *expr) {
     fclose(fp);
 }
 
+// 将AST编译成汇编代码：windows/masm64
+static void codegen_win(CallExpr *expr) {
+    // 打开输出文件
+    FILE *fp = fopen("app.asm", "w");
+    // 导入标准库
+    fprintf(fp, "includelib msvcrt.lib\n");
+    fprintf(fp, "includelib legacy_stdio_definitions.lib\n");
+    // 要打印的信息参数
+    fprintf(fp, ".data\n");
+    fprintf(fp, "    msg db '%s', 10, 0\n", expr->arg);
+    fprintf(fp, ".code\n");
+    // 声明printf函数
+    fprintf(fp, "    externdef printf:proc\n");
+
+    // main函数
+
+    fprintf(fp, "main proc\n");
+    // prolog
+    fprintf(fp, "    push rbp\n");
+    fprintf(fp, "    mov rbp, rsp\n");
+    // reserve stack for shadow space
+    fprintf(fp, "    sub rsp, 20h\n");
+
+    // 准备printf参数
+    fprintf(fp, "    lea rcx, msg\n");
+    fprintf(fp, "    call printf\n");
+
+    // restore stack
+    fprintf(fp, "    add rsp, 20h\n");
+    // epilog
+    fprintf(fp, "    pop rbp\n");
+    // 返回
+    fprintf(fp, "    mov rcx, 0\n");
+    fprintf(fp, "    ret\n");
+
+    // 结束
+    fprintf(fp, "main endp\n");
+    fprintf(fp, "end\n");
+
+    // 保存并关闭文件
+    fclose(fp);
+}
 
 static void build(char *file) {
     printf("Building %s\n", file);
@@ -132,9 +174,11 @@ static void build(char *file) {
     // 解析出AST
     CallExpr *expr = parse_expr(code);
     // 输出汇编代码
-    codegen(expr);
-    // 调用clang生成可执行文件
-    system("clang -o app.exe app.s");
+#ifdef _WIN32
+    codegen_win(expr);
+#else
+    codegen_linux(expr);
+#endif
 }
 
 static void run(char *file) {

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <stdint.h>
 
 #include "zast.h"
 
@@ -73,8 +75,83 @@ static void interp(char *code) {
     execute(call);
 }
 
+/* The original code is public domain -- Will Hartung 4/9/09 */
+/* Modifications, public domain as well, by Antti Haapala, 11/10/17
+   - Switched to getc on 5/23/19 */
+// if typedef doesn't exist (msvc, blah)
+#ifdef _WIN32
+typedef intptr_t ssize_t;
+
+ssize_t getline(char **lineptr, size_t *n, FILE *stream) {
+    size_t pos;
+    int c;
+
+    if (lineptr == NULL || stream == NULL || n == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    c = getc(stream);
+    if (c == EOF) {
+        return -1;
+    }
+
+    if (*lineptr == NULL) {
+        *lineptr = malloc(128);
+        if (*lineptr == NULL) {
+            return -1;
+        }
+        *n = 128;
+    }
+
+    pos = 0;
+    while(c != EOF) {
+        if (pos + 1 >= *n) {
+            size_t new_size = *n + (*n >> 2);
+            if (new_size < 128) {
+                new_size = 128;
+            }
+            char *new_ptr = realloc(*lineptr, new_size);
+            if (new_ptr == NULL) {
+                return -1;
+            }
+            *n = new_size;
+            *lineptr = new_ptr;
+        }
+
+        ((unsigned char *)(*lineptr))[pos ++] = c;
+        if (c == '\n') {
+            break;
+        }
+        c = getc(stream);
+    }
+
+    (*lineptr)[pos] = '\0';
+    return pos;
+}
+#endif
+
+// 交互式环境REPL
 static void repl(void) {
-    printf("TODO: repl\n");
+    printf("Z REPL v0.1\n");
+
+    for (;;) {
+        printf("-------------- \n");
+        printf(">>> ");
+        char *line = NULL;
+        size_t len = 0;
+        int nread = getline(&line, &len, stdin);
+        if (nread == -1) {
+            printf("\n");
+            break;
+        }
+        // 去掉行尾的换行符
+        line[nread-1] = '\0';
+        // 解析源码
+        CallExpr *expr = parse_expr(line);
+        // 执行
+        execute(expr);
+    }
 }
 
 static char *read_src(char *file) {

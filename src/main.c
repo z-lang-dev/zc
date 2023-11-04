@@ -154,6 +154,7 @@ static void repl(void) {
     }
 }
 
+// 读取源码
 static char *read_src(char *file) {
     // 打开文件
     FILE *fp = fopen(file, "r");

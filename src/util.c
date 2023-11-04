@@ -1,7 +1,7 @@
+#include <stdio.h>
 #include "util.h"
 
 #ifdef _WIN32
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <errno.h>

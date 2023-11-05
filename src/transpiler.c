@@ -22,7 +22,7 @@ static void codegen_c(CallExpr *expr) {
 }
 
 void trans_c(char *file) {
-    printf("Transpiling %s to C\n", file);
+    log_trace("Transpiling %s to C\n", file);
     // 读取源码文件内容
     char *code = read_src(file);
     // 解析出AST
@@ -42,7 +42,7 @@ static void codegen_py(CallExpr *expr) {
 }
 
 void trans_py(char *file) {
-    printf("Transpiling %s to Python\n", file);
+    log_trace("Transpiling %s to Python\n", file);
     // 读取源码文件内容
     char *code = read_src(file);
     // 解析出AST
@@ -62,7 +62,7 @@ static void codegen_js(CallExpr *expr) {
 }
 
 void trans_js(char *file) {
-    printf("Transpiling %s to JS\n", file);
+    log_trace("Transpiling %s to JS\n", file);
     // 读取源码文件内容
     char *code = read_src(file);
     // 解析出AST

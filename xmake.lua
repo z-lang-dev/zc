@@ -4,6 +4,41 @@ target("z")
     set_kind("binary")
     add_files("src/*.c")
 
+target("test_interp")
+    set_kind("binary")
+    set_default(false)
+    add_includedirs("src")
+    add_files("src/*.c")
+    remove_files("src/main.c")
+    add_files("test/test_interp.c")
+    add_tests("hello", {runargs="print(\"Hello, world!\")", trim_output=true, pass_outputs="Hello, world!"})
+    add_tests("hello1", {runargs="print(\"Now!\")", trim_output=true, pass_outputs="Now!"})
+
+target("test_compiler")
+    set_kind("binary")
+    set_default(false)
+    add_includedirs("src")
+    add_files("src/*.c")
+    remove_files("src/main.c")
+    add_files("test/test_compiler.c")
+    if is_plat("windows") then
+        add_tests("hello", {rundir = os.projectdir().."/test/hello", runargs = {"hello.z", "hello_expect.asm"}})
+    else
+        add_tests("hello", {rundir = os.projectdir().."/test/hello", runargs = {"hello.z", "hello_expect.s"}})
+    end
+
+target("test_transpiler")
+    set_kind("binary")
+    set_default(false)
+    add_includedirs("src")
+    add_files("src/*.c")
+    remove_files("src/main.c")
+    add_files("test/test_transpiler.c")
+    add_tests("hello_c", {rundir = os.projectdir().."/test/hello", runargs = {"c", "hello.z", "hello_expect.c"}})
+    add_tests("hello_py", {rundir = os.projectdir().."/test/hello", runargs = {"py", "hello.z", "hello_expect.py"}})
+    add_tests("hello_js", {rundir = os.projectdir().."/test/hello", runargs = {"js", "hello.z", "hello_expect.js"}})
+
+
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --

@@ -6,6 +6,7 @@
         "errno.h": "c",
         "string.h": "c",
         "parser.h": "c",
-        "zast.h": "c"
+        "zast.h": "c",
+        "stdint.h": "c"
     }
 }

@@ -15,7 +15,7 @@ static void print_ast(CallExpr *expr) {
 
 // 解析表达式
 CallExpr *parse_expr(char *code) {
-    printf("Parsing %s...\n", code);
+    log_trace("Parsing %s...\n", code);
     // 解析源码
     CallExpr *expr = calloc(1, sizeof(CallExpr));
     // 从代码开头到'('之间的就是函数名称
@@ -26,6 +26,8 @@ CallExpr *parse_expr(char *code) {
     char *arg = substr(code, index_lparen + 2, strlen(code)-2);
     expr->arg = arg;
     // 打印出AST
+#ifdef LOG_TRACE
     print_ast(expr);
+#endif
     return expr;
 }

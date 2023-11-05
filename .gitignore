@@ -64,6 +64,6 @@ work/*.lnk
 work/app.*
 
 # test
-test/*.exe
-test/*.lnk
-test/app.*
+test/*/*.exe
+test/*/*.lnk
+test/*/app.*

@@ -1,9 +1,22 @@
 add_rules("mode.debug", "mode.release")
 
+-- 测试用例列表
+local case_list = {"hello", "simple_int"}
+
 target("z")
     set_kind("binary")
     add_files("src/*.c")
     add_defines("LOG_TRACE")
+    -- 运行xmake clean时，顺便也把work和test目录下的临时文件清除
+    on_clean(function (target)
+        print("Cleaning temp files during test and run...")
+        os.rm("work/app.*")
+        os.rm("work/*.lnk")
+        for _, d in ipairs(case_list) do
+            os.rm("test/"..d.."/app.*")
+            os.rm("test/"..d.."/*.lnk")
+        end
+    end)
 
 -- 解释器interp的测试用例
 target("test_interp")
@@ -17,6 +30,7 @@ target("test_interp")
     add_tests("hello1", {runargs="print(\"Now!\")", trim_output=true, pass_outputs="Now!"})
     add_tests("simple_int", {runargs="print(41)", trim_output=true, pass_outputs="41"})
 
+
 -- 编译器compiler的测试用例
 target("test_compiler")
     set_kind("binary")
@@ -25,12 +39,9 @@ target("test_compiler")
     add_files("src/*.c")
     remove_files("src/main.c")
     add_files("test/test_compiler.c")
-    if is_plat("windows") then
-        add_tests("hello", {rundir = os.projectdir().."/test/hello", runargs = {"hello.z", "hello_expect.asm"}})
-        add_tests("simple_int", {rundir = os.projectdir().."/test/simple_int", runargs = {"case.z", "expected.asm"}})
-    else
-        add_tests("hello", {rundir = os.projectdir().."/test/hello", runargs = {"hello.z", "hello_expect.s"}})
-        add_tests("simple_int", {rundir = os.projectdir().."/test/simple_int", runargs = {"case.z", "expected.s"}})
+    for _, d in ipairs(case_list) do
+        local asm_ext = is_plat("windows") and "asm" or "s"
+        add_tests(d, {rundir = os.projectdir().."/test/"..d, runargs = {d.."_case.z", d.."_expected."..asm_ext}})
     end
 
 -- 转译器transpiler的测试用例
@@ -41,12 +52,12 @@ target("test_transpiler")
     add_files("src/*.c")
     remove_files("src/main.c")
     add_files("test/test_transpiler.c")
-    add_tests("hello_c", {rundir = os.projectdir().."/test/hello", runargs = {"c", "hello.z", "hello_expect.c"}})
-    add_tests("hello_py", {rundir = os.projectdir().."/test/hello", runargs = {"py", "hello.z", "hello_expect.py"}})
-    add_tests("hello_js", {rundir = os.projectdir().."/test/hello", runargs = {"js", "hello.z", "hello_expect.js"}})
-    add_tests("simple_int_c", {rundir = os.projectdir().."/test/simple_int", runargs = {"c", "case.z", "expected.c"}})
-    add_tests("simple_int_py", {rundir = os.projectdir().."/test/simple_int", runargs = {"py", "case.z", "expected.py"}})
-    add_tests("simple_int_js", {rundir = os.projectdir().."/test/simple_int", runargs = {"js", "case.z", "expected.js"}})
+
+    for _, d in ipairs(case_list) do
+        for _, lan in ipairs({"c", "py", "js"}) do
+            add_tests(d.."_"..lan, {rundir = os.projectdir().."/test/"..d, runargs = {lan, d.."_case.z", d.."_expected."..lan}})
+        end
+    end
 
 
 --

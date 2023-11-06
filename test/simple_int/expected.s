@@ -7,8 +7,8 @@ main:
     lea rdi, [rip+fmt]
     mov rsi, 41
     call printf
-    xor rax, rax
     pop rbp
+    xor rax, rax
     ret
 fmt:
     .asciz "%lld\n"

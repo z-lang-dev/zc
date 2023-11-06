@@ -1,13 +1,13 @@
     .intel_syntax noprefix
     .text
-.global main
+    .global main
 main:
     push rbp
     mov rbp, rsp
-    lea rdi, [rip+msg]
-    call puts
+    lea rdi, [rip+fmt]
+    call printf
     pop rbp
     xor rax, rax
     ret
-msg:
+fmt:
     .asciz "Hello, world!"

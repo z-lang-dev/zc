@@ -22,7 +22,7 @@ void repl(void) {
         // 去掉行尾的换行符
         line[nread-1] = '\0';
         // 解析源码
-        CallExpr *expr = parse_expr(line);
+        Node *expr = parse_expr(line);
         // 执行
         execute(expr);
     }

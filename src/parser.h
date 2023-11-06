@@ -2,4 +2,4 @@
 
 #include "zast.h"
 
-CallExpr *parse_expr(char *code);
+Node *parse_expr(char *code);

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdarg.h>
 #include "util.h"
 
 #ifdef _WIN32
@@ -32,8 +33,8 @@ char *substr(char *str, int start, int end) {
 }
 
 // 根据LOG_TRACE开关决定是否打印编译器详细信息
-void log_trace(char *fmt, ...) {
-#ifdef LOG_DETAIL
+void log_trace(const char *fmt, ...) {
+#ifdef LOG_TRACE
     va_list args;
     va_start(args, fmt);
     vprintf(fmt, args);

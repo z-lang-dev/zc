@@ -12,7 +12,7 @@ int index_of(char *str, char c);
 char *substr(char *str, int start, int end);
 
 // 根据LOG_TRACE开关决定是否打印信息
-void log_trace(char *fmt, ...);
+void log_trace(const char *fmt, ...);
 
 // 读取源码
 char *read_src(char *file);

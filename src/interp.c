@@ -4,17 +4,22 @@
 #include "util.h"
 
 // 执行AST
-void execute(CallExpr *call) {
-    log_trace("Executing %s(%s)...\n", call->fn, call->arg);
+void execute(Node *expr) {
+    log_trace("Executing ...\n------------------\n");
     // 打印call.arg
-    printf("%s\n", call->arg);
+    Node *arg = expr->as.call.arg;
+    if (arg->kind == ND_INT) {
+        printf("%lld\n", arg->as.num);
+    } else {
+        printf("%s\n", arg->as.str);
+    }
 }
 
 // 解释并执行代码
 void interp(char *code) {
     log_trace("Interpreting %s...\n", code);
     // 解析源码
-    CallExpr *call = parse_expr(code);
-    execute(call);
+    Node *expr = parse_expr(code);
+    execute(expr);
 }
 

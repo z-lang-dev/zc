@@ -3,7 +3,9 @@ add_rules("mode.debug", "mode.release")
 target("z")
     set_kind("binary")
     add_files("src/*.c")
+    add_defines("LOG_TRACE")
 
+-- 解释器interp的测试用例
 target("test_interp")
     set_kind("binary")
     set_default(false)
@@ -13,7 +15,9 @@ target("test_interp")
     add_files("test/test_interp.c")
     add_tests("hello", {runargs="print(\"Hello, world!\")", trim_output=true, pass_outputs="Hello, world!"})
     add_tests("hello1", {runargs="print(\"Now!\")", trim_output=true, pass_outputs="Now!"})
+    add_tests("simple_int", {runargs="print(41)", trim_output=true, pass_outputs="41"})
 
+-- 编译器compiler的测试用例
 target("test_compiler")
     set_kind("binary")
     set_default(false)
@@ -23,10 +27,13 @@ target("test_compiler")
     add_files("test/test_compiler.c")
     if is_plat("windows") then
         add_tests("hello", {rundir = os.projectdir().."/test/hello", runargs = {"hello.z", "hello_expect.asm"}})
+        add_tests("simple_int", {rundir = os.projectdir().."/test/simple_int", runargs = {"case.z", "expected.asm"}})
     else
         add_tests("hello", {rundir = os.projectdir().."/test/hello", runargs = {"hello.z", "hello_expect.s"}})
+        add_tests("simple_int", {rundir = os.projectdir().."/test/simple_int", runargs = {"case.z", "expected.s"}})
     end
 
+-- 转译器transpiler的测试用例
 target("test_transpiler")
     set_kind("binary")
     set_default(false)
@@ -37,6 +44,9 @@ target("test_transpiler")
     add_tests("hello_c", {rundir = os.projectdir().."/test/hello", runargs = {"c", "hello.z", "hello_expect.c"}})
     add_tests("hello_py", {rundir = os.projectdir().."/test/hello", runargs = {"py", "hello.z", "hello_expect.py"}})
     add_tests("hello_js", {rundir = os.projectdir().."/test/hello", runargs = {"js", "hello.z", "hello_expect.js"}})
+    add_tests("simple_int_c", {rundir = os.projectdir().."/test/simple_int", runargs = {"c", "case.z", "expected.c"}})
+    add_tests("simple_int_py", {rundir = os.projectdir().."/test/simple_int", runargs = {"py", "case.z", "expected.py"}})
+    add_tests("simple_int_js", {rundir = os.projectdir().."/test/simple_int", runargs = {"js", "case.z", "expected.js"}})
 
 
 --

@@ -7,6 +7,8 @@
         "string.h": "c",
         "parser.h": "c",
         "zast.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "codegen.h": "c",
+        "interp.h": "c"
     }
 }

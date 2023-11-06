@@ -11,14 +11,16 @@ main:
     push rbp
     mov rbp, rsp
     # load address of msg into rdi
-    lea rdi, [rip+msg]
+    lea rdi, [rip+fmt]
+    # load 41 into rsi
+    mov rsi, 41
     # call C function `puts`, rdi stores first argument
-    call puts
+    call printf
+    # return 0
+    xor rax, rax
     # epilogue
     pop rbp
-    # return 0
-    xor eax, eax
     ret
 
-msg:
-    .asciz "Hello, world!"
+fmt:
+    .asciz "%lld\n"

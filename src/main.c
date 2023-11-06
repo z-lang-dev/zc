@@ -8,6 +8,7 @@
 
 static void help(void) {
   printf("【用法】：./z <源码>|build <hello.z>|run <hello.z>\n");
+  log_trace("Hello %s\n", "world!");
 }
 
 int main(int argc, char** argv) {
@@ -23,6 +24,9 @@ int main(int argc, char** argv) {
     // 如果命令是repl，直接进入repl()交互环境
     if (strcmp(cmd, "repl") == 0) {
         repl();
+        return 0;
+    } else if (strcmp(cmd, "help") == 0) {
+        help();
         return 0;
     }
 

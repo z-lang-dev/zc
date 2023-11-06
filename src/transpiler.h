@@ -10,11 +10,3 @@ void trans_py(char *file);
 
 // 将AST编译成JS代码
 void trans_js(char *file);
-
-/*
-void codegen_c(CallExpr *expr);
-
-void codegen_py(CallExpr *expr);
-
-void codegen_js(CallExpr *expr);
-*/

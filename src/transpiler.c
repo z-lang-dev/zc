@@ -20,7 +20,7 @@ static void codegen_c(Node *expr) {
     // 调用printf函数
     if (is_call) {
         if (val->kind == ND_INT) {
-            fprintf(fp, "    printf(\"%%lld\\n\", %d);\n", val->as.num);
+            fprintf(fp, "    printf(\"%%d\\n\", %d);\n", val->as.num);
         } else {
             fprintf(fp, "    printf(\"%s\");\n", val->as.str);
         }
@@ -28,7 +28,7 @@ static void codegen_c(Node *expr) {
         fprintf(fp, "    return 0;\n");
     } else {
         // 返回
-        fprintf(fp, "    return %lld;\n", val->as.num);
+        fprintf(fp, "    return %d;\n", val->as.num);
     }
     
     // 结束
@@ -55,12 +55,12 @@ static void codegen_py(Node *expr) {
         Node *arg = expr->as.call.arg;
         // main函数
         if (arg->kind == ND_INT) {
-            fprintf(fp, "print(%lld)\n", arg->as.num);
+            fprintf(fp, "print(%d)\n", arg->as.num);
         } else {
             fprintf(fp, "print(\"%s\")\n", arg->as.str);
         }
     } else { // kind == ND_INT，直接输出数字
-        fprintf(fp, "%lld\n", expr->as.num);
+        fprintf(fp, "%d\n", expr->as.num);
     }
     
     // 保存并关闭文件
@@ -85,13 +85,13 @@ static void codegen_js(Node *expr) {
         Node *arg = expr->as.call.arg;
         // main函数
         if (arg->kind == ND_INT) {
-            fprintf(fp, "console.log(%lld)\n", arg->as.num);
+            fprintf(fp, "console.log(%d)\n", arg->as.num);
         } else {
             fprintf(fp, "console.log(\"%s\")\n", arg->as.str);
         }
     } else {
         // 直接输出数字
-        fprintf(fp, "%lld\n", expr->as.num);
+        fprintf(fp, "%d\n", expr->as.num);
     }
     // 保存并关闭文件
     fclose(fp);

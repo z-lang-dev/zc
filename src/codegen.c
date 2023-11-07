@@ -14,7 +14,7 @@ void codegen_linux(Node *expr) {
     fprintf(fp, "main:\n");
 
     if (expr->kind == ND_INT) {
-        fprintf(fp, "    mov rax, %lld\n", expr->as.num);
+        fprintf(fp, "    mov rax, %d\n", expr->as.num);
         fprintf(fp, "    ret\n");
         fclose(fp);
         return;
@@ -39,7 +39,7 @@ void codegen_linux(Node *expr) {
     // 设置参数字符串
     fprintf(fp, "fmt:\n");
     if (arg->kind == ND_INT) {
-        fprintf(fp, "    .asciz \"%%lld\\n\"\n");
+        fprintf(fp, "    .asciz \"%%d\\n\"\n");
     } else {
         fprintf(fp, "    .asciz \"%s\"\n", arg->as.str);
     }
@@ -59,7 +59,7 @@ void codegen_win(Node *expr) {
     if (expr->kind == ND_INT) {
         fprintf(fp, ".code\n");
         fprintf(fp, "main proc\n");
-        fprintf(fp, "    mov rax, %lld\n", expr->as.num);
+        fprintf(fp, "    mov rax, %d\n", expr->as.num);
         fprintf(fp, "    ret\n");
 
         // 结束
@@ -76,7 +76,7 @@ void codegen_win(Node *expr) {
     fprintf(fp, ".data\n");
     Node *arg = call->arg;
     if (arg->kind == ND_INT) {
-        fprintf(fp, "    fmt db '%%lld', 10, 0\n");
+        fprintf(fp, "    fmt db '%%d', 10, 0\n");
     } else {
         fprintf(fp, "    fmt db '%s', 10, 0\n", arg->as.str);
     } 

@@ -11,13 +11,13 @@ void execute(Node *expr) {
         // 打印call.arg
         Node *arg = expr->as.call.arg;
         if (arg->kind == ND_INT) {
-            printf("%lld\n", arg->as.num);
+            printf("%d\n", arg->as.num);
         } else {
             printf("%s\n", arg->as.str);
         }
         break;
     case ND_INT:
-        printf("%lld\n", expr->as.num);
+        printf("%d\n", expr->as.num);
         break;
     }
     

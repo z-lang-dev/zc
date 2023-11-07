@@ -23,4 +23,4 @@ main:
     ret
 
 fmt:
-    .asciz "%lld\n"
+    .asciz "%d\n"

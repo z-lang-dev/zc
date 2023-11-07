@@ -12,9 +12,9 @@ void fprint_node(FILE *fp, Node *node) {
         break;
     case ND_INT:
     #ifdef _WIN32
-        fprintf(fp, "{kind: ND_INT, as.num: %I64d}", node->as.num);
+        fprintf(fp, "{kind: ND_INT, as.num: %d}", node->as.num);
     #else
-        fprintf(fp, "{kind: ND_INT, as.num: %lld}", node->as.num);
+        fprintf(fp, "{kind: ND_INT, as.num: %d}", node->as.num);
     #endif
         break;
     case ND_STR:

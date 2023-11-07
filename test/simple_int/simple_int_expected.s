@@ -11,4 +11,4 @@ main:
     xor rax, rax
     ret
 fmt:
-    .asciz "%lld\n"
+    .asciz "%d\n"

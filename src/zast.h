@@ -1,5 +1,4 @@
 #pragma once
-#include <stdint.h>
 #include <stdio.h>
 
 
@@ -23,7 +22,7 @@ struct Node {
     NodeKind kind;
     union {
         CallExpr call;
-        int64_t num;
+        int num;
         char *str;
     } as;
 };

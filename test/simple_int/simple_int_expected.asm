@@ -1,7 +1,7 @@
 includelib msvcrt.lib
 includelib legacy_stdio_definitions.lib
 .data
-    fmt db '%lld', 10, 0
+    fmt db '%d', 10, 0
 .code
     externdef printf:proc
 main proc

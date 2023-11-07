@@ -6,7 +6,9 @@ local case_list = {"hello", "simple_int", "single_int"}
 target("z")
     set_kind("binary")
     add_files("src/*.c")
-    add_defines("LOG_TRACE")
+    if is_mode("debug") then
+        add_defines("LOG_TRACE")
+    end
     -- 运行xmake clean时，顺便也把work和test目录下的临时文件清除
     on_clean(function (target)
         print("Cleaning temp files during test and run...")

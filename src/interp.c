@@ -6,13 +6,21 @@
 // 执行AST
 void execute(Node *expr) {
     log_trace("Executing ...\n------------------\n");
-    // 打印call.arg
-    Node *arg = expr->as.call.arg;
-    if (arg->kind == ND_INT) {
-        printf("%lld\n", arg->as.num);
-    } else {
-        printf("%s\n", arg->as.str);
+    switch (expr->kind) {
+    case ND_CALL:
+        // 打印call.arg
+        Node *arg = expr->as.call.arg;
+        if (arg->kind == ND_INT) {
+            printf("%lld\n", arg->as.num);
+        } else {
+            printf("%s\n", arg->as.str);
+        }
+        break;
+    case ND_INT:
+        printf("%lld\n", expr->as.num);
+        break;
     }
+    
 }
 
 // 解释并执行代码

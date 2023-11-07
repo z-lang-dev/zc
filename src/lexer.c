@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdbool.h>
-#include "token.h"
+#include "lexer.h"
 
 // 初始化一个词法分析器
 Lexer *new_lexer(const char *code) {

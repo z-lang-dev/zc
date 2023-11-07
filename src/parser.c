@@ -4,16 +4,9 @@
 
 #include "parser.h"
 #include "util.h"
+#include "lexer.h"
 
-// 解析表达式
-Node *parse_expr(char *code) {
-    log_trace("Parsing %s...\n", code);
-    // 解析源码
-    size_t len = strlen(code);
-    if (len == 0) {
-        return NULL;
-    }
-    char h = code[0];
+static Node *parse_call(Lexer *lexer, char *code) {
     Node *expr = calloc(1, sizeof(Node));
     expr->kind = ND_CALL;
     CallExpr *call = &expr->as.call;
@@ -41,3 +34,38 @@ Node *parse_expr(char *code) {
     trace_node(expr);
     return expr;
 }
+
+static Node *parse_int(Lexer *lexer, char *code) {
+    Node *expr = calloc(1, sizeof(Node));
+    expr->kind = ND_INT;
+    char *num_text = substr(code, lexer->start - code, lexer->cur - code);
+    log_trace("Parsing int text: %s\n", num_text);
+    expr->as.num = atoll(num_text);
+    // 打印出AST
+    trace_node(expr);
+    return expr;
+}
+
+// 解析表达式
+Node *parse_expr(char *code) {
+    log_trace("Parsing %s...\n", code);
+    // 解析源码
+    size_t len = strlen(code);
+    if (len == 0) {
+        return NULL;
+    }
+
+    // 先新建一个词法分析器
+    Lexer *lexer = new_lexer(code);
+    // 获得第一个词符
+    Token *token = next_token(lexer);
+
+    if (token->kind == TK_INT) {
+        // 如果是整数
+        return parse_int(lexer, code);
+    } else {
+        // 否则就是一个函数调用
+        return parse_call(lexer, code);
+    }
+}
+

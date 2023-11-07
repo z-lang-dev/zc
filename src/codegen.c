@@ -4,14 +4,23 @@
 
 // 将AST编译成汇编代码：linux/gas
 void codegen_linux(Node *expr) {
-    CallExpr *call = &expr->as.call;
     // 打开输出文件
     FILE *fp = fopen("app.s", "w");
     // 首行配置
     fprintf(fp, "    .intel_syntax noprefix\n");
+
     fprintf(fp, "    .text\n");
     fprintf(fp, "    .global main\n");
     fprintf(fp, "main:\n");
+
+    if (expr->kind == ND_INT) {
+        fprintf(fp, "    mov rax, %lld\n", expr->as.num);
+        fprintf(fp, "    ret\n");
+        fclose(fp);
+        return;
+    }
+
+    CallExpr *call = &expr->as.call;
     // prolog
     fprintf(fp, "    push rbp\n");
     fprintf(fp, "    mov rbp, rsp\n");
@@ -41,11 +50,27 @@ void codegen_linux(Node *expr) {
 
 // 将AST编译成汇编代码：windows/masm64
 void codegen_win(Node *expr) {
-    CallExpr *call = &expr->as.call;
     // 打开输出文件
     FILE *fp = fopen("app.asm", "w");
     // 导入标准库
     fprintf(fp, "includelib msvcrt.lib\n");
+
+    // 如果是整数
+    if (expr->kind == ND_INT) {
+        fprintf(fp, ".code\n");
+        fprintf(fp, "main proc\n");
+        fprintf(fp, "    mov rax, %lld\n", expr->as.num);
+        fprintf(fp, "    ret\n");
+
+        // 结束
+        fprintf(fp, "main endp\n");
+        fprintf(fp, "end\n");
+
+        fclose(fp);
+        return;
+    }
+
+    CallExpr *call = &expr->as.call;
     fprintf(fp, "includelib legacy_stdio_definitions.lib\n");
     // 要打印的信息参数
     fprintf(fp, ".data\n");

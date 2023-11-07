@@ -1,25 +1,36 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include "transpiler.h"
 #include "parser.h"
 #include "util.h"
 
 // 将AST编译成C代码
 static void codegen_c(Node *expr) {
-    Node *arg = expr->as.call.arg;
+    bool is_call = expr->kind == ND_CALL;
+    Node *val = is_call ? expr->as.call.arg : expr;
+    
     // 打开输出文件
     FILE *fp = fopen("app.c", "w");
     // 引入标准库
-    fprintf(fp, "#include <stdio.h>\n");
+    if (is_call) {
+        fprintf(fp, "#include <stdio.h>\n");
+    }
     // main函数
     fprintf(fp, "int main(void) {\n");
     // 调用printf函数
-    if (arg->kind == ND_INT) {
-        fprintf(fp, "    printf(\"%%lld\\n\", %d);\n", arg->as.num);
+    if (is_call) {
+        if (val->kind == ND_INT) {
+            fprintf(fp, "    printf(\"%%lld\\n\", %d);\n", val->as.num);
+        } else {
+            fprintf(fp, "    printf(\"%s\");\n", val->as.str);
+        }
+        // 返回
+        fprintf(fp, "    return 0;\n");
     } else {
-        fprintf(fp, "    printf(\"%s\");\n", arg->as.str);
+        // 返回
+        fprintf(fp, "    return %lld;\n", val->as.num);
     }
-    // 返回
-    fprintf(fp, "    return 0;\n");
+    
     // 结束
     fprintf(fp, "}\n");
     // 保存并关闭文件
@@ -38,15 +49,20 @@ void trans_c(char *file) {
 
 // 将AST编译成Python代码
 static void codegen_py(Node *expr) {
-    Node *arg = expr->as.call.arg;
     // 打开输出文件
     FILE *fp = fopen("app.py", "w");
-    // main函数
-    if (arg->kind == ND_INT) {
-        fprintf(fp, "print(%lld)\n", arg->as.num);
-    } else {
-        fprintf(fp, "print(\"%s\")\n", arg->as.str);
+    if (expr->kind == ND_CALL) {
+        Node *arg = expr->as.call.arg;
+        // main函数
+        if (arg->kind == ND_INT) {
+            fprintf(fp, "print(%lld)\n", arg->as.num);
+        } else {
+            fprintf(fp, "print(\"%s\")\n", arg->as.str);
+        }
+    } else { // kind == ND_INT，直接输出数字
+        fprintf(fp, "%lld\n", expr->as.num);
     }
+    
     // 保存并关闭文件
     fclose(fp);
 }
@@ -63,14 +79,19 @@ void trans_py(char *file) {
 
 // 将AST编译成JS代码
 static void codegen_js(Node *expr) {
-    Node *arg = expr->as.call.arg;
     // 打开输出文件
     FILE *fp = fopen("app.js", "w");
-    // main函数
-    if (arg->kind == ND_INT) {
-        fprintf(fp, "console.log(%lld)\n", arg->as.num);
+    if (expr->kind == ND_CALL) {
+        Node *arg = expr->as.call.arg;
+        // main函数
+        if (arg->kind == ND_INT) {
+            fprintf(fp, "console.log(%lld)\n", arg->as.num);
+        } else {
+            fprintf(fp, "console.log(\"%s\")\n", arg->as.str);
+        }
     } else {
-        fprintf(fp, "console.log(\"%s\")\n", arg->as.str);
+        // 直接输出数字
+        fprintf(fp, "%lld\n", expr->as.num);
     }
     // 保存并关闭文件
     fclose(fp);

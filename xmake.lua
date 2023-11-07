@@ -1,7 +1,7 @@
 add_rules("mode.debug", "mode.release")
 
 -- 测试用例列表
-local case_list = {"hello", "simple_int"}
+local case_list = {"hello", "simple_int", "single_int"}
 
 target("z")
     set_kind("binary")
@@ -29,6 +29,7 @@ target("test_interp")
     add_tests("hello", {runargs="print(\"Hello, world!\")", trim_output=true, pass_outputs="Hello, world!"})
     add_tests("hello1", {runargs="print(\"Now!\")", trim_output=true, pass_outputs="Now!"})
     add_tests("simple_int", {runargs="print(41)", trim_output=true, pass_outputs="41"})
+    add_tests("single_int", {runargs="42", trim_output=true, pass_outputs="42"})
 
 
 -- 编译器compiler的测试用例

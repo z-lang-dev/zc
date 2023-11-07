@@ -9,6 +9,11 @@
 Node *parse_expr(char *code) {
     log_trace("Parsing %s...\n", code);
     // 解析源码
+    size_t len = strlen(code);
+    if (len == 0) {
+        return NULL;
+    }
+    char h = code[0];
     Node *expr = calloc(1, sizeof(Node));
     expr->kind = ND_CALL;
     CallExpr *call = &expr->as.call;

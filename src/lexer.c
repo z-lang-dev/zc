@@ -7,6 +7,7 @@ Lexer *new_lexer(const char *code) {
     Lexer *lexer = calloc(1, sizeof(Lexer));
     lexer->start = code;
     lexer->cur = code;
+    return lexer;
 }
 
 static bool is_eof(Lexer *lexer) {

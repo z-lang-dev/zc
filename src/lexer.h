@@ -22,8 +22,8 @@ struct Token {
 
 // 词法分析器
 struct Lexer {
-    const char* start; // 解析的起始位置。每解析完一个词符，start就会被更新。
-    const char* cur; // 解析的当前位置。解析完一个词符时，start到cur之间的字符串就是词符的内容。
+    char* start; // 解析的起始位置。每解析完一个词符，start就会被更新。
+    char* cur; // 解析的当前位置。解析完一个词符时，start到cur之间的字符串就是词符的内容。
 };
 
 

@@ -1,11 +1,8 @@
 #include <stdio.h>
 #include <stdarg.h>
-#include "util.h"
-
-#ifdef _WIN32
 #include <stdlib.h>
 #include <errno.h>
-#endif
+#include "util.h"
 
 // 获取字符c在字符串中的位置
 int index_of(char *str, char c) {
@@ -130,11 +127,18 @@ int compare_file(char *file1, char *file2) {
     for (;;) {
         int c1 = fgetc(fp1);
         int c2 = fgetc(fp2);
+        // ignore '\r'
+        if (c1 == '\r') {
+            c1 = fgetc(fp1);
+        }
+        if (c2 == '\r') {
+            c2 = fgetc(fp2);
+        } 
         if (c1 == EOF && c2 == EOF) {
             break;
         }
         if (c1 != c2) {
-            result = -1;
+            result = c2;
             break;
         }
     }

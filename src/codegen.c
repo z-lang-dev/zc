@@ -18,6 +18,12 @@ void codegen_linux(Node *expr) {
         fprintf(fp, "    ret\n");
         fclose(fp);
         return;
+    } else if (expr->kind == ND_ADD) {
+        fprintf(fp, "    mov rax, %d\n", expr->as.bop.left->as.num);
+        fprintf(fp, "    add rax, %d\n", expr->as.bop.right->as.num);
+        fprintf(fp, "    ret\n");
+        fclose(fp);
+        return;
     }
 
     CallExpr *call = &expr->as.call;
@@ -63,6 +69,18 @@ void codegen_win(Node *expr) {
         fprintf(fp, "    ret\n");
 
         // 结束
+        fprintf(fp, "main endp\n");
+        fprintf(fp, "end\n");
+
+        fclose(fp);
+        return;
+    } else if (expr->kind == ND_ADD) {
+        fprintf(fp, ".code\n");
+        fprintf(fp, "main proc\n");
+        fprintf(fp, "    mov rax, %d\n", expr->as.bop.left->as.num);
+        fprintf(fp, "    add rax, %d\n", expr->as.bop.right->as.num);
+        fprintf(fp, "    ret\n");
+
         fprintf(fp, "main endp\n");
         fprintf(fp, "end\n");
 

@@ -30,17 +30,19 @@ static char peek(Lexer *lexer) {
     return *lexer->cur;
 }
 
+static char next_char(Lexer *lexer) {
+    lexer->cur++;
+    return lexer->cur[-1];
+}
+
+
+
 static Token *new_token(Lexer *lexer, TokenKind kind) {
     Token *token = calloc(1, sizeof(Token));
     token->kind = kind;
     token->pos = lexer->start;
     token->len = lexer->cur - lexer->start;
     return token;
-}
-
-static char next_char(Lexer *lexer) {
-    lexer->cur++;
-    return lexer->cur[-1];
 }
 
 static Token *number(Lexer *lexer) {
@@ -65,8 +67,16 @@ static Token *name(Lexer *lexer) {
     return new_token(lexer, TK_NAME);
 }
 
+static void skip_whitespace(Lexer *lexer) {
+    char c = peek(lexer);
+    while (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
+        c = next_char(lexer);
+    }
+}
+
 // 解析下一个Token
 Token *next_token(Lexer *lexer) {
+    skip_whitespace(lexer);
     // 更新start指针，指向上个Token的末尾
     lexer->start = lexer->cur;
 
@@ -98,5 +108,11 @@ Token *next_token(Lexer *lexer) {
         return new_token(lexer, TK_LPAREN);
     case ')':
         return new_token(lexer, TK_RPAREN);
+    case '+':
+        return new_token(lexer, TK_ADD);
+    default:
+        log_trace("Unexpected character: %c\n", c);
+        return new_token(lexer, TK_EOF);
     }
+
 }

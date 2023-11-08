@@ -23,6 +23,13 @@ void fprint_node(FILE *fp, Node *node) {
     case ND_FNAME:
         fprintf(fp, "{kind: ND_FNAME, as.str: %s}", node->as.str);
         break;
+    case ND_ADD:
+        fprintf(fp, "{kind: ND_ADD, left: ");
+        fprint_node(fp, node->as.bop.left);
+        fprintf(fp, ", right: ");
+        fprint_node(fp, node->as.bop.right);
+        fprintf(fp, " }");
+        break;
     }
 }
 

@@ -1,7 +1,7 @@
 add_rules("mode.debug", "mode.release")
 
 -- 测试用例列表
-local case_list = {"hello", "simple_int", "single_int"}
+local case_list = {"hello", "simple_int", "single_int", "simple_add"}
 
 target("z")
     set_kind("binary")
@@ -12,7 +12,8 @@ target("z")
     -- 运行xmake clean时，顺便也把work和test目录下的临时文件清除
     on_clean(function (target)
         print("Cleaning temp files during test and run...")
-        os.rm("work/app.*")
+        os.rm("work/*.obj")
+        os.rm("work/*.exe")
         os.rm("work/*.lnk")
         for _, d in ipairs(case_list) do
             os.rm("test/"..d.."/app.*")
@@ -32,6 +33,7 @@ target("test_interp")
     add_tests("hello1", {runargs="print(\"Now!\")", trim_output=true, pass_outputs="Now!"})
     add_tests("simple_int", {runargs="print(41)", trim_output=true, pass_outputs="41"})
     add_tests("single_int", {runargs="42", trim_output=true, pass_outputs="42"})
+    add_tests("simple_add", {runargs="37+4", trim_output=true, pass_outputs="41"})
 
 
 -- 编译器compiler的测试用例

@@ -53,7 +53,8 @@ char *read_src(char *file) {
     fseek(fp, 0, SEEK_SET);
     // 读取文件内容
     char *code = calloc(size + 1, sizeof(char));
-    fread(code, sizeof(char), size, fp);
+    size_t n = fread(code, sizeof(char), size, fp);
+    code[n] = '\0';
     // 关闭文件
     fclose(fp);
     return code;

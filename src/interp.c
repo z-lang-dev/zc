@@ -19,6 +19,10 @@ void execute(Node *expr) {
     case ND_INT:
         printf("%d\n", expr->as.num);
         break;
+    case ND_ADD:
+        BinOp *bop = &expr->as.bop;
+        printf("%d\n", bop->left->as.num + bop->right->as.num);
+        break;
     }
     
 }

@@ -62,7 +62,23 @@ Node *parse_expr(char *code) {
 
     if (token->kind == TK_INT) {
         // 如果是整数
-        return parse_int(lexer, code);
+        Node * num = parse_int(lexer, code);
+        // 如果下一个词符是'+'，那么应当是一个加法表达式
+        token = next_token(lexer);
+        if (token->kind == TK_ADD) {
+            Node *add = calloc(1, sizeof(Node));
+            add->kind = ND_ADD;
+            add->as.bop.op = OP_ADD;
+            add->as.bop.left = num;
+            token = next_token(lexer);
+            add->as.bop.right = parse_int(lexer, code);
+            // 打印出AST
+            trace_node(add);
+            return add;
+        } else {
+            // 否则就是一个整数
+            return num;
+        }
     } else {
         // 否则就是一个函数调用
         return parse_call(lexer, code);

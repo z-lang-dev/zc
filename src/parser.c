@@ -46,6 +46,22 @@ static Node *parse_int(Lexer *lexer, char *code) {
     return expr;
 }
 
+static Op get_op(TokenKind kind) {
+    switch (kind) {
+    case TK_ADD:
+        return OP_ADD;
+    case TK_SUB:
+        return OP_SUB;
+    case TK_MUL:
+        return OP_MUL;
+    case TK_DIV:
+        return OP_DIV;
+    default:
+        printf("Unknown operator: %d\n", kind);
+        return OP_ILL;
+    }
+}
+
 // 解析表达式
 Node *parse_expr(char *code) {
     log_trace("Parsing %s...\n", code);
@@ -65,10 +81,10 @@ Node *parse_expr(char *code) {
         Node * num = parse_int(lexer, code);
         // 如果下一个词符是'+'，那么应当是一个加法表达式
         token = next_token(lexer);
-        if (token->kind == TK_ADD) {
+        if (token->kind == TK_ADD || token->kind == TK_SUB || token->kind == TK_MUL || token->kind == TK_DIV) {
             Node *add = calloc(1, sizeof(Node));
-            add->kind = ND_ADD;
-            add->as.bop.op = OP_ADD;
+            add->kind = ND_BINOP;
+            add->as.bop.op = get_op(token->kind);
             add->as.bop.left = num;
             token = next_token(lexer);
             add->as.bop.right = parse_int(lexer, code);

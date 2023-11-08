@@ -1,6 +1,19 @@
 #include <stdio.h>
 #include "zast.h"
 
+static const char *op_to_str(Op op) {
+    switch (op) {
+    case OP_ADD:
+        return "+";
+    case OP_SUB:
+        return "-";
+    case OP_MUL:
+        return "*";
+    case OP_DIV:
+        return "/";
+    }
+}
+
 void fprint_node(FILE *fp, Node *node) {
     switch (node->kind) {
     case ND_CALL:
@@ -23,8 +36,9 @@ void fprint_node(FILE *fp, Node *node) {
     case ND_FNAME:
         fprintf(fp, "{kind: ND_FNAME, as.str: %s}", node->as.str);
         break;
-    case ND_ADD:
-        fprintf(fp, "{kind: ND_ADD, left: ");
+    case ND_BINOP:
+        fprintf(fp, "{kind: ND_BINOP, op: %s", op_to_str(node->as.bop.op));
+        fprintf(fp, ", left: ");
         fprint_node(fp, node->as.bop.left);
         fprintf(fp, ", right: ");
         fprint_node(fp, node->as.bop.right);

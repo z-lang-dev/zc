@@ -11,6 +11,9 @@ typedef enum {
     TK_RPAREN, // )
     TK_STR, // 字符串
     TK_ADD, // +
+    TK_SUB, // -
+    TK_MUL, // *
+    TK_DIV, // /
     TK_EOF, // 源码结束
 } TokenKind;
 

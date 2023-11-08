@@ -12,7 +12,7 @@ typedef enum {
     ND_INT, // 整数
     ND_STR, // 字符串
     ND_FNAME, // 函数名称
-    ND_ADD, // 加法
+    ND_BINOP, // 二元运算
 } NodeKind;
 
 struct CallExpr {
@@ -22,6 +22,10 @@ struct CallExpr {
 
 typedef enum {
     OP_ADD, // 加法
+    OP_SUB, // 减法
+    OP_MUL, // 乘法
+    OP_DIV, // 除法
+    OP_ILL, // 非法操作符
 } Op;
 
 struct BinOp {

@@ -110,6 +110,12 @@ Token *next_token(Lexer *lexer) {
         return new_token(lexer, TK_RPAREN);
     case '+':
         return new_token(lexer, TK_ADD);
+    case '-':
+        return new_token(lexer, TK_SUB);
+    case '*':
+        return new_token(lexer, TK_MUL);
+    case '/':
+        return new_token(lexer, TK_DIV);
     default:
         log_trace("Unexpected character: %c\n", c);
         return new_token(lexer, TK_EOF);

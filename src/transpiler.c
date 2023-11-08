@@ -27,7 +27,7 @@ static void codegen_c(Node *expr) {
         // 返回
         fprintf(fp, "    return 0;\n");
     } else {
-        if (expr->kind == ND_ADD) {
+        if (expr->kind == ND_BINOP) {
             fprintf(fp, "    return %d + %d;\n", expr->as.bop.left->as.num, expr->as.bop.right->as.num);
         } else {
             // 返回
@@ -63,7 +63,7 @@ static void codegen_py(Node *expr) {
         } else {
             fprintf(fp, "print(\"%s\")\n", arg->as.str);
         }
-    } else if (expr->kind == ND_ADD) {
+    } else if (expr->kind == ND_BINOP) {
         fprintf(fp, "%d + %d\n", expr->as.bop.left->as.num, expr->as.bop.right->as.num);
     } else { // kind == ND_INT，直接输出数字
         fprintf(fp, "%d\n", expr->as.num);
@@ -95,8 +95,8 @@ static void codegen_js(Node *expr) {
         } else {
             fprintf(fp, "console.log(\"%s\")\n", arg->as.str);
         }
-    } else if (expr->kind == ND_ADD) {
-        // 直接输出数字
+    } else if (expr->kind == ND_BINOP) {
+        // 输出 a + b
         fprintf(fp, "%d + %d\n", expr->as.bop.left->as.num, expr->as.bop.right->as.num);
     } else {
         // 直接输出数字

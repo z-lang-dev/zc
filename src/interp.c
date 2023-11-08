@@ -19,9 +19,26 @@ void execute(Node *expr) {
     case ND_INT:
         printf("%d\n", expr->as.num);
         break;
-    case ND_ADD:
+    case ND_BINOP:
         BinOp *bop = &expr->as.bop;
-        printf("%d\n", bop->left->as.num + bop->right->as.num);
+        int res = 0;
+        switch (bop->op) {
+        case OP_ADD:
+            res = bop->left->as.num + bop->right->as.num;
+            break;
+        case OP_SUB:
+            res = bop->left->as.num - bop->right->as.num;
+            break;
+        case OP_MUL:
+            res = bop->left->as.num * bop->right->as.num;
+            break;
+        case OP_DIV:
+            res = bop->left->as.num / bop->right->as.num;
+            break;
+        default:
+            printf("Unknown operator: %d\n", bop->op);
+        }
+        printf("%d\n", res);
         break;
     }
     

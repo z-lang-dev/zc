@@ -62,6 +62,25 @@ static Op get_op(TokenKind kind) {
     }
 }
 
+static Node *parse_binop(Lexer *lexer, char *code, Node *left) {
+    Token *token = next_token(lexer);
+    // 如果下一个词符是运算符，那么应当是一个二元表达式
+    if (token->kind == TK_ADD || token->kind == TK_SUB || token->kind == TK_MUL || token->kind == TK_DIV) {
+        Node *binop = calloc(1, sizeof(Node));
+        binop->kind = ND_BINOP;
+        binop->as.bop.op = get_op(token->kind);
+        binop->as.bop.left = left;
+        token = next_token(lexer);
+        binop->as.bop.right = parse_int(lexer, code);
+        // 打印出AST
+        trace_node(binop);
+        return parse_binop(lexer, code, binop);
+    } else {
+        // 否则就直接返回左子节点。
+        return left;
+    }
+}
+
 // 解析表达式
 Node *parse_expr(char *code) {
     log_trace("Parsing %s...\n", code);
@@ -79,22 +98,7 @@ Node *parse_expr(char *code) {
     if (token->kind == TK_INT) {
         // 如果是整数
         Node * num = parse_int(lexer, code);
-        // 如果下一个词符是'+'，那么应当是一个加法表达式
-        token = next_token(lexer);
-        if (token->kind == TK_ADD || token->kind == TK_SUB || token->kind == TK_MUL || token->kind == TK_DIV) {
-            Node *add = calloc(1, sizeof(Node));
-            add->kind = ND_BINOP;
-            add->as.bop.op = get_op(token->kind);
-            add->as.bop.left = num;
-            token = next_token(lexer);
-            add->as.bop.right = parse_int(lexer, code);
-            // 打印出AST
-            trace_node(add);
-            return add;
-        } else {
-            // 否则就是一个整数
-            return num;
-        }
+        return parse_binop(lexer, code, num);
     } else {
         // 否则就是一个函数调用
         return parse_call(lexer, code);

@@ -59,7 +59,8 @@ void execute(Node *expr) {
 void interp(char *code) {
     log_trace("Interpreting %s...\n", code);
     // 解析源码
-    Node *expr = parse_expr(code);
+    Parser *parser = new_parser(code);
+    Node *expr = parse(parser);
     execute(expr);
 }
 

@@ -8,7 +8,8 @@ void build(char *file) {
     // 读取源码文件内容
     char *code = read_src(file);
     // 解析出AST
-    Node *expr = parse_expr(code);
+    Parser *parser = new_parser(code);
+    Node *expr = parse(parser);
     // 输出汇编代码
 #ifdef _WIN32
     codegen_win(expr);

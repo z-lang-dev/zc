@@ -6,7 +6,7 @@
 #include "util.h"
 #include "lexer.h"
 
-static Node *parse_call(Lexer *lexer, char *code) {
+static Node *call(Lexer *lexer, char *code) {
     Node *expr = calloc(1, sizeof(Node));
     expr->kind = ND_CALL;
     CallExpr *call = &expr->as.call;
@@ -35,7 +35,7 @@ static Node *parse_call(Lexer *lexer, char *code) {
     return expr;
 }
 
-static Node *parse_int(Lexer *lexer, char *code) {
+static Node *integer(Lexer *lexer, char *code) {
     Node *expr = calloc(1, sizeof(Node));
     expr->kind = ND_INT;
     char *num_text = substr(code, lexer->start - code, lexer->cur - code);
@@ -62,19 +62,19 @@ static Op get_op(TokenKind kind) {
     }
 }
 
-static Node *parse_binop(Lexer *lexer, char *code, Node *left) {
+static Node *binop(Lexer *lexer, char *code, Node *left) {
     Token *token = next_token(lexer);
     // 如果下一个词符是运算符，那么应当是一个二元表达式
     if (token->kind == TK_ADD || token->kind == TK_SUB || token->kind == TK_MUL || token->kind == TK_DIV) {
-        Node *binop = calloc(1, sizeof(Node));
-        binop->kind = ND_BINOP;
-        binop->as.bop.op = get_op(token->kind);
-        binop->as.bop.left = left;
+        Node *bop = calloc(1, sizeof(Node));
+        bop->kind = ND_BINOP;
+        bop->as.bop.op = get_op(token->kind);
+        bop->as.bop.left = left;
         token = next_token(lexer);
-        binop->as.bop.right = parse_int(lexer, code);
+        bop->as.bop.right = integer(lexer, code);
         // 打印出AST
-        trace_node(binop);
-        return parse_binop(lexer, code, binop);
+        trace_node(bop);
+        return binop(lexer, code, bop);
     } else {
         // 否则就直接返回左子节点。
         return left;
@@ -82,7 +82,8 @@ static Node *parse_binop(Lexer *lexer, char *code, Node *left) {
 }
 
 // 解析表达式
-Node *parse_expr(char *code) {
+Node *parse(Parser *parser) {
+    char *code = parser->code;
     log_trace("Parsing %s...\n", code);
     // 解析源码
     size_t len = strlen(code);
@@ -97,10 +98,19 @@ Node *parse_expr(char *code) {
 
     if (token->kind == TK_INT) {
         // 如果是整数
-        Node * num = parse_int(lexer, code);
-        return parse_binop(lexer, code, num);
+        Node * num = integer(lexer, code);
+        return binop(lexer, code, num);
     } else {
         // 否则就是一个函数调用
-        return parse_call(lexer, code);
+        return call(lexer, code);
     }
+}
+
+Parser *new_parser(char *code) {
+    Parser *parser = calloc(1, sizeof(Parser));
+    parser->lexer = new_lexer(code);
+    parser->code = code;
+    parser->cur = next_token(parser->lexer);
+    parser->next = next_token(parser->lexer);
+    return parser;
 }

@@ -6,7 +6,13 @@
 #include "util.h"
 #include "lexer.h"
 
-static Node *call(Lexer *lexer, char *code) {
+static void advance(Parser *parser) {
+    parser->cur = parser->next;
+    parser->next = next_token(parser->lexer);
+}
+
+static Node *call(Parser *parser) {
+    char *code = parser->code;
     Node *expr = calloc(1, sizeof(Node));
     expr->kind = ND_CALL;
     CallExpr *call = &expr->as.call;
@@ -35,14 +41,28 @@ static Node *call(Lexer *lexer, char *code) {
     return expr;
 }
 
-static Node *integer(Lexer *lexer, char *code) {
+static char *extract_token_text(Parser *parser) {
+    char *code = parser->code;
+    int len = parser->cur->len;
+    char *result = calloc(len + 1, sizeof(char));
+    int i = 0;
+    while (i < len) {
+        result[i] = parser->cur->pos[i];
+        i++;
+    }
+    result[i] = '\0';
+    return result;
+}
+
+static Node *integer(Parser *parser) {
     Node *expr = calloc(1, sizeof(Node));
     expr->kind = ND_INT;
-    char *num_text = substr(code, lexer->start - code, lexer->cur - code);
+    char *num_text = extract_token_text(parser);
     log_trace("Parsing int text: %s\n", num_text);
     expr->as.num = atoll(num_text);
     // 打印出AST
     trace_node(expr);
+    advance(parser);
     return expr;
 }
 
@@ -62,22 +82,35 @@ static Op get_op(TokenKind kind) {
     }
 }
 
-static Node *binop(Lexer *lexer, char *code, Node *left) {
-    Token *token = next_token(lexer);
+static Node *binop(Parser *parser, Node *left) {
+    Token *cur = parser->cur;
     // 如果下一个词符是运算符，那么应当是一个二元表达式
-    if (token->kind == TK_ADD || token->kind == TK_SUB || token->kind == TK_MUL || token->kind == TK_DIV) {
+    if (cur->kind == TK_ADD || cur->kind == TK_SUB || cur->kind == TK_MUL || cur->kind == TK_DIV) {
         Node *bop = calloc(1, sizeof(Node));
         bop->kind = ND_BINOP;
-        bop->as.bop.op = get_op(token->kind);
+        bop->as.bop.op = get_op(cur->kind);
         bop->as.bop.left = left;
-        token = next_token(lexer);
-        bop->as.bop.right = integer(lexer, code);
+        advance(parser);
+        bop->as.bop.right = integer(parser);
         // 打印出AST
         trace_node(bop);
-        return binop(lexer, code, bop);
+        return binop(parser, bop);
     } else {
         // 否则就直接返回左子节点。
         return left;
+    }
+}
+
+// 解析一个表达式
+static void expression(Parser *parser) {
+    // 表达式可以是一个整数、一系列运算，或者一个调用
+    if (parser->cur->kind == TK_INT) {
+        // 如果是整数
+        Node *num = integer(parser);
+        return binop(parser, num);
+    } else {
+        // 否则就是一个函数调用
+        return call(parser);
     }
 }
 
@@ -91,19 +124,7 @@ Node *parse(Parser *parser) {
         return NULL;
     }
 
-    // 先新建一个词法分析器
-    Lexer *lexer = new_lexer(code);
-    // 获得第一个词符
-    Token *token = next_token(lexer);
-
-    if (token->kind == TK_INT) {
-        // 如果是整数
-        Node * num = integer(lexer, code);
-        return binop(lexer, code, num);
-    } else {
-        // 否则就是一个函数调用
-        return call(lexer, code);
-    }
+    expression(parser);
 }
 
 Parser *new_parser(char *code) {

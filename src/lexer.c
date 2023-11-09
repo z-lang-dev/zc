@@ -31,11 +31,13 @@ static char peek(Lexer *lexer) {
 }
 
 static char next_char(Lexer *lexer) {
-    lexer->cur++;
-    return lexer->cur[-1];
+    if (lexer->cur != '\0') {
+        lexer->cur++;
+        return lexer->cur[-1];
+    } else {
+        return '\0';
+    }
 }
-
-
 
 static Token *new_token(Lexer *lexer, TokenKind kind) {
     Token *token = calloc(1, sizeof(Token));

@@ -10,8 +10,8 @@
             "name": "Debug XMake target",
             "target": "z",
             "cwd": "${workspaceFolder}/work",
-            "args": ["build", "single_int.z"],
-            "stopAtEntry": true
+            "args": ["interp", "1+2+3"],
+            "stopAtEntry": false
         }
     ]
 }

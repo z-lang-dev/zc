@@ -99,36 +99,33 @@ static Precedence get_prec(TokenKind kind) {
     }
 }
 
-static bool is_higher_prec(Parser *parser, Precedence prec) {
-    return get_prec(parser->cur->kind) > prec;
-}
-
 static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
     Token *cur = parser->cur;
     // 如果下一个词符是运算符，那么应当是一个二元表达式
     if (cur->kind == TK_ADD || cur->kind == TK_SUB || cur->kind == TK_MUL || cur->kind == TK_DIV) {
-        Precedence cur_prec = get_prec(cur->kind);
+        Precedence cur_prec = get_prec(cur->kind); // 当前操作符的优先级
         Node *bop = calloc(1, sizeof(Node));
         bop->kind = ND_BINOP;
         bop->as.bop.op = get_op(cur->kind);
         bop->as.bop.left = left;
         advance(parser);
         Node *right = integer(parser);
+        Precedence next_prec = get_prec(parser->cur->kind); // 下一个操作符的优先级。注意，调用`integer`之后，cur已经指向了下一个词符
         // peek
-        if (is_higher_prec(parser, cur_prec)) {
+        if (next_prec > cur_prec) { // 下一个操作符优先级更高，右结合
             // 如果下一个运算符的优先级更高，那么就递归调用binop
             Node *right_bop = binop(parser, right, get_prec(parser->cur->kind));
             bop->as.bop.right = right_bop;
             Node *res = binop(parser, bop, base_prec);
             echo_node(res);
             return res;
-        } else if (is_higher_prec(parser, base_prec)) {
+        } else if (next_prec > base_prec) { // base_prec < next_prec < cur_prec，左结合
             bop->as.bop.right = right;
             // 打印出AST
             Node *res = binop(parser, bop, get_prec(parser->cur->kind));
             // echo_node(bop);
             return res;
-        } else {
+        } else {  // next_rec <= base_prec，退回到上一层。
             // 不再递归
             bop->as.bop.right = right;
             return bop;

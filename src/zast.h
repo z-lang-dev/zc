@@ -53,3 +53,5 @@ void print_node(Node *node);
 void fprint_node(FILE* f, Node *node);
 // 在开启LOG_TRACE开关时，打印节点信息。用于开发阶段辅助调试
 void trace_node(Node *node);
+// 在开启LOG_TRACE开关时，打印节点信息。用于开发阶段辅助调试
+void echo_node(Node *node);

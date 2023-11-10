@@ -10,7 +10,16 @@
             "name": "Debug XMake target",
             "target": "z",
             "cwd": "${workspaceFolder}/work",
-            "args": ["interp", "1+2+3"],
+            "args": ["interp", "1+5-3"],
+            "stopAtEntry": false
+        },
+        {
+            "type": "xmake",
+            "request": "launch",
+            "name": "z2c",
+            "target": "z",
+            "cwd": "${workspaceFolder}/test/calc",
+            "args": ["c", "calc_case.z"],
             "stopAtEntry": false
         }
     ]

@@ -40,36 +40,34 @@ static void gen_expr(FILE *fp, Node *expr) {
         default:
             printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
         }
-    } 
-    // 暂时右侧只可能是整数，所以不需要else。等添加了括号之后，就需要else分支了。
-    // else {
-    //     fprintf(fp, "    push rax\n");
-    //     // 右臂
-    //     gen_expr(fp, node->as.bop.right);
-    //     fprintf(fp, "    push rax\n");
-    //     // 取出结果，进行运算操作
-    //     fprintf(fp, "    pop rdi\n");
-    //     fprintf(fp, "    pop rax\n");
+    } else {
+        fprintf(fp, "    push rax\n");
+        // 右臂
+        gen_expr(fp, expr->as.bop.right);
+        fprintf(fp, "    push rax\n");
+        // 取出结果，进行运算操作
+        fprintf(fp, "    pop rdi\n");
+        fprintf(fp, "    pop rax\n");
 
-    //     // 具体的二元运算
-    //     switch (node->as.bop.op) {
-    //     case OP_ADD:
-    //         fprintf(fp, "    add rax, rdi\n");
-    //         break;
-    //     case OP_SUB:
-    //         fprintf(fp, "    sub rax, rdi\n");
-    //         break;
-    //     case OP_MUL:
-    //         fprintf(fp, "    imul rax, rdi\n");
-    //         break;
-    //     case OP_DIV:
-    //         fprintf(fp, "    cqo\n");
-    //         fprintf(fp, "    idiv rdi\n");
-    //         break;
-    //     default:
-    //         printf("Error: unknown operator for binop expr: %d\n", node->as.bop.op);
-    //     }
-    // }
+        // 具体的二元运算
+        switch (expr->as.bop.op) {
+        case OP_ADD:
+            fprintf(fp, "    add rax, rdi\n");
+            break;
+        case OP_SUB:
+            fprintf(fp, "    sub rax, rdi\n");
+            break;
+        case OP_MUL:
+            fprintf(fp, "    imul rax, rdi\n");
+            break;
+        case OP_DIV:
+            fprintf(fp, "    cqo\n");
+            fprintf(fp, "    idiv rdi\n");
+            break;
+        default:
+            printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
+        }
+    }
     return;
 }
 

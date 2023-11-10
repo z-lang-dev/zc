@@ -38,7 +38,23 @@ static void gen_expr(FILE *fp, Node *expr) {
             printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
         }
     } else {
-        printf("Error: unsupported right operand for binop expr: %d\n", expr->as.bop.right->kind);
+        switch (expr->as.bop.op) {
+        case OP_ADD:
+            fprintf(fp, " + ");
+            break;
+        case OP_SUB:
+            fprintf(fp, " - ");
+            break;
+        case OP_MUL:
+            fprintf(fp, " * ");
+            break;
+        case OP_DIV:
+            fprintf(fp, " / ");
+            break;
+        default:
+            printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
+        }
+        gen_expr(fp, expr->as.bop.right);
     }
 }
 
@@ -83,6 +99,7 @@ void trans_c(char *file) {
     // 解析出AST
     Parser *parser = new_parser(code);
     Node *expr = parse(parser);
+    trace_node(expr);
     // 输出C代码
     codegen_c(expr);
 }

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "parser.h"
 #include "util.h"
@@ -82,21 +83,59 @@ static Op get_op(TokenKind kind) {
     }
 }
 
-static Node *binop(Parser *parser, Node *left) {
+static Precedence get_prec(TokenKind kind) {
+    switch (kind) {
+    case TK_ADD:
+    case TK_SUB:
+        return PREC_ADDSUB;
+    case TK_MUL:
+    case TK_DIV:
+        return PREC_MULDIV;
+    case TK_EOF:
+        return PREC_NONE;
+    default:
+        printf("Unknown operator: %d\n", kind);
+        return PREC_NONE;
+    }
+}
+
+static bool is_higher_prec(Parser *parser, Precedence prec) {
+    return get_prec(parser->cur->kind) > prec;
+}
+
+static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
     Token *cur = parser->cur;
     // 如果下一个词符是运算符，那么应当是一个二元表达式
     if (cur->kind == TK_ADD || cur->kind == TK_SUB || cur->kind == TK_MUL || cur->kind == TK_DIV) {
+        Precedence cur_prec = get_prec(cur->kind);
         Node *bop = calloc(1, sizeof(Node));
         bop->kind = ND_BINOP;
         bop->as.bop.op = get_op(cur->kind);
         bop->as.bop.left = left;
         advance(parser);
-        bop->as.bop.right = integer(parser);
-        // 打印出AST
-        trace_node(bop);
-        return binop(parser, bop);
+        Node *right = integer(parser);
+        // peek
+        if (is_higher_prec(parser, cur_prec)) {
+            // 如果下一个运算符的优先级更高，那么就递归调用binop
+            Node *right_bop = binop(parser, right, get_prec(parser->cur->kind));
+            bop->as.bop.right = right_bop;
+            Node *res = binop(parser, bop, base_prec);
+            echo_node(res);
+            return res;
+        } else if (is_higher_prec(parser, base_prec)) {
+            bop->as.bop.right = right;
+            // 打印出AST
+            Node *res = binop(parser, bop, get_prec(parser->cur->kind));
+            // echo_node(bop);
+            return res;
+        } else {
+            // 不再递归
+            bop->as.bop.right = right;
+            return bop;
+        }
     } else {
         // 否则就直接返回左子节点。
+        echo_node(left);
         return left;
     }
 }
@@ -107,7 +146,7 @@ static void expression(Parser *parser) {
     if (parser->cur->kind == TK_INT) {
         // 如果是整数
         Node *num = integer(parser);
-        return binop(parser, num);
+        return binop(parser, num, PREC_NONE);
     } else {
         // 否则就是一个函数调用
         return call(parser);

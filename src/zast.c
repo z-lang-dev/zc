@@ -14,6 +14,37 @@ static const char *op_to_str(Op op) {
     }
 }
 
+void fecho_node(FILE *fp, Node *node) {
+    switch (node->kind) {
+    case ND_CALL:
+        fecho_node(fp, node->as.call.fname);
+        fprintf(fp, "(");
+        fprint_node(fp, node->as.call.arg);
+        fprintf(fp, ")");
+        break;
+    case ND_INT:
+    #ifdef _WIN32
+        fprintf(fp, "%d", node->as.num);
+    #else
+        fprintf(fp, "%d", node->as.num);
+    #endif
+        break;
+    case ND_STR:
+        fprintf(fp, "\"%s\"", node->as.str);
+        break;
+    case ND_FNAME:
+        fprintf(fp, "%s", node->as.str);
+        break;
+    case ND_BINOP:
+        fprintf(fp, "{");
+        fecho_node(fp, node->as.bop.left);
+        fprintf(fp, " %s ", op_to_str(node->as.bop.op));
+        fecho_node(fp, node->as.bop.right);
+        fprintf(fp, "}");
+        break;
+    }
+}
+
 void fprint_node(FILE *fp, Node *node) {
     switch (node->kind) {
     case ND_CALL:
@@ -49,6 +80,14 @@ void fprint_node(FILE *fp, Node *node) {
 
 void print_node(Node *node) {
     fprint_node(stdout, node);
+}
+
+void echo_node(Node *node) {
+#ifdef LOG_TRACE
+    printf("> node: ");
+    fecho_node(stdout, node);
+    printf("\n");
+#endif
 }
 
 void trace_node(Node *node) {

@@ -67,6 +67,16 @@ static Node *integer(Parser *parser) {
     return expr;
 }
 
+static Node *unary(Parser *parser) {
+  switch (parser->cur->kind) {
+  case TK_SUB:
+    advance(parser);
+    return new_unary(ND_NEG, unary(parser));
+  case TK_INT:
+    return integer(parser);
+  }
+}
+
 static Op get_op(TokenKind kind) {
     switch (kind) {
     case TK_ADD:

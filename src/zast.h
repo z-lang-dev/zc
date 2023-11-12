@@ -6,10 +6,12 @@ typedef struct Node Node;
 typedef struct Value Value;
 typedef struct CallExpr CallExpr;
 typedef struct BinOp BinOp;
+typedef struct Unary Unary;
 
 typedef enum {
     ND_CALL, // 函数调用
     ND_INT, // 整数
+    ND_NEG, // 负数
     ND_STR, // 字符串
     ND_FNAME, // 函数名称
     ND_BINOP, // 二元运算
@@ -34,6 +36,11 @@ struct BinOp {
     Op op;
 };
 
+struct Unary {
+  Op op;
+  Node *body;
+};
+
 struct Node {
     NodeKind kind;
     union {
@@ -41,6 +48,7 @@ struct Node {
         int num;
         char *str;
         BinOp bop;
+        Unary una;
     } as;
 };
 

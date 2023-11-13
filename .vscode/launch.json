@@ -10,7 +10,7 @@
             "name": "Debug XMake target",
             "target": "z",
             "cwd": "${workspaceFolder}/work",
-            "args": ["interp", "(1+5)*2"],
+            "args": ["interp", "-(3*5+-2-8)"],
             "stopAtEntry": false
         },
         {
@@ -18,9 +18,18 @@
             "request": "launch",
             "name": "z2c",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/calc",
-            "args": ["c", "calc_case.z"],
+            "cwd": "${workspaceFolder}/test/neg_group",
+            "args": ["c", "neg_group_case.z"],
             "stopAtEntry": false
-        }
+        },
+        {
+            "type": "xmake",
+            "request": "launch",
+            "name": "zc_build",
+            "target": "z",
+            "cwd": "${workspaceFolder}/test/neg_group",
+            "args": ["build", "neg_group_case.z"],
+            "stopAtEntry": false
+        },
     ]
 }

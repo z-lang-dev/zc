@@ -2,13 +2,15 @@
     .text
     .global main
 main:
-    push rbp
-    mov rbp, rsp
-    lea rdi, [rip+fmt]
-    mov rsi, 41
-    call printf
-    pop rbp
-    xor rax, rax
+    mov rax, 3
+    imul rax, 5
+    push rax
+    mov rax, 2
+    neg rax
+    push rax
+    pop rdi
+    pop rax
+    add rax, rdi
+    sub rax, 8
+    neg rax
     ret
-fmt:
-    .asciz "%d\n"

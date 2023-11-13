@@ -8,6 +8,7 @@
 #include "lexer.h"
 
 static Node *expression(Parser *parser);
+static Node *expr_prec(Parser *parser, Precedence base_prec);
 
 static void advance(Parser *parser) {
     parser->cur = parser->next;
@@ -86,7 +87,7 @@ static Node *neg(Parser *parser) {
     advance(parser);
     Node *expr = new_node(ND_NEG);
     expr->as.una.op = OP_SUB;
-    expr->as.una.body = expression(parser);
+    expr->as.una.body = expr_prec(parser, PREC_NEG);
     // 打印出AST
     trace_node(expr);
     return expr;
@@ -130,22 +131,33 @@ static Precedence get_prec(TokenKind kind) {
     case TK_EOF:
         return PREC_NONE;
     default:
-        printf("Unknown operator: %d\n", kind);
+        printf("Unknown operator for prec: %d\n", kind);
         return PREC_NONE;
     }
+}
+
+static bool is_binop(TokenKind kind) {
+    return kind == TK_ADD || kind == TK_SUB || kind == TK_MUL || kind == TK_DIV;
 }
 
 static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
     Token *cur = parser->cur;
     // 如果下一个词符是运算符，那么应当是一个二元表达式
-    if (cur->kind == TK_ADD || cur->kind == TK_SUB || cur->kind == TK_MUL || cur->kind == TK_DIV) {
+    if (is_binop(cur->kind)) {
         Precedence cur_prec = get_prec(cur->kind); // 当前操作符的优先级
+        if (cur_prec < base_prec) {
+            return left;
+        }
         Node *bop = calloc(1, sizeof(Node));
         bop->kind = ND_BINOP;
         bop->as.bop.op = get_op(cur->kind);
         bop->as.bop.left = left;
         advance(parser);
         Node *right = unary(parser);
+        if (!is_binop(parser->cur->kind)) {
+            bop->as.bop.right = right;
+            return bop;
+        }
         Precedence next_prec = get_prec(parser->cur->kind); // 下一个操作符的优先级。注意，调用`unary`之后，cur已经指向了下一个词符
         // peek
         if (next_prec > cur_prec) { // 下一个操作符优先级更高，右结合
@@ -155,13 +167,13 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
             Node *res = binop(parser, bop, base_prec);
             echo_node(res);
             return res;
-        } else if (next_prec > base_prec) { // base_prec < next_prec < cur_prec，左结合
+        } else if (next_prec >= base_prec) { // base_prec <= next_prec < cur_prec，左结合
             bop->as.bop.right = right;
             // 打印出AST
             Node *res = binop(parser, bop, get_prec(parser->cur->kind));
             // echo_node(bop);
             return res;
-        } else {  // next_rec <= base_prec，退回到上一层。
+        } else {  // next_rec < base_prec，退回到上一层。
             // 不再递归
             bop->as.bop.right = right;
             return bop;
@@ -173,17 +185,27 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
     }
 }
 
+
+
 // 解析一个表达式
-static Node *expression(Parser *parser) {
+static Node *expr_prec(Parser *parser, Precedence base_prec) {
     // 表达式可以是一个整数、一系列运算，或者一个调用
     if (parser->cur->kind != TK_NAME) {
         // 如果是整数
-        Node *num = unary(parser);
-        return binop(parser, num, PREC_NONE);
+        Node *left = unary(parser);
+        // Precedence prec = base_prec;
+        // if (left->kind == ND_NEG && PREC_NEG > base_prec) {
+        //     prec = PREC_NEG;
+        // }
+        return binop(parser, left, base_prec);
     } else {
         // 否则就是一个函数调用
         return call(parser);
     }
+}
+
+static Node *expression(Parser *parser) {
+    return expr_prec(parser, PREC_NONE);
 }
 
 // 解析表达式

@@ -1,19 +1,17 @@
 includelib msvcrt.lib
-includelib legacy_stdio_definitions.lib
-.data
-    fmt db '%d', 10, 0
 .code
-    externdef printf:proc
 main proc
-    push rbp
-    mov rbp, rsp
-    sub rsp, 20h
-    lea rcx, fmt
-    mov rdx, 41
-    call printf
-    add rsp, 20h
-    pop rbp
-    xor eax, eax
+    mov rax, 3
+    imul rax, 5
+    push rax
+    mov rax, 2
+    neg rax
+    push rax
+    pop rdi
+    pop rax
+    add rax, rdi
+    sub rax, 8
+    neg rax
     ret
 main endp
 end

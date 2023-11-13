@@ -8,6 +8,12 @@ static void gen_expr(FILE *fp, Node *expr) {
         return;
     }
 
+    if (expr->kind == ND_NEG) {
+        gen_expr(fp, expr->as.una.body);
+        fprintf(fp, "    neg rax\n");
+        return;
+    }
+
     // 错误情况：
     if (expr->kind != ND_BINOP) {
         printf("Error: unknown node kind for gen_expr: %d\n", expr->kind);
@@ -139,7 +145,7 @@ void codegen_win(Node *expr) {
 
         fclose(fp);
         return;
-    } else if (expr->kind == ND_BINOP) {
+    } else if (expr->kind == ND_BINOP || expr->kind == ND_NEG) {
         fprintf(fp, ".code\n");
         fprintf(fp, "main proc\n");
         gen_expr(fp, expr);

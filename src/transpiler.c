@@ -5,8 +5,14 @@
 #include "util.h"
 
 static void gen_expr(FILE *fp, Node *expr) {
-    if (expr->kind == ND_INT) {
+    switch (expr->kind) {
+    case ND_INT:
         fprintf(fp, "%d", expr->as.num);
+        return;
+    case ND_NEG:
+        fprintf(fp, "-(");
+        gen_expr(fp, expr->as.una.body);
+        fprintf(fp, ")");
         return;
     }
 

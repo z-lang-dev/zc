@@ -36,7 +36,7 @@ target("test_interp")
     add_tests("simple_add", {runargs="37+4", trim_output=true, pass_outputs="41"})
     add_tests("add_sub", {runargs="1+5-3", trim_output=true, pass_outputs="3"})
     add_tests("calc", {runargs="2*3+4*5-1*7", trim_output=true, pass_outputs="19"})
-    add_tests("neg_group", {runargs="-(3+5+-2*8)", trim_output=true, pass_outputs="8"})
+    add_tests("neg_group", {runargs="-(3*5+-2-8)", trim_output=true, pass_outputs="-5"})
 
 
 -- 编译器compiler的测试用例

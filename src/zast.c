@@ -16,6 +16,10 @@ static const char *op_to_str(Op op) {
 
 void fecho_node(FILE *fp, Node *node) {
     switch (node->kind) {
+    case ND_NEG:
+        fprintf(fp, "-");
+        fecho_node(fp, node->as.una.body);
+        break;
     case ND_CALL:
         fecho_node(fp, node->as.call.fname);
         fprintf(fp, "(");
@@ -47,6 +51,11 @@ void fecho_node(FILE *fp, Node *node) {
 
 void fprint_node(FILE *fp, Node *node) {
     switch (node->kind) {
+    case ND_NEG:
+        fprintf(fp, "{kind:ND_NEG, body: ");
+        fprint_node(fp, node->as.una.body);
+        fprintf(fp, " }");
+        break;
     case ND_CALL:
         fprintf(fp, "{ kind:NT_CALL, fname: ");
         fprint_node(fp, node->as.call.fname);

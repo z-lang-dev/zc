@@ -8,6 +8,8 @@ int eval(Node *expr) {
     switch (expr->kind) {
     case ND_INT:
         return expr->as.num;
+    case ND_NEG:
+        return -eval(expr->as.una.body);
     case ND_BINOP:
         BinOp *bop = &expr->as.bop;
         int res = 0;

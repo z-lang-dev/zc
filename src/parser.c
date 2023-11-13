@@ -7,9 +7,17 @@
 #include "util.h"
 #include "lexer.h"
 
+static Node *expression(Parser *parser);
+
 static void advance(Parser *parser) {
     parser->cur = parser->next;
     parser->next = next_token(parser->lexer);
+}
+
+static Node *new_node(NodeKind kind) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    return node;
 }
 
 static Node *call(Parser *parser) {
@@ -67,13 +75,31 @@ static Node *integer(Parser *parser) {
     return expr;
 }
 
+static Node *group(Parser *parser) {
+    advance(parser); // 跳过'('
+    Node *expr = expression(parser);
+    advance(parser); // 跳过')'
+    return expr;
+}
+
+static Node *neg(Parser *parser) {
+    advance(parser);
+    Node *expr = new_node(ND_NEG);
+    expr->as.una.op = OP_SUB;
+    expr->as.una.body = expression(parser);
+    // 打印出AST
+    trace_node(expr);
+    return expr;
+}
+
 static Node *unary(Parser *parser) {
   switch (parser->cur->kind) {
-  case TK_SUB:
-    advance(parser);
-    return new_unary(ND_NEG, unary(parser));
-  case TK_INT:
-    return integer(parser);
+    case TK_LPAREN:
+        return group(parser);
+    case TK_SUB:
+        return neg(parser);
+    case TK_INT:
+        return integer(parser);
   }
 }
 
@@ -119,8 +145,8 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
         bop->as.bop.op = get_op(cur->kind);
         bop->as.bop.left = left;
         advance(parser);
-        Node *right = integer(parser);
-        Precedence next_prec = get_prec(parser->cur->kind); // 下一个操作符的优先级。注意，调用`integer`之后，cur已经指向了下一个词符
+        Node *right = unary(parser);
+        Precedence next_prec = get_prec(parser->cur->kind); // 下一个操作符的优先级。注意，调用`unary`之后，cur已经指向了下一个词符
         // peek
         if (next_prec > cur_prec) { // 下一个操作符优先级更高，右结合
             // 如果下一个运算符的优先级更高，那么就递归调用binop
@@ -148,11 +174,11 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
 }
 
 // 解析一个表达式
-static void expression(Parser *parser) {
+static Node *expression(Parser *parser) {
     // 表达式可以是一个整数、一系列运算，或者一个调用
-    if (parser->cur->kind == TK_INT) {
+    if (parser->cur->kind != TK_NAME) {
         // 如果是整数
-        Node *num = integer(parser);
+        Node *num = unary(parser);
         return binop(parser, num, PREC_NONE);
     } else {
         // 否则就是一个函数调用
@@ -170,7 +196,7 @@ Node *parse(Parser *parser) {
         return NULL;
     }
 
-    expression(parser);
+    return expression(parser);
 }
 
 Parser *new_parser(char *code) {

@@ -10,7 +10,7 @@
             "name": "Debug XMake target",
             "target": "z",
             "cwd": "${workspaceFolder}/work",
-            "args": ["interp", "1+5-3"],
+            "args": ["interp", "(1+5)*2"],
             "stopAtEntry": false
         },
         {

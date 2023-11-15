@@ -3,6 +3,39 @@
 #include "parser.h"
 #include "util.h"
 
+// 内置函数
+
+// print
+static void print(Node *arg) {
+    if (arg->kind == ND_INT) {
+        printf("%d\n", arg->as.num);
+    } else {
+        printf("%s\n", arg->as.str);
+    }
+}
+
+// pwd
+static void pwd() {
+    char buf[1024];
+    getcwd(buf, sizeof(buf));
+    printf("%s\n", buf);
+}
+
+// ls
+static void ls(char *path) {
+    char cmd[1024];
+    sprintf(cmd, "ls %s", path);
+    system(cmd);
+}
+
+// cd
+static void cd(char *path) {
+    if (chdir(path) != 0) {
+        perror("chdir");
+    }
+}
+
+
 // 对表达式求值
 int eval(Node *expr) {
     switch (expr->kind) {
@@ -42,11 +75,17 @@ void execute(Node *expr) {
     switch (expr->kind) {
     case ND_CALL:
         // 打印call.arg
-        Node *arg = expr->as.call.arg;
-        if (arg->kind == ND_INT) {
-            printf("%d\n", arg->as.num);
+        char *fname = expr->as.call.fname->as.str;
+        if (strcmp(fname, "print") == 0) {
+            print(expr->as.call.arg);
+        } else if (strcmp(fname, "pwd") == 0) {
+            pwd();
+        } else if (strcmp(fname, "ls") == 0) {
+            ls(expr->as.call.arg->as.str);
+        } else if (strcmp(fname, "cd") == 0) {
+            cd(expr->as.call.arg->as.str);
         } else {
-            printf("%s\n", arg->as.str);
+            printf("Unknown builtin function: %s\n", fname);
         }
         break;
     default:

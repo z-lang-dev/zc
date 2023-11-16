@@ -1,15 +1,24 @@
 #pragma once
 
+#include <stdbool.h>
+
 #ifdef _WIN32
 #include <stdint.h>
 #include <stdio.h>
 #endif
+
+
+bool is_digit(char c);
+bool is_alpha(char c);
+bool is_alnum(char c);
 
 // 获取字符c在字符串中的位置
 int index_of(char *str, char c);
 
 // 提取一个子串
 char *substr(char *str, int start, int end);
+
+bool starts_with(char *str, char *prefix);
 
 // 根据LOG_TRACE开关决定是否打印信息
 void log_trace(const char *fmt, ...);

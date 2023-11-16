@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "lexer.h"
+#include "util.h"
 
 // 初始化一个词法分析器
 Lexer *new_lexer(const char *code) {
@@ -12,18 +13,6 @@ Lexer *new_lexer(const char *code) {
 
 static bool is_eof(Lexer *lexer) {
     return *lexer->cur == '\0';
-}
-
-static bool is_digit(char c) {
-    return '0' <= c && c <= '9';
-}
-
-static bool is_alpha(char c) {
-    return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
-}
-
-static bool is_alnum(char c) {
-    return is_digit(c) || is_alpha(c);
 }
 
 static char peek(Lexer *lexer) {

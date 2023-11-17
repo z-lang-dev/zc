@@ -21,6 +21,25 @@ target("z")
         end
     end)
 
+target("std")
+    set_kind("static")
+    add_files("lib/*.c")
+    add_files("src/util.c")
+    add_includedirs("lib")
+    add_includedirs("src")
+
+target("test_std")
+    set_kind("binary")
+    add_files("test/test_std.c")
+    add_deps("std")
+    add_includedirs("lib")
+    add_includedirs("src")
+    set_rundir(os.projectdir())
+    add_tests("hello", {rundir = os.projectdir(), trim_output=true, pass_outputs="hello world"})
+    after_test(function (target, opt)
+        os.rm("write_file_test.txt")
+    end)
+
 -- 解释器interp的测试用例
 target("test_interp")
     set_kind("binary")

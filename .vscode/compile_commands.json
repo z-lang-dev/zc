@@ -51,6 +51,16 @@
 },
 {
   "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\std.pdb", "/Od", "/Ilib", "/Isrc", "/EHsc", "/Fobuild\\.objs\\std\\windows\\x64\\debug\\lib\\std.c.obj", "lib\\std.c"],
+  "file": "lib\\std.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\std.pdb", "/Od", "/Ilib", "/Isrc", "/EHsc", "/Fobuild\\.objs\\std\\windows\\x64\\debug\\src\\util.c.obj", "src\\util.c"],
+  "file": "src\\util.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
   "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_interp.pdb", "/Od", "/Isrc", "/EHsc", "/Fobuild\\.objs\\test_interp\\windows\\x64\\debug\\src\\codegen.c.obj", "src\\codegen.c"],
   "file": "src\\codegen.c"
 },
@@ -198,4 +208,9 @@
   "directory": "d:\\gitee\\z-lang\\zc",
   "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_compiler.pdb", "/Od", "/Isrc", "/EHsc", "/Fobuild\\.objs\\test_compiler\\windows\\x64\\debug\\test\\test_compiler.c.obj", "test\\test_compiler.c"],
   "file": "test\\test_compiler.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_std.pdb", "/Od", "/Ilib", "/Isrc", "/EHsc", "/Fobuild\\.objs\\test_std\\windows\\x64\\debug\\test\\test_std.c.obj", "test\\test_std.c"],
+  "file": "test\\test_std.c"
 }]

@@ -15,6 +15,8 @@ target("z")
         os.rm("work/*.obj")
         os.rm("work/*.exe")
         os.rm("work/*.lnk")
+        os.rm("work/*.tmp")
+        os.rm("work/a.out")
         for _, d in ipairs(case_list) do
             os.rm("test/"..d.."/app.*")
             os.rm("test/"..d.."/*.lnk")

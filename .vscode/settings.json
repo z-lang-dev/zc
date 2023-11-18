@@ -9,6 +9,7 @@
         "zast.h": "c",
         "stdint.h": "c",
         "codegen.h": "c",
-        "interp.h": "c"
+        "interp.h": "c",
+        "direct.h": "c"
     }
 }

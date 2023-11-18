@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <direct.h>
-
 #include "repl.h"
 #include "util.h"
 #include "parser.h"
@@ -52,8 +50,6 @@ static char *command(char *line) {
 // 交互式环境REPL
 void repl(void) {
     printf("Z REPL v0.1\n");
-
-    printf("Working directory: %s", getcwd(NULL, 0));
 
     for (;;) {
         printf("-------------- \n");

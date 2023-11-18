@@ -67,7 +67,7 @@ static void gen_expr(FILE *fp, Node *expr) {
 // 将AST编译成C代码
 static void codegen_c(Node *expr) {
     bool is_call = expr->kind == ND_CALL;
-    Node *val = is_call ? expr->as.call.arg : expr;
+    Node *val = is_call ? expr->as.call.args[0] : expr;
     
     // 打开输出文件
     FILE *fp = fopen("app.c", "w");
@@ -115,7 +115,7 @@ static void codegen_py(Node *expr) {
     // 打开输出文件
     FILE *fp = fopen("app.py", "w");
     if (expr->kind == ND_CALL) {
-        Node *arg = expr->as.call.arg;
+        Node *arg = expr->as.call.args[0];
         // main函数
         if (arg->kind == ND_INT) {
             fprintf(fp, "print(%d)\n", arg->as.num);
@@ -146,7 +146,7 @@ static void codegen_js(Node *expr) {
     // 打开输出文件
     FILE *fp = fopen("app.js", "w");
     if (expr->kind == ND_CALL) {
-        Node *arg = expr->as.call.arg;
+        Node *arg = expr->as.call.args[0];
         // main函数
         if (arg->kind == ND_INT) {
             fprintf(fp, "console.log(%d)\n", arg->as.num);

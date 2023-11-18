@@ -107,6 +107,8 @@ Token *next_token(Lexer *lexer) {
         return new_token(lexer, TK_MUL);
     case '/':
         return new_token(lexer, TK_DIV);
+    case ',':
+        return new_token(lexer, TK_COMMA);
     default:
         log_trace("Unexpected character: %c\n", c);
         return new_token(lexer, TK_EOF);

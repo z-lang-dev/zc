@@ -21,34 +21,108 @@ static Node *new_node(NodeKind kind) {
     return node;
 }
 
-static Node *call(Parser *parser) {
-    char *code = parser->code;
-    Node *expr = calloc(1, sizeof(Node));
-    expr->kind = ND_CALL;
-    CallExpr *call = &expr->as.call;
-    // 从代码开头到'('之间的就是函数名称
-    int index_lparen = index_of(code, '(');
-    char *name = substr(code, 0, index_lparen);
-    Node *fname = calloc(1, sizeof(Node));
-    fname->kind = ND_FNAME;
-    fname->as.str = name;
-    call->fname = fname;
-    // 读取'('之后的第一个字符
-    char c = code[index_lparen + 1];
-    Node *arg = calloc(1, sizeof(Node));
-    if (c == '"') {
-        // 如果是'"'，则是字符串参数
-        arg->kind = ND_STR;
-        arg->as.str = substr(code, index_lparen + 2, strlen(code)-2);
-    } else {
-        // 否则是整数参数
-        arg->kind = ND_INT;
-        arg->as.num = atoll(substr(code, index_lparen + 1, strlen(code)-1));
+static char* token_to_str(TokenKind kind) {
+    switch (kind) {
+    case TK_ADD:
+        return "TK_ADD";
+    case TK_SUB:
+        return "TK_SUB";
+    case TK_MUL:
+        return "TK_MUL";
+    case TK_DIV:
+        return "TK_DIV";
+    case TK_INT:
+        return "TK_INT";
+    case TK_LPAREN:
+        return "TK_LPAREN";
+    case TK_RPAREN:
+        return "TK_RPAREN";
+    case TK_EOF:
+        return "TK_EOF";
+    case TK_NAME:
+        return "TK_NAME";
+    case TK_STR:
+        return "TK_STR";
+    case TK_COMMA:
+        return "TK_COMMA";
+    default:
+        return "TK_ILL";
     }
-    call->arg = arg;
-    // 打印出AST
-    trace_node(expr);
-    return expr;
+}
+
+static void expect(Parser *parser, TokenKind kind) {
+    if (parser->cur->kind != kind) {
+        printf("Expected %s, but got %s\n", token_to_str(kind), token_to_str(parser->cur->kind));
+        exit(1);
+    }
+    advance(parser);
+}
+
+typedef struct {
+  int count;
+  int cap;
+  Node *data[];
+} ArgBuf;
+
+#define MAX_ARGS 4
+
+ArgBuf *arg_buf;
+
+static ArgBuf *args(Parser *parser) {
+  if (arg_buf == NULL) {
+    arg_buf = malloc(sizeof(ArgBuf) + MAX_ARGS * sizeof(Node *));
+  }
+  ArgBuf *buf = arg_buf;
+  buf->count = 0;
+  buf->cap = MAX_ARGS;
+  while (parser->cur->kind != TK_RPAREN) {
+    buf->data[buf->count++] = expression(parser);
+    if (parser->cur->kind == TK_COMMA) {
+      advance(parser);
+    }
+  }
+  return buf;
+}
+
+static char *strip(char *str, int len) {
+  char *result = calloc(len + 1, sizeof(char));
+  int i = 0;
+  while (i < len) {
+    result[i] = str[i];
+    i++;
+  }
+  result[i] = '\0';
+  return result;
+}
+
+static Node *fname(Parser *parser) {
+  Node *node = new_node(ND_FNAME);
+  node->as.str = strip(parser->cur->pos, parser->cur->len);
+  advance(parser);
+  return node;
+}
+
+static Node *call(Parser *parser) {
+  Node *fn = fname(parser);
+  expect(parser, TK_LPAREN);
+  ArgBuf *buf = args(parser);
+  expect(parser, TK_RPAREN); 
+  Node *node = malloc(sizeof(NodeKind) + sizeof(CallExpr) + buf->count * sizeof(Node *));
+  node->kind = ND_CALL;
+  node->as.call.fname = fn;
+  node->as.call.argc = buf->count;
+  for (int i = 0; i < buf->count; i++) {
+    node->as.call.args[i] = buf->data[i];
+  }
+  trace_node(node);
+  return node;
+}
+
+static Node* string(Parser *parser) {
+  Node *node = new_node(ND_STR);
+  node->as.str = strip(parser->cur->pos+1, parser->cur->len-2);
+  advance(parser);
+  return node;
 }
 
 static char *extract_token_text(Parser *parser) {
@@ -99,6 +173,8 @@ static Node *unary(Parser *parser) {
         return group(parser);
     case TK_SUB:
         return neg(parser);
+      case TK_STR:
+        return string(parser);
     case TK_INT:
         return integer(parser);
   }

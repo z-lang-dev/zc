@@ -19,7 +19,8 @@ typedef enum {
 
 struct CallExpr {
     Node *fname; // 函数名
-    Node *arg; // 参数
+    int argc; // 参数个数
+    Node *args[]; // 参数
 };
 
 typedef enum {

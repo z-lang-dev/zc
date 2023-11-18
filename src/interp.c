@@ -77,13 +77,13 @@ void execute(Node *expr) {
         // 打印call.arg
         char *fname = expr->as.call.fname->as.str;
         if (strcmp(fname, "print") == 0) {
-            print(expr->as.call.arg);
+            print(expr->as.call.args[0]);
         } else if (strcmp(fname, "pwd") == 0) {
             pwd();
         } else if (strcmp(fname, "ls") == 0) {
-            ls(expr->as.call.arg->as.str);
+            ls(expr->as.call.args[0]->as.str);
         } else if (strcmp(fname, "cd") == 0) {
-            cd(expr->as.call.arg->as.str);
+            cd(expr->as.call.args[0]->as.str);
         } else {
             printf("Unknown builtin function: %s\n", fname);
         }

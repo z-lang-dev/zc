@@ -102,9 +102,9 @@ void codegen_linux(Node *expr) {
     fprintf(fp, "    mov rbp, rsp\n");
     // 调用printf函数。
     fprintf(fp, "    lea rdi, [rip+fmt]\n");
-    Node *arg = call->arg;
+    Node *arg = call->args[0];
     if (arg->kind == ND_INT) {
-        fprintf(fp, "    mov rsi, %" PRId64 "\n", arg->as.num);
+        fprintf(fp, "    mov rsi, %d\n", arg->as.num);
     }
     fprintf(fp, "    call printf\n");
     // epilog
@@ -164,7 +164,7 @@ void codegen_win(Node *expr) {
     fprintf(fp, "includelib legacy_stdio_definitions.lib\n");
     // 要打印的信息参数
     fprintf(fp, ".data\n");
-    Node *arg = call->arg;
+    Node *arg = call->args[0];
     if (arg->kind == ND_INT) {
         fprintf(fp, "    fmt db '%%d', 10, 0\n");
     } else {

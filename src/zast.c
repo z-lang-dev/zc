@@ -23,7 +23,12 @@ void fecho_node(FILE *fp, Node *node) {
     case ND_CALL:
         fecho_node(fp, node->as.call.fname);
         fprintf(fp, "(");
-        fprint_node(fp, node->as.call.arg);
+        for (int i = 0; i < node->as.call.argc; i++) {
+            if (i > 0) {
+                fprintf(fp, ", ");
+            }
+            fecho_node(fp, node->as.call.args[i]);
+        }
         fprintf(fp, ")");
         break;
     case ND_INT:
@@ -59,8 +64,13 @@ void fprint_node(FILE *fp, Node *node) {
     case ND_CALL:
         fprintf(fp, "{ kind:NT_CALL, fname: ");
         fprint_node(fp, node->as.call.fname);
-        fprintf(fp, ", arg: ");
-        fprint_node(fp, node->as.call.arg);
+        fprintf(fp, ", args: ");
+        for (int i = 0; i < node->as.call.argc; i++) {
+            if (i > 0) {
+                fprintf(fp, ", ");
+            }
+            fprint_node(fp, node->as.call.args[i]);
+        }
         fprintf(fp, " }");
         break;
     case ND_INT:

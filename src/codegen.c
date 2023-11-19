@@ -78,6 +78,8 @@ static void gen_expr(FILE *fp, Node *expr) {
 }
 
 
+char *LINUX_REGS[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
 // 将AST编译成汇编代码：linux/gas
 void codegen_linux(Node *expr) {
     // 打开输出文件
@@ -124,6 +126,7 @@ void codegen_linux(Node *expr) {
     fclose(fp);
 }
 
+char *WIN_REGS[4] = {"rcx", "rdx", "r8", "r9"};
 
 // 将AST编译成汇编代码：windows/masm64
 void codegen_win(Node *expr) {
@@ -162,20 +165,33 @@ void codegen_win(Node *expr) {
 
     CallExpr *call = &expr->as.call;
     fprintf(fp, "includelib legacy_stdio_definitions.lib\n");
-    // 要打印的信息参数
+    fprintf(fp, "includelib std.lib\n");
     fprintf(fp, ".data\n");
-    Node *arg = call->args[0];
-    if (arg->kind == ND_INT) {
-        fprintf(fp, "    fmt db '%%d', 10, 0\n");
-    } else {
-        fprintf(fp, "    fmt db '%s', 10, 0\n", arg->as.str);
-    } 
+    // 现在支持的参数都是常亮，因此直接写到.data字段就行了
+    char *fname = call->fname->as.str;
+    printf("fname: %s\n", fname);
+    for (int i = 0; i < call->argc; ++i) {
+        Node *arg = call->args[i];
+        if (strcmp(fname, "print") == 0) { // printf 要单独处理，加上'\n'
+            if (arg->kind == ND_INT) {
+                fprintf(fp, "    fmt db '%%d', 10, 0\n");
+            } else {
+                fprintf(fp, "    fmt db '%s', 10, 0\n", arg->as.str);
+            }
+        } else { // 普通函数
+            if (arg->kind == ND_INT) {
+                fprintf(fp, "    arg%d db '%%d', 0\n", i);
+            } else {
+                fprintf(fp, "    arg%d db '%s', 0\n", i, arg->as.str);
+            }
+        }
+    }
+     
     fprintf(fp, ".code\n");
-    // 声明printf函数
-    fprintf(fp, "    externdef printf:proc\n");
+    // 声明函数
+    fprintf(fp, "    externdef %s:proc\n", fname);
 
     // main函数
-
     fprintf(fp, "main proc\n");
     // prolog
     fprintf(fp, "    push rbp\n");
@@ -183,12 +199,23 @@ void codegen_win(Node *expr) {
     // reserve stack for shadow space
     fprintf(fp, "    sub rsp, 20h\n");
 
-    // 准备printf参数
-    fprintf(fp, "    lea rcx, fmt\n");
-    if (arg->kind == ND_INT) {
-        fprintf(fp, "    mov rdx, %" PRId64 "\n", arg->as.num);
+    // 准备参数
+
+    if (strcmp(fname, "print") == 0) { // printf 要单独处理，加上'\n'
+        fprintf(fp, "    lea rcx, fmt\n");
+        fprintf(fp, "    mov rdx, %d\n", call->args[0]->as.num);
+        fprintf(fp, "    call printf\n");
+    } else {
+        for (int i = 0; i < call->argc; ++i) {
+            Node *arg = call->args[i];
+            if (arg->kind == ND_INT) {
+                fprintf(fp, "    mov %s, %d\n", WIN_REGS[i], arg->as.num);
+            } else {
+                fprintf(fp, "    lea %s, arg%d\n", WIN_REGS[i], i);
+            }
+        }
+        fprintf(fp, "    call %s\n", fname);
     }
-    fprintf(fp, "    call printf\n");
 
     // restore stack
     fprintf(fp, "    add rsp, 20h\n");

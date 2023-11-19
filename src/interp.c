@@ -75,7 +75,7 @@ int eval(Node *expr) {
     }
 }
 
-bool do_builtin(Node *expr) {
+bool call_builtin(Node *expr) {
     char *fname = expr->as.call.fname->as.str;
     if (strcmp(fname, "print") == 0) {
         print(expr->as.call.args[0]);
@@ -96,7 +96,7 @@ bool do_builtin(Node *expr) {
     return false;
 }
 
-bool do_stdlib(Node *expr) {
+bool call_stdlib(Node *expr) {
     char *fname = expr->as.call.fname->as.str;
     if (strcmp(fname, "read_file") == 0) {
         read_file(expr->as.call.args[0]->as.str);
@@ -113,8 +113,8 @@ void execute(Node *expr) {
     log_trace("Executing ...\n------------------\n");
     switch (expr->kind) {
     case ND_CALL:
-        if (do_builtin(expr)) break;
-        if (do_stdlib(expr)) break;
+        if (call_builtin(expr)) break;
+        if (call_stdlib(expr)) break;
         printf("Unknown function: %s\n", expr->as.call.fname->as.str);
         break;
     default:

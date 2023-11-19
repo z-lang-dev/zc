@@ -27,8 +27,8 @@
             "request": "launch",
             "name": "zc_build",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/neg_group",
-            "args": ["build", "neg_group_case.z"],
+            "cwd": "${workspaceFolder}/test/read_file",
+            "args": ["build", "read_file_case.z"],
             "stopAtEntry": false
         },
     ]

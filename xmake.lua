@@ -1,7 +1,7 @@
 add_rules("mode.debug", "mode.release")
 
 -- 测试用例列表
-local case_list = {"hello", "simple_int", "single_int", "simple_add", "add_sub", "calc", "neg_group"}
+local case_list = {"hello", "simple_int", "single_int", "simple_add", "add_sub", "calc", "neg_group", "read_file", "write_file"}
 
 target("z")
     set_kind("binary")
@@ -22,6 +22,7 @@ target("z")
         for _, d in ipairs(case_list) do
             os.rm("test/"..d.."/app.*")
             os.rm("test/"..d.."/*.lnk")
+            os.rm("test/"..d.."/*.tmp")
         end
     end)
 

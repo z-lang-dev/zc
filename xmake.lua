@@ -6,6 +6,8 @@ local case_list = {"hello", "simple_int", "single_int", "simple_add", "add_sub",
 target("z")
     set_kind("binary")
     add_files("src/*.c")
+    add_deps("std")
+    add_includedirs("lib")
     if is_mode("debug") then
         add_defines("LOG_TRACE")
     end

@@ -61,7 +61,8 @@ static Token *name(Lexer *lexer) {
 static void skip_whitespace(Lexer *lexer) {
     char c = peek(lexer);
     while (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
-        c = next_char(lexer);
+        next_char(lexer);
+        c = peek(lexer);
     }
 }
 

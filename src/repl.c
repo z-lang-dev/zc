@@ -12,6 +12,7 @@ char *commands[] = {
     "pwd",
     "ls",
     "cd",
+    "cat",
     NULL
 };
 

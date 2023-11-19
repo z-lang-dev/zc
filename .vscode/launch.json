@@ -9,8 +9,8 @@
             "request": "launch",
             "name": "Debug XMake target",
             "target": "z",
-            "cwd": "${workspaceFolder}/work",
-            "args": ["interp", "print(\"Hello\")"],
+            "cwd": "${workspaceFolder}",
+            "args": ["interp", "write_file(\"htllo.tmp\", \"hlllo\")"],
             "stopAtEntry": false
         },
         {

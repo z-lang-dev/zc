@@ -67,7 +67,7 @@ static void gen_expr(FILE *fp, Node *expr) {
 // 将AST编译成C代码
 static void codegen_c(Node *expr) {
     bool is_call = expr->kind == ND_CALL;
-    bool is_print = strcmp(expr->as.call.fname->as.str, "print") == 0;
+    bool is_print = is_call && strcmp(expr->as.call.fname->as.str, "print") == 0;
     Node *val = is_call ? expr->as.call.args[0] : expr;
     
     // 打开输出文件

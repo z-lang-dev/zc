@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include "codegen.h"
 
 static void gen_expr(FILE *fp, Node *expr) {
@@ -102,24 +103,49 @@ void codegen_linux(Node *expr) {
     // prolog
     fprintf(fp, "    push rbp\n");
     fprintf(fp, "    mov rbp, rsp\n");
-    // 调用printf函数。
-    fprintf(fp, "    lea rdi, [rip+fmt]\n");
-    Node *arg = call->args[0];
-    if (arg->kind == ND_INT) {
-        fprintf(fp, "    mov rsi, %d\n", arg->as.num);
+    char *fname = call->fname->as.str;
+    bool is_print = strcmp(fname, "print") == 0;
+    if (is_print) {
+        // 调用printf函数。
+        fprintf(fp, "    lea rdi, [rip+fmt]\n");
+        Node *arg = call->args[0];
+        if (arg->kind == ND_INT) {
+            fprintf(fp, "    mov rsi, %d\n", arg->as.num);
+        }
+        fprintf(fp, "    call printf\n");
+    } else {
+        for (int i = 0; i < call->argc; ++i) {
+            Node *arg = call->args[i];
+            if (arg->kind == ND_INT) {
+                fprintf(fp, "    mov %s, %d\n", LINUX_REGS[i], arg->as.num);
+            } else {
+                fprintf(fp, "    lea %s, [rip+arg%d]\n", LINUX_REGS[i], i);
+            }
+        }
+        fprintf(fp, "    call %s\n", fname);
     }
-    fprintf(fp, "    call printf\n");
+
     // epilog
     fprintf(fp, "    pop rbp\n");
     // 返回
     fprintf(fp, "    xor rax, rax\n");
     fprintf(fp, "    ret\n");
     // 设置参数字符串
-    fprintf(fp, "fmt:\n");
-    if (arg->kind == ND_INT) {
-        fprintf(fp, "    .asciz \"%%d\\n\"\n");
+    if (is_print) {
+        fprintf(fp, "fmt:\n");
+        if (call->args[0]->kind == ND_INT) {
+            fprintf(fp, "    .asciz \"%%d\\n\"\n");
+        } else {
+            fprintf(fp, "    .asciz \"%s\"\n", call->args[0]->as.str);
+        }
     } else {
-        fprintf(fp, "    .asciz \"%s\"\n", arg->as.str);
+        for (int i = 0; i < call->argc; ++i) {
+            Node *arg = call->args[i];
+            if (arg->kind == ND_STR) {
+                fprintf(fp, "arg%d:\n", i);
+                fprintf(fp, "    .asciz \"%s\"\n", arg->as.str);
+            }
+        }
     }
 
     // 保存并关闭文件

@@ -78,8 +78,7 @@ static void gen_expr(FILE *fp, Node *expr) {
     return;
 }
 
-
-char *LINUX_REGS[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+static char *LINUX_REGS[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 // 将AST编译成汇编代码：linux/gas
 void codegen_linux(Node *expr) {
@@ -152,7 +151,7 @@ void codegen_linux(Node *expr) {
     fclose(fp);
 }
 
-char *WIN_REGS[4] = {"rcx", "rdx", "r8", "r9"};
+static char *WIN_REGS[4] = {"rcx", "rdx", "r8", "r9"};
 
 // 将AST编译成汇编代码：windows/masm64
 void codegen_win(Node *expr) {
@@ -195,19 +194,17 @@ void codegen_win(Node *expr) {
     fprintf(fp, ".data\n");
     // 现在支持的参数都是常亮，因此直接写到.data字段就行了
     char *fname = call->fname->as.str;
-    printf("fname: %s\n", fname);
+    bool is_print = strcmp(fname, "print") == 0;
     for (int i = 0; i < call->argc; ++i) {
         Node *arg = call->args[i];
-        if (strcmp(fname, "print") == 0) { // printf 要单独处理，加上'\n'
+        if (is_print) { // printf 要单独处理，加上'\n'
             if (arg->kind == ND_INT) {
                 fprintf(fp, "    fmt db '%%d', 10, 0\n");
             } else {
                 fprintf(fp, "    fmt db '%s', 10, 0\n", arg->as.str);
             }
         } else { // 普通函数
-            if (arg->kind == ND_INT) {
-                fprintf(fp, "    arg%d db '%%d', 0\n", i);
-            } else {
+            if (arg->kind == ND_STR) {
                 fprintf(fp, "    arg%d db '%s', 0\n", i, arg->as.str);
             }
         }
@@ -226,8 +223,7 @@ void codegen_win(Node *expr) {
     fprintf(fp, "    sub rsp, 20h\n");
 
     // 准备参数
-
-    if (strcmp(fname, "print") == 0) { // printf 要单独处理，加上'\n'
+    if (is_print) { // printf 要单独处理，加上'\n'
         fprintf(fp, "    lea rcx, fmt\n");
         fprintf(fp, "    mov rdx, %d\n", call->args[0]->as.num);
         fprintf(fp, "    call printf\n");

@@ -189,12 +189,14 @@ void codegen_win(Node *expr) {
     }
 
     CallExpr *call = &expr->as.call;
-    fprintf(fp, "includelib legacy_stdio_definitions.lib\n");
-    fprintf(fp, "includelib std.lib\n");
-    fprintf(fp, ".data\n");
-    // 现在支持的参数都是常亮，因此直接写到.data字段就行了
     char *fname = call->fname->as.str;
     bool is_print = strcmp(fname, "print") == 0;
+    fprintf(fp, "includelib legacy_stdio_definitions.lib\n");
+    if (!is_print) {
+        fprintf(fp, "includelib std.lib\n");
+    }
+    fprintf(fp, ".data\n");
+    // 现在支持的参数都是常亮，因此直接写到.data字段就行了
     for (int i = 0; i < call->argc; ++i) {
         Node *arg = call->args[i];
         if (is_print) { // printf 要单独处理，加上'\n'
@@ -212,7 +214,11 @@ void codegen_win(Node *expr) {
      
     fprintf(fp, ".code\n");
     // 声明函数
-    fprintf(fp, "    externdef %s:proc\n", fname);
+    if (is_print) {
+        fprintf(fp, "    externdef printf:proc\n");
+    } else {
+        fprintf(fp, "    externdef %s:proc\n", fname);
+    }
 
     // main函数
     fprintf(fp, "main proc\n");
@@ -224,8 +230,13 @@ void codegen_win(Node *expr) {
 
     // 准备参数
     if (is_print) { // printf 要单独处理，加上'\n'
-        fprintf(fp, "    lea rcx, fmt\n");
-        fprintf(fp, "    mov rdx, %d\n", call->args[0]->as.num);
+        Node *arg = call->args[0];
+        if (arg->kind == ND_INT) {
+            fprintf(fp, "    lea rcx, fmt\n");
+            fprintf(fp, "    mov rdx, %d\n", call->args[0]->as.num);
+        } else {
+            fprintf(fp, "    lea rcx, fmt\n");
+        }
         fprintf(fp, "    call printf\n");
     } else {
         for (int i = 0; i < call->argc; ++i) {

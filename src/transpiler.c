@@ -67,6 +67,7 @@ static void gen_expr(FILE *fp, Node *expr) {
 // 将AST编译成C代码
 static void codegen_c(Node *expr) {
     bool is_call = expr->kind == ND_CALL;
+    bool is_print = strcmp(expr->as.call.fname->as.str, "print") == 0;
     Node *val = is_call ? expr->as.call.args[0] : expr;
     
     // 打开输出文件
@@ -74,15 +75,34 @@ static void codegen_c(Node *expr) {
     // 引入标准库
     if (is_call) {
         fprintf(fp, "#include <stdio.h>\n");
+        if (!is_print) {
+            fprintf(fp, "#include \"std.h\"\n");
+        }
     }
     // main函数
     fprintf(fp, "int main(void) {\n");
     // 调用printf函数
     if (is_call) {
-        if (val->kind == ND_INT) {
-            fprintf(fp, "    printf(\"%%d\\n\", %d);\n", val->as.num);
-        } else {
-            fprintf(fp, "    printf(\"%s\");\n", val->as.str);
+        if (is_print) {
+            if (val->kind == ND_INT) {
+                fprintf(fp, "    printf(\"%%d\\n\", %d);\n", val->as.num);
+            } else {
+                fprintf(fp, "    printf(\"%s\");\n", val->as.str);
+            }
+        } else { // 调用普通函数
+            fprintf(fp, "    %s(", expr->as.call.fname->as.str);
+            for (int i = 0; i < expr->as.call.argc; ++i) {
+                Node *arg = expr->as.call.args[i];
+                if (arg->kind == ND_INT) {
+                    fprintf(fp, "%d", arg->as.num);
+                } else {
+                    fprintf(fp, "\"%s\"", arg->as.str);
+                }
+                if (i < expr->as.call.argc - 1) {
+                    fprintf(fp, ", ");
+                }
+            }
+            fprintf(fp, ");\n");
         }
         // 返回
         fprintf(fp, "    return 0;\n");

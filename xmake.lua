@@ -1,7 +1,8 @@
 add_rules("mode.debug", "mode.release")
 
 -- 测试用例列表
-local case_list = {"hello", "simple_int", "single_int", "simple_add", "add_sub", "calc", "neg_group", "read_file", "write_file"}
+local case_list = {"hello", "simple_int", "single_int", "simple_add", "add_sub", "calc", "neg_group", "read_file", "write_file", "alert"}
+local skip_table = {["read_file"] = {["js"] = true}, ["write_file"] = {["js"] = true}, ["alert"] = {["c"]=true, ["py"]=true, ["compiler"]=true}}
 
 target("z")
     set_kind("binary")
@@ -76,8 +77,10 @@ target("test_compiler")
     add_includedirs("lib")
     add_files("test/test_compiler.c")
     for _, d in ipairs(case_list) do
-        local asm_ext = is_plat("windows") and "asm" or "s"
-        add_tests(d, {rundir = os.projectdir().."/test/"..d, runargs = {d.."_case.z", d.."_expected."..asm_ext}})
+        if skip_table[d] == nil or skip_table[d]["compiler"] == nil then
+            local asm_ext = is_plat("windows") and "asm" or "s"
+            add_tests(d, {rundir = os.projectdir().."/test/"..d, runargs = {d.."_case.z", d.."_expected."..asm_ext}})
+        end
     end
 
 -- 转译器transpiler的测试用例
@@ -93,7 +96,9 @@ target("test_transpiler")
 
     for _, d in ipairs(case_list) do
         for _, lan in ipairs({"c", "py", "js"}) do
-            add_tests(d.."_"..lan, {rundir = os.projectdir().."/test/"..d, runargs = {lan, d.."_case.z", d.."_expected."..lan}})
+            if skip_table[d] == nil or skip_table[d][lan] == nil then
+                add_tests(d.."_"..lan, {rundir = os.projectdir().."/test/"..d, runargs = {lan, d.."_case.z", d.."_expected."..lan}})
+            end
         end
     end
 

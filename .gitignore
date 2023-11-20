@@ -67,3 +67,7 @@ work/app.*
 test/*/*.exe
 test/*/*.lnk
 test/*/app.*
+
+# python
+__pycache__/
+*.py[cod]

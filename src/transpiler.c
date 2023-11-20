@@ -135,13 +135,28 @@ static void codegen_py(Node *expr) {
     // 打开输出文件
     FILE *fp = fopen("app.py", "w");
     if (expr->kind == ND_CALL) {
-        Node *arg = expr->as.call.args[0];
-        // main函数
-        if (arg->kind == ND_INT) {
-            fprintf(fp, "print(%d)\n", arg->as.num);
+        char *fname = expr->as.call.fname->as.str;
+        bool is_print = strcmp(fname, "print") == 0;
+        if (is_print) {
+            fprintf(fp, "print(");
         } else {
-            fprintf(fp, "print(\"%s\")\n", arg->as.str);
+            fprintf(fp, "import stdz\n\n");
+            fprintf(fp, "stdz.%s(", fname);
         }
+        for (int i = 0; i < expr->as.call.argc; ++i) {
+            Node *arg = expr->as.call.args[i];
+            // main函数
+            if (arg->kind == ND_INT) {
+                fprintf(fp, "%d", arg->as.num);
+            } else {
+                fprintf(fp, "\"%s\"", arg->as.str);
+            }
+            if (i < expr->as.call.argc - 1) {
+                fprintf(fp, ", ");
+            }
+        }
+        fprintf(fp, ")\n");
+        
     }  else {
         gen_expr(fp, expr);
         fprintf(fp, "\n");
@@ -166,12 +181,24 @@ static void codegen_js(Node *expr) {
     // 打开输出文件
     FILE *fp = fopen("app.js", "w");
     if (expr->kind == ND_CALL) {
-        Node *arg = expr->as.call.args[0];
-        // main函数
-        if (arg->kind == ND_INT) {
-            fprintf(fp, "console.log(%d)\n", arg->as.num);
+        char *fname = expr->as.call.fname->as.str;
+        bool is_print = strcmp(fname, "print") == 0;
+        if (is_print) {
+            Node *arg = expr->as.call.args[0];
+            // main函数
+            if (arg->kind == ND_INT) {
+                fprintf(fp, "console.log(%d)\n", arg->as.num);
+            } else {
+                fprintf(fp, "console.log(\"%s\")\n", arg->as.str);
+            }
         } else {
-            fprintf(fp, "console.log(\"%s\")\n", arg->as.str);
+            Node *arg = expr->as.call.args[0];
+            fprintf(fp, "import {%s} from \"./stdz.js\"\n\n", fname);
+            if (arg->kind == ND_INT) {
+                fprintf(fp, "%s(%d)\n", fname, arg->as.num);
+            } else {
+                fprintf(fp, "%s(\"%s\")\n", fname, arg->as.str);
+            }
         }
     }  else {
         gen_expr(fp, expr);

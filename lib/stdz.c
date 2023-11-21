@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "std.h"
+#include "stdz.h"
 #include "util.h"
 
 // 打印字符串

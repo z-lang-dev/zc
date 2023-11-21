@@ -15,6 +15,8 @@ typedef enum {
     TK_MUL, // *
     TK_DIV, // /
     TK_COMMA, // ,
+    TK_NLINE, // \n
+    TK_SEMI, // ;
     TK_EOF, // 源码结束
 } TokenKind;
 

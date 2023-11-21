@@ -9,8 +9,8 @@
             "request": "launch",
             "name": "Debug XMake target",
             "target": "z",
-            "cwd": "${workspaceFolder}",
-            "args": ["interp", "write_file(\"htllo.tmp\", \"hlllo\")"],
+            "cwd": "${workspaceFolder}/test/read_file",
+            "args": ["build", "read_file_case.z"],
             "stopAtEntry": false
         },
         {
@@ -27,8 +27,8 @@
             "request": "launch",
             "name": "zc_build",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/read_file",
-            "args": ["build", "read_file_case.z"],
+            "cwd": "${workspaceFolder}/test/write_file",
+            "args": ["build", "write_file_case.z"],
             "stopAtEntry": false
         },
     ]

@@ -1,3 +1,3 @@
-import stdz
+from stdz import *
 
-stdz.read_file("hello.txt")
+read_file("hello.txt")

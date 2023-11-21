@@ -2,7 +2,7 @@
 #include "interp.h"
 #include "parser.h"
 #include "util.h"
-#include "std.h"
+#include "stdz.h"
 
 // 内置函数
 
@@ -112,6 +112,11 @@ bool call_stdlib(Node *expr) {
 void execute(Node *expr) {
     log_trace("Executing ...\n------------------\n");
     switch (expr->kind) {
+    case ND_PROG:
+        for (int i = 0; i < expr->as.exprs.count; i++) {
+            execute(expr->as.exprs.exprs[i]);
+        }
+        break;
     case ND_CALL:
         if (call_builtin(expr)) break;
         if (call_stdlib(expr)) break;

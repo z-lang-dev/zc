@@ -4,13 +4,13 @@
 main:
     push rbp
     mov rbp, rsp
-    lea rdi, [rip+arg0]
-    lea rsi, [rip+arg1]
+    lea rdi, [rip+ct0]
+    lea rsi, [rip+ct1]
     call write_file
     pop rbp
     xor rax, rax
     ret
-arg0:
+ct0:
     .asciz "hello.tmp"
-arg1:
+ct1:
     .asciz "HELLO\n"

@@ -1,17 +1,16 @@
 includelib msvcrt.lib
-includelib legacy_stdio_definitions.lib
-includelib std.lib
+includelib stdz.lib
 .data
-    arg0 db 'hello.tmp', 0
-    arg1 db 'HELLO\n', 0
+    ct0 db 'hello.tmp', 0
+    ct1 db 'HELLO\n', 0
 .code
     externdef write_file:proc
 main proc
     push rbp
     mov rbp, rsp
     sub rsp, 20h
-    lea rcx, arg0
-    lea rdx, arg1
+    lea rcx, ct0
+    lea rdx, ct1
     call write_file
     add rsp, 20h
     pop rbp

@@ -7,8 +7,10 @@ typedef struct Value Value;
 typedef struct CallExpr CallExpr;
 typedef struct BinOp BinOp;
 typedef struct Unary Unary;
+typedef struct Exprs Exprs;
 
 typedef enum {
+    ND_PROG, // 一段程序
     ND_CALL, // 函数调用
     ND_INT, // 整数
     ND_NEG, // 负数
@@ -42,14 +44,41 @@ struct Unary {
   Node *body;
 };
 
+// Exprs是一个动态的数组
+struct Exprs {
+    int count;
+    int cap;
+    Node **exprs;
+};
+
+Node *new_prog();
+void init_e(Node **e, int cap);
+void init_exprs_a(Node *prog, int cap);
+void t(Node *prog, int cap);
+ 
+void append_expr(Node *prog, Node *expr);
+
 struct Node {
     NodeKind kind;
+    void* meta;
     union {
         CallExpr call;
         int num;
         char *str;
         BinOp bop;
         Unary una;
+        Exprs exprs;
+    } as;
+};
+
+struct NodeU {
+    union {
+        CallExpr call;
+        int num;
+        char *str;
+        BinOp bop;
+        Unary una;
+        Exprs exprs;
     } as;
 };
 

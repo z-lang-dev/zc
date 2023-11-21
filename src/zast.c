@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "zast.h"
+#include <stdlib.h>
 
 static const char *op_to_str(Op op) {
     switch (op) {
@@ -16,6 +17,13 @@ static const char *op_to_str(Op op) {
 
 void fecho_node(FILE *fp, Node *node) {
     switch (node->kind) {
+    case ND_PROG:
+        for (int i = 0; i < node->as.exprs.count; i++) {
+            if (i > 0) {
+                fprintf(fp, "\n");
+            }
+            fecho_node(fp, node->as.exprs.exprs[i]);
+        }
     case ND_NEG:
         fprintf(fp, "-");
         fecho_node(fp, node->as.una.body);
@@ -56,6 +64,16 @@ void fecho_node(FILE *fp, Node *node) {
 
 void fprint_node(FILE *fp, Node *node) {
     switch (node->kind) {
+    case ND_PROG:
+        fprintf(fp, "{kind:ND_PROG, exprs: [");
+        for (int i = 0; i < node->as.exprs.count; i++) {
+            if (i > 0) {
+                fprintf(fp, ", ");
+            }
+            fprint_node(fp, node->as.exprs.exprs[i]);
+        }
+        fprintf(fp, "]}");
+        break;
     case ND_NEG:
         fprintf(fp, "{kind:ND_NEG, body: ");
         fprint_node(fp, node->as.una.body);
@@ -99,6 +117,7 @@ void fprint_node(FILE *fp, Node *node) {
 
 void print_node(Node *node) {
     fprint_node(stdout, node);
+    fflush(stdout);
 }
 
 void echo_node(Node *node) {
@@ -117,3 +136,32 @@ void trace_node(Node *node) {
     printf("----- END ---- \n");
 #endif
 }
+
+Node *new_prog() {
+    Node *prog = calloc(1, sizeof(Node));
+    prog->kind = ND_PROG;
+    prog->as.exprs.count = 0;
+    prog->as.exprs.cap = 1;
+    prog->as.exprs.exprs = calloc(1, sizeof(Node *));
+    return prog;
+}
+
+void append_expr(Node *prog, Node *node) {
+    Exprs *exprs = &prog->as.exprs;
+    if (exprs->count >= exprs->cap) { // grow if needed
+        if (exprs->cap <= 0) exprs->cap = 1;
+        else exprs->cap *= 2;
+        exprs->exprs = realloc(exprs->exprs, exprs->cap * sizeof(Node *));
+    }
+    exprs->exprs[exprs->count++] = node;
+}
+
+/*
+void append_expr(Exprs *exprs, Node *node) {
+    if (exprs->count >= exprs->cap) { // grow if needed
+        if (exprs->cap <= 0) exprs->cap = 1;
+        else exprs->cap *= 2;
+        exprs->exprs = realloc(exprs->exprs, exprs->cap * sizeof(Node *));
+    }
+    exprs->exprs[exprs->count++] = node;
+}*/

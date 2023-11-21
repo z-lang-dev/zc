@@ -60,7 +60,7 @@ static Token *name(Lexer *lexer) {
 
 static void skip_whitespace(Lexer *lexer) {
     char c = peek(lexer);
-    while (c == ' ' || c == '\n' || c == '\t' || c == '\r') {
+    while (c == ' ' || c == '\t' || c == '\r') {
         next_char(lexer);
         c = peek(lexer);
     }
@@ -110,6 +110,10 @@ Token *next_token(Lexer *lexer) {
         return new_token(lexer, TK_DIV);
     case ',':
         return new_token(lexer, TK_COMMA);
+    case '\n':
+        return new_token(lexer, TK_NLINE);
+    case ';':
+        return new_token(lexer, TK_SEMI);
     default:
         log_trace("Unexpected character: %c\n", c);
         return new_token(lexer, TK_EOF);

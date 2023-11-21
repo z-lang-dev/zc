@@ -4,11 +4,11 @@
 main:
     push rbp
     mov rbp, rsp
-    lea rdi, [rip+fmt]
+    lea rdi, [rip+ct0]
     mov rsi, 41
     call printf
     pop rbp
     xor rax, rax
     ret
-fmt:
+ct0:
     .asciz "%d\n"

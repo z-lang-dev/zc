@@ -1,15 +1,14 @@
 includelib msvcrt.lib
-includelib legacy_stdio_definitions.lib
-includelib std.lib
+includelib stdz.lib
 .data
-    arg0 db 'hello.txt', 0
+    ct0 db 'hello.txt', 0
 .code
     externdef read_file:proc
 main proc
     push rbp
     mov rbp, rsp
     sub rsp, 20h
-    lea rcx, arg0
+    lea rcx, ct0
     call read_file
     add rsp, 20h
     pop rbp

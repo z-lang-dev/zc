@@ -4,10 +4,10 @@
 main:
     push rbp
     mov rbp, rsp
-    lea rdi, [rip+fmt]
+    lea rdi, [rip+ct0]
     call printf
     pop rbp
     xor rax, rax
     ret
-fmt:
-    .asciz "Hello, world!"
+ct0:
+    .asciz "Hello, world!\n"

@@ -9,12 +9,12 @@ void build(char *file) {
     char *code = read_src(file);
     // 解析出AST
     Parser *parser = new_parser(code);
-    Node *expr = parse(parser);
-    // 输出汇编代码
+    Node *prog = parse(parser);
+    // 生成汇编
 #ifdef _WIN32
-    codegen_win(expr);
+    codegen_win(prog);
 #else
-    codegen_linux(expr);
+    codegen_linux(prog);
 #endif
 }
 

@@ -1,3 +1,3 @@
-import stdz
+from stdz import *
 
-stdz.write_file("hello.tmp", "HELLO\n")
+write_file("hello.tmp", "HELLO\n")

@@ -12,6 +12,9 @@ static Node *expr_prec(Parser *parser, Precedence base_prec);
 
 static void advance(Parser *parser) {
     parser->cur = parser->next;
+    if (parser->next->kind == TK_EOF) {
+        return;
+    }
     parser->next = next_token(parser->lexer);
 }
 
@@ -56,6 +59,20 @@ static void expect(Parser *parser, TokenKind kind) {
         exit(1);
     }
     advance(parser);
+}
+
+
+// 检查是否为表达式结束符（End Of Expression）
+static void expect_eoe(Parser *parser) {
+    TokenKind kind = parser->cur->kind;
+    if (kind == TK_NLINE || kind == TK_SEMI) {
+        advance(parser);
+    } else if (kind == TK_EOF) {
+        return;
+    } else {
+        printf("Expected %s, but got %s\n", token_to_str(kind), token_to_str(kind));
+        exit(1);
+    }
 }
 
 typedef struct {
@@ -107,7 +124,7 @@ static Node *call(Parser *parser) {
   expect(parser, TK_LPAREN);
   ArgBuf *buf = args(parser);
   expect(parser, TK_RPAREN); 
-  Node *node = malloc(sizeof(NodeKind) + sizeof(CallExpr) + buf->count * sizeof(Node *));
+  Node *node = malloc(sizeof(Node) + buf->count * sizeof(Node *));
   node->kind = ND_CALL;
   node->as.call.fname = fn;
   node->as.call.argc = buf->count;
@@ -284,6 +301,10 @@ static Node *expression(Parser *parser) {
     return expr_prec(parser, PREC_NONE);
 }
 
+static bool is_end(Parser *parser) {
+    return parser->cur->kind == TK_EOF;
+}
+
 // 解析表达式
 Node *parse(Parser *parser) {
     char *code = parser->code;
@@ -294,7 +315,12 @@ Node *parse(Parser *parser) {
         return NULL;
     }
 
-    return expression(parser);
+    Node *prog = new_prog();
+    while (!is_end(parser)) {
+        append_expr(prog, expression(parser));
+        expect_eoe(parser);
+    }
+    return prog;
 }
 
 Parser *new_parser(char *code) {

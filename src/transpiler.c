@@ -4,6 +4,31 @@
 #include "parser.h"
 #include "util.h"
 
+#define MAX_USES 100
+typedef struct TransMeta TransMeta;
+struct TransMeta {
+    int use_count;
+    char *uses[MAX_USES];
+
+    bool is_c;
+};
+
+static TransMeta META;
+
+static void do_meta(Node *prog) {
+    for (int i = 0; i < prog->as.exprs.count; ++i) {
+        Node *expr = prog->as.exprs.exprs[i];
+        if (expr->kind == ND_CALL) {
+            char *fname = expr->as.call.fname->as.str;
+            if (strcmp(fname, "print") == 0) {
+                META.uses[META.use_count++] = "<stdio.h>";
+            } else {
+                META.uses[META.use_count++] = "\"stdz.h\"";
+            }
+        }
+    }
+}
+
 static void gen_expr(FILE *fp, Node *expr) {
     switch (expr->kind) {
     case ND_INT:
@@ -14,7 +39,34 @@ static void gen_expr(FILE *fp, Node *expr) {
         gen_expr(fp, expr->as.una.body);
         fprintf(fp, ")");
         return;
+    case ND_CALL:
+        if (META.is_c && strcmp(expr->as.call.fname->as.str, "print") == 0) {
+            Node *val = expr->as.call.args[0];
+            if (val->kind == ND_INT) {
+                fprintf(fp, "    printf(\"%%d\\n\", %d)", val->as.num);
+            } else {
+                fprintf(fp, "    printf(\"%s\\n\")", val->as.str);
+            }
+            return;
+        } else {
+            char *tab = META.is_c ? "    " : "";
+            fprintf(fp, "%s%s(", tab, expr->as.call.fname->as.str);
+            for (int i = 0; i < expr->as.call.argc; ++i) {
+                Node *arg = expr->as.call.args[i];
+                if (arg->kind == ND_INT) {
+                    fprintf(fp, "%d", arg->as.num);
+                } else {
+                    fprintf(fp, "\"%s\"", arg->as.str);
+                }
+                if (i < expr->as.call.argc - 1) {
+                    fprintf(fp, ", ");
+                }
+            }
+            fprintf(fp, ")");
+        }
+        return;
     }
+
 
     if (expr->kind != ND_BINOP) {
         printf("Error: unknown node kind for gen_expr: %d\n", expr->kind);
@@ -64,54 +116,51 @@ static void gen_expr(FILE *fp, Node *expr) {
     }
 }
 
+static Node *last_expr(Node *prog) {
+    return prog->as.exprs.exprs[prog->as.exprs.count - 1];
+}
+
 // 将AST编译成C代码
-static void codegen_c(Node *expr) {
+static void codegen_c(Node *prog) {
+    do_meta(prog);
+    META.is_c = true;
+    Node *expr = prog->as.exprs.exprs[0];
     bool is_call = expr->kind == ND_CALL;
     bool is_print = is_call && strcmp(expr->as.call.fname->as.str, "print") == 0;
     Node *val = is_call ? expr->as.call.args[0] : expr;
     
     // 打开输出文件
     FILE *fp = fopen("app.c", "w");
-    // 引入标准库
-    if (is_call) {
-        fprintf(fp, "#include <stdio.h>\n");
-        if (!is_print) {
-            fprintf(fp, "#include \"std.h\"\n");
-        }
+    for (int i = 0; i < META.use_count; ++i) {
+        fprintf(fp, "#include %s\n", META.uses[i]);
     }
+
     // main函数
     fprintf(fp, "int main(void) {\n");
-    // 调用printf函数
-    if (is_call) {
-        if (is_print) {
-            if (val->kind == ND_INT) {
-                fprintf(fp, "    printf(\"%%d\\n\", %d);\n", val->as.num);
+
+    if (prog->as.exprs.count > 1) {
+        for (int i = 0; i < prog->as.exprs.count - 1; ++i) {
+            Node *expr = prog->as.exprs.exprs[i];
+            gen_expr(fp, expr);
+            if (META.is_c) {
+                fprintf(fp, ";\n");
             } else {
-                fprintf(fp, "    printf(\"%s\");\n", val->as.str);
+                fprintf(fp, "\n");
             }
-        } else { // 调用普通函数
-            fprintf(fp, "    %s(", expr->as.call.fname->as.str);
-            for (int i = 0; i < expr->as.call.argc; ++i) {
-                Node *arg = expr->as.call.args[i];
-                if (arg->kind == ND_INT) {
-                    fprintf(fp, "%d", arg->as.num);
-                } else {
-                    fprintf(fp, "\"%s\"", arg->as.str);
-                }
-                if (i < expr->as.call.argc - 1) {
-                    fprintf(fp, ", ");
-                }
-            }
-            fprintf(fp, ");\n");
         }
-        // 返回
+    }
+
+    Node *last = last_expr(prog);
+    if (last->kind == ND_CALL) {
+        gen_expr(fp, last);
+        fprintf(fp, ";\n");
         fprintf(fp, "    return 0;\n");
     } else {
         fprintf(fp, "    return ");
-        gen_expr(fp, expr);
+        gen_expr(fp, last);
         fprintf(fp, ";\n");
     }
-    
+
     // 结束
     fprintf(fp, "}\n");
     // 保存并关闭文件
@@ -124,40 +173,32 @@ void trans_c(char *file) {
     char *code = read_src(file);
     // 解析出AST
     Parser *parser = new_parser(code);
-    Node *expr = parse(parser);
-    trace_node(expr);
+    Node *prog = parse(parser);
+    trace_node(prog);
     // 输出C代码
-    codegen_c(expr);
+    codegen_c(prog);
 }
 
 // 将AST编译成Python代码
-static void codegen_py(Node *expr) {
+static void codegen_py(Node *prog) {
     // 打开输出文件
     FILE *fp = fopen("app.py", "w");
-    if (expr->kind == ND_CALL) {
-        char *fname = expr->as.call.fname->as.str;
-        bool is_print = strcmp(fname, "print") == 0;
-        if (is_print) {
-            fprintf(fp, "print(");
-        } else {
-            fprintf(fp, "import stdz\n\n");
-            fprintf(fp, "stdz.%s(", fname);
-        }
-        for (int i = 0; i < expr->as.call.argc; ++i) {
-            Node *arg = expr->as.call.args[i];
-            // main函数
-            if (arg->kind == ND_INT) {
-                fprintf(fp, "%d", arg->as.num);
-            } else {
-                fprintf(fp, "\"%s\"", arg->as.str);
-            }
-            if (i < expr->as.call.argc - 1) {
-                fprintf(fp, ", ");
+    bool has_import = false;
+    for (int i = 0; i < prog->as.exprs.count; ++i) {
+        Node *expr = prog->as.exprs.exprs[i];
+        if (expr->kind == ND_CALL) {
+            char *fname = expr->as.call.fname->as.str;
+            if (strcmp(fname, "print") != 0) {
+                fprintf(fp, "from stdz import *\n", META.uses[i]);
+                has_import = true;
             }
         }
-        fprintf(fp, ")\n");
-        
-    }  else {
+    }
+    if (has_import) {
+        fprintf(fp, "\n");
+    }
+    for (int i = 0; i < prog->as.exprs.count; ++i) {
+        Node *expr = prog->as.exprs.exprs[i];
         gen_expr(fp, expr);
         fprintf(fp, "\n");
     }   
@@ -171,39 +212,38 @@ void trans_py(char *file) {
     char *code = read_src(file);
     // 解析出AST
     Parser *parser = new_parser(code);
-    Node *expr = parse(parser);
+    Node *prog = parse(parser);
     // 输出Python代码
-    codegen_py(expr);
+    codegen_py(prog);
 }
 
 // 将AST编译成JS代码
-static void codegen_js(Node *expr) {
+static void codegen_js(Node *prog) {
+    Node *expr = prog->as.exprs.exprs[0];
     // 打开输出文件
     FILE *fp = fopen("app.js", "w");
-    if (expr->kind == ND_CALL) {
-        char *fname = expr->as.call.fname->as.str;
-        bool is_print = strcmp(fname, "print") == 0;
-        if (is_print) {
-            Node *arg = expr->as.call.args[0];
-            // main函数
-            if (arg->kind == ND_INT) {
-                fprintf(fp, "console.log(%d)\n", arg->as.num);
+    bool has_import = false;
+    for (int i = 0; i < prog->as.exprs.count; ++i) {
+        Node *expr = prog->as.exprs.exprs[i];
+        if (expr->kind == ND_CALL) {
+            char *fname = expr->as.call.fname->as.str;
+            if (strcmp(fname, "print") == 0) {
+                expr->as.call.fname->as.str = "console.log";
             } else {
-                fprintf(fp, "console.log(\"%s\")\n", arg->as.str);
-            }
-        } else {
-            Node *arg = expr->as.call.args[0];
-            fprintf(fp, "import {%s} from \"./stdz.js\"\n\n", fname);
-            if (arg->kind == ND_INT) {
-                fprintf(fp, "%s(%d)\n", fname, arg->as.num);
-            } else {
-                fprintf(fp, "%s(\"%s\")\n", fname, arg->as.str);
+                fprintf(fp, "import {%s} from \"./stdz.js\"\n", fname);
+                has_import = true;
             }
         }
-    }  else {
+    }
+    if (has_import) {
+        fprintf(fp, "\n");
+    }
+    for (int i = 0; i < prog->as.exprs.count; ++i) {
+        Node *expr = prog->as.exprs.exprs[i];
         gen_expr(fp, expr);
         fprintf(fp, "\n");
     }
+    
     // 保存并关闭文件
     fclose(fp);
 }
@@ -214,7 +254,7 @@ void trans_js(char *file) {
     char *code = read_src(file);
     // 解析出AST
     Parser *parser = new_parser(code);
-    Node *expr = parse(parser);
+    Node *prog = parse(parser);
     // 输出JS代码
-    codegen_js(expr);
+    codegen_js(prog);
 }

@@ -48,14 +48,10 @@ struct Unary {
 struct Exprs {
     int count;
     int cap;
-    Node **exprs;
+    Node **list;
 };
 
 Node *new_prog();
-void init_e(Node **e, int cap);
-void init_exprs_a(Node *prog, int cap);
-void t(Node *prog, int cap);
- 
 void append_expr(Node *prog, Node *expr);
 
 struct Node {
@@ -70,19 +66,6 @@ struct Node {
         Exprs exprs;
     } as;
 };
-
-struct NodeU {
-    union {
-        CallExpr call;
-        int num;
-        char *str;
-        BinOp bop;
-        Unary una;
-        Exprs exprs;
-    } as;
-};
-
-// 函数调用表达式
 
 
 // 打印AST节点信息，输出到stdout

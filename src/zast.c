@@ -22,7 +22,7 @@ void fecho_node(FILE *fp, Node *node) {
             if (i > 0) {
                 fprintf(fp, "\n");
             }
-            fecho_node(fp, node->as.exprs.exprs[i]);
+            fecho_node(fp, node->as.exprs.list[i]);
         }
     case ND_NEG:
         fprintf(fp, "-");
@@ -70,7 +70,7 @@ void fprint_node(FILE *fp, Node *node) {
             if (i > 0) {
                 fprintf(fp, ", ");
             }
-            fprint_node(fp, node->as.exprs.exprs[i]);
+            fprint_node(fp, node->as.exprs.list[i]);
         }
         fprintf(fp, "]}");
         break;
@@ -142,7 +142,7 @@ Node *new_prog() {
     prog->kind = ND_PROG;
     prog->as.exprs.count = 0;
     prog->as.exprs.cap = 1;
-    prog->as.exprs.exprs = calloc(1, sizeof(Node *));
+    prog->as.exprs.list = calloc(1, sizeof(Node *));
     return prog;
 }
 
@@ -151,9 +151,9 @@ void append_expr(Node *prog, Node *node) {
     if (exprs->count >= exprs->cap) { // grow if needed
         if (exprs->cap <= 0) exprs->cap = 1;
         else exprs->cap *= 2;
-        exprs->exprs = realloc(exprs->exprs, exprs->cap * sizeof(Node *));
+        exprs->list = realloc(exprs->list, exprs->cap * sizeof(Node *));
     }
-    exprs->exprs[exprs->count++] = node;
+    exprs->list[exprs->count++] = node;
 }
 
 /*

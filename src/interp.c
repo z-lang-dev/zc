@@ -114,7 +114,7 @@ void execute(Node *expr) {
     switch (expr->kind) {
     case ND_PROG:
         for (int i = 0; i < expr->as.exprs.count; i++) {
-            execute(expr->as.exprs.exprs[i]);
+            execute(expr->as.exprs.list[i]);
         }
         break;
     case ND_CALL:

@@ -17,7 +17,7 @@ static TransMeta META;
 
 static void do_meta(Node *prog) {
     for (int i = 0; i < prog->as.exprs.count; ++i) {
-        Node *expr = prog->as.exprs.exprs[i];
+        Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_CALL) {
             char *fname = expr->as.call.fname->as.str;
             if (strcmp(fname, "print") == 0) {
@@ -117,14 +117,14 @@ static void gen_expr(FILE *fp, Node *expr) {
 }
 
 static Node *last_expr(Node *prog) {
-    return prog->as.exprs.exprs[prog->as.exprs.count - 1];
+    return prog->as.exprs.list[prog->as.exprs.count - 1];
 }
 
 // 将AST编译成C代码
 static void codegen_c(Node *prog) {
     do_meta(prog);
     META.is_c = true;
-    Node *expr = prog->as.exprs.exprs[0];
+    Node *expr = prog->as.exprs.list[0];
     bool is_call = expr->kind == ND_CALL;
     bool is_print = is_call && strcmp(expr->as.call.fname->as.str, "print") == 0;
     Node *val = is_call ? expr->as.call.args[0] : expr;
@@ -140,7 +140,7 @@ static void codegen_c(Node *prog) {
 
     if (prog->as.exprs.count > 1) {
         for (int i = 0; i < prog->as.exprs.count - 1; ++i) {
-            Node *expr = prog->as.exprs.exprs[i];
+            Node *expr = prog->as.exprs.list[i];
             gen_expr(fp, expr);
             if (META.is_c) {
                 fprintf(fp, ";\n");
@@ -185,7 +185,7 @@ static void codegen_py(Node *prog) {
     FILE *fp = fopen("app.py", "w");
     bool has_import = false;
     for (int i = 0; i < prog->as.exprs.count; ++i) {
-        Node *expr = prog->as.exprs.exprs[i];
+        Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_CALL) {
             char *fname = expr->as.call.fname->as.str;
             if (strcmp(fname, "print") != 0) {
@@ -198,7 +198,7 @@ static void codegen_py(Node *prog) {
         fprintf(fp, "\n");
     }
     for (int i = 0; i < prog->as.exprs.count; ++i) {
-        Node *expr = prog->as.exprs.exprs[i];
+        Node *expr = prog->as.exprs.list[i];
         gen_expr(fp, expr);
         fprintf(fp, "\n");
     }   
@@ -219,12 +219,12 @@ void trans_py(char *file) {
 
 // 将AST编译成JS代码
 static void codegen_js(Node *prog) {
-    Node *expr = prog->as.exprs.exprs[0];
+    Node *expr = prog->as.exprs.list[0];
     // 打开输出文件
     FILE *fp = fopen("app.js", "w");
     bool has_import = false;
     for (int i = 0; i < prog->as.exprs.count; ++i) {
-        Node *expr = prog->as.exprs.exprs[i];
+        Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_CALL) {
             char *fname = expr->as.call.fname->as.str;
             if (strcmp(fname, "print") == 0) {
@@ -239,7 +239,7 @@ static void codegen_js(Node *prog) {
         fprintf(fp, "\n");
     }
     for (int i = 0; i < prog->as.exprs.count; ++i) {
-        Node *expr = prog->as.exprs.exprs[i];
+        Node *expr = prog->as.exprs.list[i];
         gen_expr(fp, expr);
         fprintf(fp, "\n");
     }

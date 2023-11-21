@@ -168,7 +168,7 @@ static void do_meta(Node *prog) {
     bool has_print = false;
     bool need_stdz = false;
     for (int i = 0; i < prog->as.exprs.count; ++i) {
-        Node *expr = prog->as.exprs.exprs[i];
+        Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_CALL) {
             char *fname = expr->as.call.fname->as.str;
             bool is_print = strcmp(fname, "print") == 0;
@@ -266,7 +266,7 @@ void codegen_linux(Node *prog) {
     }
 
     for (int i = 0; i < prog->as.exprs.count; ++i) {
-        Node *expr = prog->as.exprs.exprs[i];
+        Node *expr = prog->as.exprs.list[i];
         gen_expr(fp, expr);
     }
 
@@ -311,7 +311,7 @@ void codegen_win(Node *prog) {
     }
 
     for (int i = 0; i < prog->as.exprs.count; ++i) {
-        Node *expr = prog->as.exprs.exprs[i];
+        Node *expr = prog->as.exprs.list[i];
         gen_expr(fp, expr);
     }
 

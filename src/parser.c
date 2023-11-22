@@ -305,7 +305,13 @@ static bool is_end(Parser *parser) {
     return parser->cur->kind == TK_EOF;
 }
 
-// 解析表达式
+/**
+ * 
+ * 解析一段Z源码
+ *
+ * @param parser The parser object.
+ * @return 一个`ND_PROG`类型的节点，代表一段Z源码。
+ */
 Node *parse(Parser *parser) {
     char *code = parser->code;
     log_trace("Parsing %s...\n", code);
@@ -323,6 +329,12 @@ Node *parse(Parser *parser) {
     return prog;
 }
 
+/**
+ * Creates a new Parser object.
+ *
+ * @param code The code to be parsed.
+ * @return A pointer to the newly created Parser object.
+ */
 Parser *new_parser(char *code) {
     Parser *parser = calloc(1, sizeof(Parser));
     parser->lexer = new_lexer(code);

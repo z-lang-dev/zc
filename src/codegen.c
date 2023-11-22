@@ -7,6 +7,8 @@
 #define MAX_INCLUDE 100
 #define MAX_CONSTS 100
 #define MAX_EXTERN 100
+
+// 常量信息
 typedef struct ConstData ConstData;
 struct ConstData {
     int idx;
@@ -14,6 +16,7 @@ struct ConstData {
     char *value;
 };
 
+// 元信息
 struct CodegenMeta {
     // includes
     int inc_count;
@@ -208,12 +211,14 @@ static void do_meta(Node *prog) {
     }
 }
 
+// 根据META信息输出include语句
 static void do_includes(FILE *fp, Node *prog) {
     for (int i = 0; i < META.inc_count; ++i) {
         fprintf(fp, "includelib %s\n", META.includes[i]);
     }
 }
 
+// 根据META信息输出.data字段
 static void do_data(FILE *fp) {
     if (META.data_count > 0) {
         fprintf(fp, ".data\n");
@@ -228,6 +233,7 @@ static void do_data(FILE *fp) {
     }
 }
 
+// 根据META信息输出externdef语句
 static bool do_externdef(FILE *fp, Node *prog) {
     for (int i = 0; i < META.extern_count; ++i) {
         fprintf(fp, "    externdef %s:proc\n", META.externs[i]);

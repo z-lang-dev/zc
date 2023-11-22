@@ -124,10 +124,6 @@ static Node *last_expr(Node *prog) {
 static void codegen_c(Node *prog) {
     do_meta(prog);
     META.is_c = true;
-    Node *expr = prog->as.exprs.list[0];
-    bool is_call = expr->kind == ND_CALL;
-    bool is_print = is_call && strcmp(expr->as.call.fname->as.str, "print") == 0;
-    Node *val = is_call ? expr->as.call.args[0] : expr;
     
     // 打开输出文件
     FILE *fp = fopen("app.c", "w");
@@ -138,18 +134,16 @@ static void codegen_c(Node *prog) {
     // main函数
     fprintf(fp, "int main(void) {\n");
 
+    // 生成多条语句
     if (prog->as.exprs.count > 1) {
         for (int i = 0; i < prog->as.exprs.count - 1; ++i) {
             Node *expr = prog->as.exprs.list[i];
             gen_expr(fp, expr);
-            if (META.is_c) {
-                fprintf(fp, ";\n");
-            } else {
-                fprintf(fp, "\n");
-            }
+            fprintf(fp, ";\n"); // C语句需要`;`结尾
         }
     }
 
+    // 最后一条语句需要处理`return`
     Node *last = last_expr(prog);
     if (last->kind == ND_CALL) {
         gen_expr(fp, last);
@@ -222,11 +216,13 @@ static void codegen_js(Node *prog) {
     Node *expr = prog->as.exprs.list[0];
     // 打开输出文件
     FILE *fp = fopen("app.js", "w");
+    // 第一道收集信息，顺便打出import语句
     bool has_import = false;
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_CALL) {
             char *fname = expr->as.call.fname->as.str;
+            // 注意，print直接替换为console.log即可
             if (strcmp(fname, "print") == 0) {
                 expr->as.call.fname->as.str = "console.log";
             } else {
@@ -238,6 +234,7 @@ static void codegen_js(Node *prog) {
     if (has_import) {
         fprintf(fp, "\n");
     }
+    // 第二道，遍历每个语句，生成代码
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
         gen_expr(fp, expr);

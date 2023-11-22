@@ -135,7 +135,7 @@ void interp(char *code) {
     log_trace("Interpreting %s...\n", code);
     // 解析源码
     Parser *parser = new_parser(code);
-    Node *expr = parse(parser);
-    execute(expr);
+    Node *prog = parse(parser);
+    execute(prog);
 }
 

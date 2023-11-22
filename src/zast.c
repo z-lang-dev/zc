@@ -24,6 +24,10 @@ void fecho_node(FILE *fp, Node *node) {
             }
             fecho_node(fp, node->as.exprs.list[i]);
         }
+        break;
+    case ND_USE:
+        fprintf(fp, "use %s.%s", node->as.use.box, node->as.use.name);
+        break;
     case ND_NEG:
         fprintf(fp, "-");
         fecho_node(fp, node->as.una.body);
@@ -59,6 +63,8 @@ void fecho_node(FILE *fp, Node *node) {
         fecho_node(fp, node->as.bop.right);
         fprintf(fp, "}");
         break;
+    default:
+        fprintf(fp, "Unknown node kind: %d", node->kind);
     }
 }
 
@@ -73,6 +79,9 @@ void fprint_node(FILE *fp, Node *node) {
             fprint_node(fp, node->as.exprs.list[i]);
         }
         fprintf(fp, "]}");
+        break;
+    case ND_USE:
+        fprintf(fp, "{kind:ND_USE, box: %s, name: %s}", node->as.use.box, node->as.use.name);
         break;
     case ND_NEG:
         fprintf(fp, "{kind:ND_NEG, body: ");
@@ -112,6 +121,8 @@ void fprint_node(FILE *fp, Node *node) {
         fprint_node(fp, node->as.bop.right);
         fprintf(fp, " }");
         break;
+    default:
+        fprintf(fp, "Unknown node kind: %d", node->kind);
     }
 }
 

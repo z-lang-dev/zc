@@ -18,8 +18,17 @@
             "request": "launch",
             "name": "z2c",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/neg_group",
-            "args": ["c", "neg_group_case.z"],
+            "cwd": "${workspaceFolder}/test/use",
+            "args": ["c", "use_case.z"],
+            "stopAtEntry": false
+        },
+        {
+            "type": "xmake",
+            "request": "launch",
+            "name": "z2py",
+            "target": "z",
+            "cwd": "${workspaceFolder}/test/use",
+            "args": ["py", "use_case.z"],
             "stopAtEntry": false
         },
         {
@@ -29,6 +38,15 @@
             "target": "z",
             "cwd": "${workspaceFolder}/test/write_file",
             "args": ["build", "write_file_case.z"],
+            "stopAtEntry": false
+        },
+        {
+            "type": "xmake",
+            "request": "launch",
+            "name": "interp",
+            "target": "z",
+            "cwd": "${workspaceFolder}",
+            "args": ["interp", "use charts.pie"],
             "stopAtEntry": false
         },
     ]

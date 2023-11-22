@@ -8,9 +8,11 @@ typedef struct CallExpr CallExpr;
 typedef struct BinOp BinOp;
 typedef struct Unary Unary;
 typedef struct Exprs Exprs;
+typedef struct Use Use;
 
 typedef enum {
     ND_PROG, // 一段程序
+    ND_USE, // 导入模块
     ND_CALL, // 函数调用
     ND_INT, // 整数
     ND_NEG, // 负数
@@ -54,6 +56,11 @@ struct Exprs {
 Node *new_prog();
 void append_expr(Node *prog, Node *expr);
 
+struct Use {
+    char *box;
+    char *name;
+};
+
 struct Node {
     NodeKind kind;
     void* meta;
@@ -64,6 +71,7 @@ struct Node {
         BinOp bop;
         Unary una;
         Exprs exprs;
+        Use use;
     } as;
 };
 

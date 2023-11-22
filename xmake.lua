@@ -1,8 +1,13 @@
 add_rules("mode.debug", "mode.release")
 
 -- 测试用例列表
-local case_list = {"hello", "simple_int", "single_int", "simple_add", "add_sub", "calc", "neg_group", "read_file", "write_file", "alert", "two_exprs"}
-local skip_table = {["read_file"] = {["js"] = true}, ["write_file"] = {["js"] = true}, ["alert"] = {["c"]=true, ["py"]=true, ["compiler"]=true}}
+local case_list = {"hello", "simple_int", "single_int", "simple_add", "add_sub", "calc", "neg_group", "read_file", "write_file", "alert", "two_exprs", "use"}
+local skip_table = {
+    ["read_file"] = {["js"] = true},
+    ["write_file"] = {["js"] = true},
+    ["alert"] = {["c"]=true, ["py"]=true, ["compiler"]=true},
+    ["use"] = {["compiler"]=true}
+}
 
 target("z")
     set_kind("binary")

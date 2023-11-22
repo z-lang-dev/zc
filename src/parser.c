@@ -48,9 +48,21 @@ static char* token_to_str(TokenKind kind) {
         return "TK_STR";
     case TK_COMMA:
         return "TK_COMMA";
+    case TK_NLINE:
+        return "TK_NLINE";
+    case TK_SEMI:
+        return "TK_SEMI";
+    case TK_DOT:
+        return "TK_DOT";
+    case TK_USE:
+        return "TK_USE";
     default:
         return "TK_ILL";
     }
+}
+
+static bool match(Parser *parser, TokenKind kind) {
+    return parser->cur->kind == kind;
 }
 
 static void expect(Parser *parser, TokenKind kind) {
@@ -184,8 +196,23 @@ static Node *neg(Parser *parser) {
     return expr;
 }
 
+static Node *use(Parser *parser) {
+    advance(parser); // skip 'use'
+    Node *expr = new_node(ND_USE);
+    expr->as.use.box = strip(parser->cur->pos, parser->cur->len);
+    advance(parser); // skip TK_NAME
+    if (match(parser, TK_DOT)) {
+        advance(parser); // skip '.'
+        expr->as.use.name = strip(parser->cur->pos, parser->cur->len);
+        advance(parser); // skip TK_NAME
+    }
+    return expr;
+}
+
 static Node *unary(Parser *parser) {
   switch (parser->cur->kind) {
+    case TK_USE:
+        return use(parser);
     case TK_LPAREN:
         return group(parser);
     case TK_SUB:
@@ -297,7 +324,14 @@ static Node *expr_prec(Parser *parser, Precedence base_prec) {
     }
 }
 
+static void skip_empty_line(Parser *parser) {
+    while (parser->cur->kind == TK_NLINE) {
+        advance(parser);
+    }
+}
+
 static Node *expression(Parser *parser) {
+    skip_empty_line(parser);
     return expr_prec(parser, PREC_NONE);
 }
 
@@ -326,6 +360,9 @@ Node *parse(Parser *parser) {
         append_expr(prog, expression(parser));
         expect_eoe(parser);
     }
+
+    log_trace("Parse done.\n");
+    trace_node(prog);
     return prog;
 }
 

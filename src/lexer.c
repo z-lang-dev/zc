@@ -51,11 +51,33 @@ static Token *str(Lexer *lexer) {
     return new_token(lexer, TK_STR);
 }
 
+typedef struct {
+    const char *name;
+    TokenKind kind;
+} Keyword;
+
+static Keyword keywords[] = {
+    {"use", TK_USE},
+};
+
+// 查找关键字
+// TODO: 现在是顺序对比，以后可以考虑用hash表，或者用trie树
+static Token *lookup_keyword(Lexer *lexer) {
+    for (int i = 0; i < sizeof(keywords) / sizeof(Keyword); i++) {
+        if (strncmp(lexer->start, keywords[i].name, lexer->cur - lexer->start) == 0) {
+            return new_token(lexer, keywords[i].kind);
+        }
+    }
+    return NULL;
+}
+
 static Token *name(Lexer *lexer) {
     while (is_alnum(peek(lexer))) {
         next_char(lexer);
     }
-    return new_token(lexer, TK_NAME);
+
+    Token *keyword = lookup_keyword(lexer);
+    return keyword != NULL ? keyword : new_token(lexer, TK_NAME);
 }
 
 static void skip_whitespace(Lexer *lexer) {
@@ -114,6 +136,8 @@ Token *next_token(Lexer *lexer) {
         return new_token(lexer, TK_NLINE);
     case ';':
         return new_token(lexer, TK_SEMI);
+    case '.':
+        return new_token(lexer, TK_DOT);
     default:
         log_trace("Unexpected character: %c\n", c);
         return new_token(lexer, TK_EOF);

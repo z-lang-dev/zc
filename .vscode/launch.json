@@ -49,5 +49,14 @@
             "args": ["interp", "use charts.pie"],
             "stopAtEntry": false
         },
+        {
+            "type": "xmake",
+            "request": "launch",
+            "name": "run",
+            "target": "z",
+            "cwd": "${workspaceFolder}/test/use",
+            "args": ["run", "py", "use_case.z"],
+            "stopAtEntry": false
+        },
     ]
 }

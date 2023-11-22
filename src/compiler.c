@@ -17,7 +17,3 @@ void build(char *file) {
     codegen_linux(prog);
 #endif
 }
-
-void run(char *file) {
-    printf("TODO: Running %s\n", file);
-}

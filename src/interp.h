@@ -6,4 +6,4 @@
 void interp(char *code);
 
 // 执行AST
-void execute(Node *code);
+int execute(Node *code);

@@ -31,19 +31,19 @@ char* sfmt(const char* fmt, char *msg) {
 }
 
 static void do_meta(Node *prog) {
-    char *fname_in_use = "";
+    char *name_in_use = "";
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_CALL) {
-            char *fname = expr->as.call.fname->as.str;
-            if (strcmp(fname, "print") == 0) {
+            char *name = expr->as.call.name->as.str;
+            if (strcmp(name, "print") == 0) {
                 META.uses[META.use_count++] = "<stdio.h>";
-            } else if (strcmp(fname, fname_in_use) != 0) {
+            } else if (strcmp(name, name_in_use) != 0) {
                 META.uses[META.use_count++] = "\"stdz.h\"";
             }
         } else if (expr->kind == ND_USE) {
             META.uses[META.use_count++] = sfmt("\"%s.h\"", expr->as.use.box);
-            fname_in_use = expr->as.use.name;
+            name_in_use = expr->as.use.name;
         }
     }
 }
@@ -61,7 +61,7 @@ static void gen_expr(FILE *fp, Node *expr) {
     case ND_USE:
         return;
     case ND_CALL:
-        if (META.lan == LAN_C && strcmp(expr->as.call.fname->as.str, "print") == 0) {
+        if (META.lan == LAN_C && strcmp(expr->as.call.name->as.str, "print") == 0) {
             Node *val = expr->as.call.args[0];
             if (val->kind == ND_INT) {
                 fprintf(fp, "    printf(\"%%d\\n\", %d)", val->as.num);
@@ -71,7 +71,7 @@ static void gen_expr(FILE *fp, Node *expr) {
             return;
         } else {
             char *tab = META.lan == LAN_C ? "    " : "";
-            fprintf(fp, "%s%s(", tab, expr->as.call.fname->as.str);
+            fprintf(fp, "%s%s(", tab, expr->as.call.name->as.str);
             for (int i = 0; i < expr->as.call.argc; ++i) {
                 Node *arg = expr->as.call.args[i];
                 if (arg->kind == ND_INT) {
@@ -201,19 +201,19 @@ static void codegen_py(Node *prog) {
     // 打开输出文件
     FILE *fp = fopen("app.py", "w");
     bool has_import = false;
-    char *fname_in_use = "";
+    char *name_in_use = "";
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_USE) {
-            char *fname = expr->as.use.name;
-            if (strcmp(fname, fname_in_use) != 0) {
+            char *name = expr->as.use.name;
+            if (strcmp(name, name_in_use) != 0) {
                 fprintf(fp, "from %s import %s\n", expr->as.use.box, expr->as.use.name);
                 has_import = true;
             }
-            fname_in_use = fname;
+            name_in_use = name;
         } else if (expr->kind == ND_CALL) {
-            char *fname = expr->as.call.fname->as.str;
-            if (strcmp(fname, "print") != 0 && strcmp(fname, fname_in_use) != 0) {
+            char *name = expr->as.call.name->as.str;
+            if (strcmp(name, "print") != 0 && strcmp(name, name_in_use) != 0) {
                 fprintf(fp, "from stdz import *\n", META.uses[i]);
                 has_import = true;
             }
@@ -251,23 +251,23 @@ static void codegen_js(Node *prog) {
     FILE *fp = fopen("app.js", "w");
     // 第一道收集信息，顺便打出import语句
     bool has_import = false;
-    char *fname_in_use = "";
+    char *name_in_use = "";
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_USE) {
-            char *fname = expr->as.use.name;
-            if (strcmp(fname, fname_in_use) != 0) {
+            char *name = expr->as.use.name;
+            if (strcmp(name, name_in_use) != 0) {
                 fprintf(fp, "import {%s} from \"./%s\"\n", expr->as.use.name, expr->as.use.box);
                 has_import = true;
             }
-            fname_in_use = fname;
+            name_in_use = name;
         } else if (expr->kind == ND_CALL) {
-            char *fname = expr->as.call.fname->as.str;
+            char *name = expr->as.call.name->as.str;
             // 注意，print直接替换为console.log即可
-            if (strcmp(fname, "print") == 0) {
-                expr->as.call.fname->as.str = "console.log";
-            } else if (strcmp(fname, fname_in_use) != 0) {
-                fprintf(fp, "import {%s} from \"./stdz.js\"\n", fname);
+            if (strcmp(name, "print") == 0) {
+                expr->as.call.name->as.str = "console.log";
+            } else if (strcmp(name, name_in_use) != 0) {
+                fprintf(fp, "import {%s} from \"./stdz.js\"\n", name);
                 has_import = true;
             }
         }

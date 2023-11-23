@@ -58,6 +58,7 @@ typedef struct {
 
 static Keyword keywords[] = {
     {"use", TK_USE},
+    {"let", TK_LET},
 };
 
 // 查找关键字
@@ -138,6 +139,8 @@ Token *next_token(Lexer *lexer) {
         return new_token(lexer, TK_SEMI);
     case '.':
         return new_token(lexer, TK_DOT);
+    case '=':
+        return new_token(lexer, TK_ASN);
     default:
         log_trace("Unexpected character: %c\n", c);
         return new_token(lexer, TK_EOF);

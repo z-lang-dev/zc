@@ -6,6 +6,8 @@ typedef struct Lexer Lexer;
 // 词符的类型
 typedef enum {
     TK_NAME, // 名称
+    TK_LET, // let
+    TK_ASN, // =
     TK_USE, // 导入
     TK_INT, // 整数
     TK_LPAREN, // (

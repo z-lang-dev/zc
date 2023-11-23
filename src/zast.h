@@ -9,20 +9,22 @@ typedef struct BinOp BinOp;
 typedef struct Unary Unary;
 typedef struct Exprs Exprs;
 typedef struct Use Use;
+typedef struct Asn Asn;
 
 typedef enum {
     ND_PROG, // 一段程序
     ND_USE, // 导入模块
     ND_CALL, // 函数调用
+    ND_LET, // 定量声明
     ND_INT, // 整数
     ND_NEG, // 负数
     ND_STR, // 字符串
-    ND_FNAME, // 函数名称
+    ND_NAME, // 名称，包括函数名、存量名、类名等
     ND_BINOP, // 二元运算
 } NodeKind;
 
 struct CallExpr {
-    Node *fname; // 函数名
+    Node *name; // 函数名
     int argc; // 参数个数
     Node *args[]; // 参数
 };
@@ -61,6 +63,11 @@ struct Use {
     char *name;
 };
 
+struct Asn {
+    Node *name; // ND_NAME
+    Node *value; // EXPR
+};
+
 struct Node {
     NodeKind kind;
     void* meta;
@@ -72,6 +79,7 @@ struct Node {
         Unary una;
         Exprs exprs;
         Use use;
+        Asn asn;
     } as;
 };
 

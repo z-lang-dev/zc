@@ -61,14 +61,15 @@ target("test_interp")
     add_deps("stdz")
     add_includedirs("lib")
     add_files("test/test_interp.c")
-    add_tests("hello", {runargs="print(\"Hello, world!\")", trim_output=true, pass_outputs="Hello, world!"})
-    add_tests("hello1", {runargs="print(\"Now!\")", trim_output=true, pass_outputs="Now!"})
-    add_tests("simple_int", {runargs="print(41)", trim_output=true, pass_outputs="41"})
+    add_tests("hello", {runargs="print(\"Hello, world!\")", trim_output=true, pass_outputs="Hello, world!\n0"})
+    add_tests("hello1", {runargs="print(\"Now!\")", trim_output=true, pass_outputs="Now!\n0"})
+    add_tests("simple_int", {runargs="print(41)", trim_output=true, pass_outputs="41\n0"})
     add_tests("single_int", {runargs="42", trim_output=true, pass_outputs="42"})
     add_tests("simple_add", {runargs="37+4", trim_output=true, pass_outputs="41"})
     add_tests("add_sub", {runargs="1+5-3", trim_output=true, pass_outputs="3"})
     add_tests("calc", {runargs="2*3+4*5-1*7", trim_output=true, pass_outputs="19"})
     add_tests("neg_group", {runargs="-(3*5+-2-8)", trim_output=true, pass_outputs="-5"})
+    add_tests("let", {runargs="let a=10;a+5", trim_output=true, pass_outputs="15"})
 
 
 -- 编译器compiler的测试用例

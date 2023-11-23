@@ -46,7 +46,7 @@
             "name": "interp",
             "target": "z",
             "cwd": "${workspaceFolder}",
-            "args": ["interp", "use charts.pie"],
+            "args": ["interp", "print(\"hello\")"],
             "stopAtEntry": false
         },
         {

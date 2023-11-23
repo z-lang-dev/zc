@@ -28,12 +28,16 @@ void fecho_node(FILE *fp, Node *node) {
     case ND_USE:
         fprintf(fp, "use %s.%s", node->as.use.box, node->as.use.name);
         break;
+    case ND_LET:
+        fprintf(fp, "let %s = ", node->as.asn.name->as.str);
+        fecho_node(fp, node->as.asn.value);
+        break;
     case ND_NEG:
         fprintf(fp, "-");
         fecho_node(fp, node->as.una.body);
         break;
     case ND_CALL:
-        fecho_node(fp, node->as.call.fname);
+        fecho_node(fp, node->as.call.name);
         fprintf(fp, "(");
         for (int i = 0; i < node->as.call.argc; i++) {
             if (i > 0) {
@@ -43,18 +47,14 @@ void fecho_node(FILE *fp, Node *node) {
         }
         fprintf(fp, ")");
         break;
+    case ND_NAME:
+        fprintf(fp, "%s", node->as.str);
+        break;
     case ND_INT:
-    #ifdef _WIN32
         fprintf(fp, "%d", node->as.num);
-    #else
-        fprintf(fp, "%d", node->as.num);
-    #endif
         break;
     case ND_STR:
         fprintf(fp, "\"%s\"", node->as.str);
-        break;
-    case ND_FNAME:
-        fprintf(fp, "%s", node->as.str);
         break;
     case ND_BINOP:
         fprintf(fp, "{");
@@ -83,14 +83,19 @@ void fprint_node(FILE *fp, Node *node) {
     case ND_USE:
         fprintf(fp, "{kind:ND_USE, box: %s, name: %s}", node->as.use.box, node->as.use.name);
         break;
+    case ND_LET:
+        fprintf(fp, "{kind:ND_LET, name: %s, value: ", node->as.asn.name->as.str);
+        fprint_node(fp, node->as.asn.value);
+        fprintf(fp, " }");
+        break;
     case ND_NEG:
         fprintf(fp, "{kind:ND_NEG, body: ");
         fprint_node(fp, node->as.una.body);
         fprintf(fp, " }");
         break;
     case ND_CALL:
-        fprintf(fp, "{ kind:NT_CALL, fname: ");
-        fprint_node(fp, node->as.call.fname);
+        fprintf(fp, "{ kind:NT_CALL, name: ");
+        fprint_node(fp, node->as.call.name);
         fprintf(fp, ", args: ");
         for (int i = 0; i < node->as.call.argc; i++) {
             if (i > 0) {
@@ -101,17 +106,13 @@ void fprint_node(FILE *fp, Node *node) {
         fprintf(fp, " }");
         break;
     case ND_INT:
-    #ifdef _WIN32
         fprintf(fp, "{kind: ND_INT, as.num: %d}", node->as.num);
-    #else
-        fprintf(fp, "{kind: ND_INT, as.num: %d}", node->as.num);
-    #endif
         break;
     case ND_STR:
         fprintf(fp, "{kind: ND_STR, as.str: \"%s\"}", node->as.str);
         break;
-    case ND_FNAME:
-        fprintf(fp, "{kind: ND_FNAME, as.str: %s}", node->as.str);
+    case ND_NAME:
+        fprintf(fp, "{kind: ND_NAME, as.str: %s}", node->as.str);
         break;
     case ND_BINOP:
         fprintf(fp, "{kind: ND_BINOP, op: %s", op_to_str(node->as.bop.op));
@@ -166,13 +167,3 @@ void append_expr(Node *prog, Node *node) {
     }
     exprs->list[exprs->count++] = node;
 }
-
-/*
-void append_expr(Exprs *exprs, Node *node) {
-    if (exprs->count >= exprs->cap) { // grow if needed
-        if (exprs->cap <= 0) exprs->cap = 1;
-        else exprs->cap *= 2;
-        exprs->exprs = realloc(exprs->exprs, exprs->cap * sizeof(Node *));
-    }
-    exprs->exprs[exprs->count++] = node;
-}*/

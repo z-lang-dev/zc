@@ -56,6 +56,10 @@ static char* token_to_str(TokenKind kind) {
         return "TK_DOT";
     case TK_USE:
         return "TK_USE";
+    case TK_ASN:
+        return "TK_ASN";
+    case TK_LET:
+        return "TK_LET";
     default:
         return "TK_ILL";
     }
@@ -65,6 +69,7 @@ static bool match(Parser *parser, TokenKind kind) {
     return parser->cur->kind == kind;
 }
 
+// 检查当前词符是否为kind，如果是，就跳过它，否则就报错
 static void expect(Parser *parser, TokenKind kind) {
     if (parser->cur->kind != kind) {
         printf("Expected %s, but got %s\n", token_to_str(kind), token_to_str(parser->cur->kind));
@@ -98,47 +103,50 @@ typedef struct {
 ArgBuf *arg_buf;
 
 static ArgBuf *args(Parser *parser) {
-  if (arg_buf == NULL) {
-    arg_buf = malloc(sizeof(ArgBuf) + MAX_ARGS * sizeof(Node *));
-  }
-  ArgBuf *buf = arg_buf;
-  buf->count = 0;
-  buf->cap = MAX_ARGS;
-  while (parser->cur->kind != TK_RPAREN) {
-    buf->data[buf->count++] = expression(parser);
-    if (parser->cur->kind == TK_COMMA) {
-      advance(parser);
+    if (arg_buf == NULL) {
+        arg_buf = malloc(sizeof(ArgBuf) + MAX_ARGS * sizeof(Node *));
     }
-  }
-  return buf;
+    ArgBuf *buf = arg_buf;
+    buf->count = 0;
+    buf->cap = MAX_ARGS;
+    while (parser->cur->kind != TK_RPAREN) {
+        buf->data[buf->count++] = expression(parser);
+        if (parser->cur->kind == TK_COMMA) {
+        advance(parser);
+        }
+    }
+    return buf;
 }
 
 static char *strip(char *str, int len) {
-  char *result = calloc(len + 1, sizeof(char));
-  int i = 0;
-  while (i < len) {
-    result[i] = str[i];
-    i++;
-  }
-  result[i] = '\0';
-  return result;
+    char *result = calloc(len + 1, sizeof(char));
+    int i = 0;
+    while (i < len) {
+        result[i] = str[i];
+        i++;
+    }
+    result[i] = '\0';
+    return result;
 }
 
-static Node *fname(Parser *parser) {
-  Node *node = new_node(ND_FNAME);
-  node->as.str = strip(parser->cur->pos, parser->cur->len);
-  advance(parser);
-  return node;
+static char *get_text(Parser *parser) {
+    return strip(parser->cur->pos, parser->cur->len);
 }
 
-static Node *call(Parser *parser) {
-  Node *fn = fname(parser);
+static Node *name(Parser *parser) {
+    Node *node = new_node(ND_NAME);
+    node->as.str = get_text(parser);
+    advance(parser);
+    return node;
+}
+
+static Node *call(Parser *parser, Node *left) {
   expect(parser, TK_LPAREN);
   ArgBuf *buf = args(parser);
   expect(parser, TK_RPAREN); 
   Node *node = malloc(sizeof(Node) + buf->count * sizeof(Node *));
   node->kind = ND_CALL;
-  node->as.call.fname = fn;
+  node->as.call.name = left;
   node->as.call.argc = buf->count;
   for (int i = 0; i < buf->count; i++) {
     node->as.call.args[i] = buf->data[i];
@@ -154,23 +162,10 @@ static Node* string(Parser *parser) {
   return node;
 }
 
-static char *extract_token_text(Parser *parser) {
-    char *code = parser->code;
-    int len = parser->cur->len;
-    char *result = calloc(len + 1, sizeof(char));
-    int i = 0;
-    while (i < len) {
-        result[i] = parser->cur->pos[i];
-        i++;
-    }
-    result[i] = '\0';
-    return result;
-}
-
 static Node *integer(Parser *parser) {
     Node *expr = calloc(1, sizeof(Node));
     expr->kind = ND_INT;
-    char *num_text = extract_token_text(parser);
+    char *num_text = get_text(parser);
     log_trace("Parsing int text: %s\n", num_text);
     expr->as.num = atoll(num_text);
     // 打印出AST
@@ -199,28 +194,51 @@ static Node *neg(Parser *parser) {
 static Node *use(Parser *parser) {
     advance(parser); // skip 'use'
     Node *expr = new_node(ND_USE);
-    expr->as.use.box = strip(parser->cur->pos, parser->cur->len);
+    expr->as.use.box = get_text(parser);
     advance(parser); // skip TK_NAME
     if (match(parser, TK_DOT)) {
         advance(parser); // skip '.'
-        expr->as.use.name = strip(parser->cur->pos, parser->cur->len);
+        expr->as.use.name = get_text(parser);
         advance(parser); // skip TK_NAME
     }
     return expr;
 }
 
+static Node *let(Parser *parser) {
+    // 跳过'let'
+    advance(parser);
+    Node *expr = new_node(ND_LET);
+
+    // 解析存量名称
+    Node *name = new_node(ND_NAME);
+    name->as.str = get_text(parser);
+    expr->as.asn.name = name;
+    advance(parser);
+
+    // 解析'='
+    expect(parser, TK_ASN);
+
+    // 解析数值表达式
+    expr->as.asn.value = expression(parser);
+    return expr;
+}
+
 static Node *unary(Parser *parser) {
   switch (parser->cur->kind) {
+    case TK_LET:
+        return let(parser);
     case TK_USE:
         return use(parser);
     case TK_LPAREN:
         return group(parser);
     case TK_SUB:
         return neg(parser);
-      case TK_STR:
+    case TK_STR:
         return string(parser);
     case TK_INT:
         return integer(parser);
+    case TK_NAME:
+        return name(parser);
   }
 }
 
@@ -309,18 +327,17 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
 
 // 解析一个表达式
 static Node *expr_prec(Parser *parser, Precedence base_prec) {
-    // 表达式可以是一个整数、一系列运算，或者一个调用
-    if (parser->cur->kind != TK_NAME) {
-        // 如果是整数
-        Node *left = unary(parser);
-        // Precedence prec = base_prec;
-        // if (left->kind == ND_NEG && PREC_NEG > base_prec) {
-        //     prec = PREC_NEG;
-        // }
+    // 表达式由一个一元操作开头，后接多层二元操作。
+
+    // 先尝试一元操作
+    Node *left = unary(parser);
+
+    // 接着尝试二元操作
+    switch (parser->cur->kind) {
+    case TK_LPAREN:
+        return call(parser, left);
+    default:
         return binop(parser, left, base_prec);
-    } else {
-        // 否则就是一个函数调用
-        return call(parser);
     }
 }
 

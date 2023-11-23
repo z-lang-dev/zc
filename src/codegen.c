@@ -51,8 +51,8 @@ static void gen_expr(FILE *fp, Node *expr) {
     if (expr->kind == ND_CALL) {
         // 处理函数名称
         CallExpr *call = &expr->as.call;
-        char *fname = call->fname->as.str;
-        bool is_print = strcmp(fname, "print") == 0;
+        char *name = call->name->as.str;
+        bool is_print = strcmp(name, "print") == 0;
 #ifdef _WIN32
         if (is_print) { // printf 要单独处理，加上'\n'
             Node *arg = call->args[0];
@@ -74,7 +74,7 @@ static void gen_expr(FILE *fp, Node *expr) {
                     fprintf(fp, "    lea %s, ct%d\n", WIN_REGS[i], data->idx);
                 }
             }
-            fprintf(fp, "    call %s\n", fname);
+            fprintf(fp, "    call %s\n", name);
         }
 #else
         if (is_print) {
@@ -95,7 +95,7 @@ static void gen_expr(FILE *fp, Node *expr) {
                     fprintf(fp, "    lea %s, [rip+ct%d]\n", LINUX_REGS[i], i);
                 }
             }
-            fprintf(fp, "    call %s\n", fname);
+            fprintf(fp, "    call %s\n", name);
         }
 #endif
         return;
@@ -173,14 +173,14 @@ static void do_meta(Node *prog) {
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_CALL) {
-            char *fname = expr->as.call.fname->as.str;
-            bool is_print = strcmp(fname, "print") == 0;
+            char *name = expr->as.call.name->as.str;
+            bool is_print = strcmp(name, "print") == 0;
             if (is_print) {
                 META.externs[META.extern_count++] = "printf";
                 has_print = true;
             } else {
                 need_stdz = true;
-                META.externs[META.extern_count++] = fname;
+                META.externs[META.extern_count++] = name;
             }
 
             for (int j = 0; j < expr->as.call.argc; ++j) {

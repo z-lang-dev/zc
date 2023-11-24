@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "util.h"
 #include "stdz.h"
+#include "hash.h"
 
 // 内置函数
 
@@ -43,19 +44,25 @@ static void cat(char *path) {
 
 // 用来模拟存量的查找
 // 需要用一个hashtable来替代。
-static int a = 0;
+// static int a = 0;
+static HashTable *table;
+// static ValueArray *values;
 
 static void set_val(char *name, int val) {
-    if (strcmp(name, "a") == 0) {
-        a = val;
-    }
+    hash_set(table, name, val);
+    // array_set(values, name, val);
+    // if (strcmp(name, "a") == 0) {
+        // a = val;
+    // }
 }
 
 static int get_val(char *name) {
-    if (strcmp(name, "a") == 0) {
-        return a;
-    }
-    return 0;
+    return hash_get(table, name);
+    // return array_get(values, name);
+    // if (strcmp(name, "a") == 0) {
+        // return a;
+    // }
+    // return 0;
 }
 
 // 对表达式求值
@@ -156,6 +163,8 @@ int execute(Node *expr) {
 
 // 解释并执行代码
 void interp(char *code) {
+    table = new_hash_table();
+    // values = new_value_array();
     log_trace("Interpreting %s...\n", code);
     // 解析源码
     Parser *parser = new_parser(code);

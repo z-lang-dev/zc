@@ -19,5 +19,6 @@ typedef enum {
     PREC_NEG,
 } Precedence;
 
+
 Parser *new_parser(char *code);
 Node *parse(Parser *parser);

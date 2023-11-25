@@ -6,6 +6,7 @@
 #include "parser.h"
 #include "util.h"
 #include "lexer.h"
+#include "meta.h"
 
 static Node *expression(Parser *parser);
 static Node *expr_prec(Parser *parser, Precedence base_prec);
@@ -204,6 +205,13 @@ static Node *use(Parser *parser) {
     return expr;
 }
 
+static void do_meta(Parser *parser, Node *expr) {
+    // 现在只需要收集定量`let`的元信息
+    Meta *m = new_meta(expr, MT_LET);
+    m->name = expr->as.asn.name->as.str;
+    set_meta(m);
+}
+
 static Node *let(Parser *parser) {
     // 跳过'let'
     advance(parser);
@@ -220,6 +228,9 @@ static Node *let(Parser *parser) {
 
     // 解析数值表达式
     expr->as.asn.value = expression(parser);
+
+    // 收集元信息
+    do_meta(parser, expr);
     return expr;
 }
 
@@ -239,6 +250,9 @@ static Node *unary(Parser *parser) {
         return integer(parser);
     case TK_NAME:
         return name(parser);
+    default:
+        printf("Unknown token: %d\n", parser->cur->kind);
+        exit(1);
   }
 }
 
@@ -395,5 +409,6 @@ Parser *new_parser(char *code) {
     parser->code = code;
     parser->cur = next_token(parser->lexer);
     parser->next = next_token(parser->lexer);
+    init_meta();
     return parser;
 }

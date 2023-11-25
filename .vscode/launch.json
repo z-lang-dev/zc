@@ -7,10 +7,25 @@
         {
             "type": "xmake",
             "request": "launch",
-            "name": "Debug XMake target",
+            "name": "interp",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/read_file",
-            "args": ["build", "read_file_case.z"],
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "interp",
+                "let a = 10; a+5"
+            ],
+            "stopAtEntry": false
+        },
+        {
+            "type": "xmake",
+            "request": "launch",
+            "name": "build",
+            "target": "z",
+            "cwd": "${workspaceFolder}/test/let",
+            "args": [
+                "build",
+                "let_case.z"
+            ],
             "stopAtEntry": false
         },
         {
@@ -19,7 +34,10 @@
             "name": "z2c",
             "target": "z",
             "cwd": "${workspaceFolder}/test/use",
-            "args": ["c", "use_case.z"],
+            "args": [
+                "c",
+                "use_case.z"
+            ],
             "stopAtEntry": false
         },
         {
@@ -28,25 +46,22 @@
             "name": "z2py",
             "target": "z",
             "cwd": "${workspaceFolder}/test/use",
-            "args": ["py", "use_case.z"],
+            "args": [
+                "py",
+                "use_case.z"
+            ],
             "stopAtEntry": false
         },
         {
             "type": "xmake",
             "request": "launch",
-            "name": "zc_build",
+            "name": "z2js",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/write_file",
-            "args": ["build", "write_file_case.z"],
-            "stopAtEntry": false
-        },
-        {
-            "type": "xmake",
-            "request": "launch",
-            "name": "interp",
-            "target": "z",
-            "cwd": "${workspaceFolder}",
-            "args": ["interp", "let a = 10; a+5"],
+            "cwd": "${workspaceFolder}/test/let",
+            "args": [
+                "build",
+                "let_case.z"
+            ],
             "stopAtEntry": false
         },
         {
@@ -55,7 +70,11 @@
             "name": "run",
             "target": "z",
             "cwd": "${workspaceFolder}/test/use",
-            "args": ["run", "py", "use_case.z"],
+            "args": [
+                "run",
+                "py",
+                "use_case.z"
+            ],
             "stopAtEntry": false
         },
     ]

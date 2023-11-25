@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include "codegen.h"
+#include "meta.h"
 
 #define MAX_INCLUDE 100
 #define MAX_CONSTS 100
@@ -37,6 +38,17 @@ static char *WIN_REGS[4] = {"rcx", "rdx", "r8", "r9"};
 static char *LINUX_REGS[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 static void gen_expr(FILE *fp, Node *expr) {
+    if (expr->kind == ND_LET) {
+        gen_expr(fp, expr->as.asn.value);
+        // fprintf(fp, "    mov DWORD PTR %s$[rsp], eax\n", expr->as.asn.name->as.str);
+        fprintf(fp, "    mov %s$[rbp], eax\n", expr->as.asn.name->as.str);
+        return;
+    }
+    if (expr->kind == ND_NAME) {
+        // 变量名，需要获取其值
+        fprintf(fp, "    mov rax, %s$[rbp]\n", expr->as.str);
+        return;
+    }
     if (expr->kind == ND_INT) {
         fprintf(fp, "    mov rax, %d\n", expr->as.num);
         return;
@@ -290,6 +302,18 @@ void codegen_linux(Node *prog) {
     fclose(fp);
 }
 
+static bool do_locals(FILE *fp) {
+    HashTable *table = get_meta_table();
+    HashIter *i = hash_iter(table);
+    bool has_locals = false;
+    while (hash_next(table, i)) {
+        Meta *meta = i->value;
+        fprintf(fp, "%s$ = -%d\n", meta->name, meta->offset);
+        has_locals = true;
+    }
+    return has_locals;
+}
+
 // 将AST编译成汇编代码：windows/masm64
 void codegen_win(Node *prog) {
     do_meta(prog);
@@ -306,14 +330,16 @@ void codegen_win(Node *prog) {
 
     bool has_call = do_externdef(fp, prog);
 
+    bool has_locals = do_locals(fp);
+
     fprintf(fp, "main proc\n");
 
-    if (has_call) {
+    if (has_call || has_locals) {
         // prolog
         fprintf(fp, "    push rbp\n");
         fprintf(fp, "    mov rbp, rsp\n");
         // reserve stack for shadow space
-        fprintf(fp, "    sub rsp, 20h\n");
+        fprintf(fp, "    sub rsp, 24\n");
     }
 
     for (int i = 0; i < prog->as.exprs.count; ++i) {
@@ -321,13 +347,11 @@ void codegen_win(Node *prog) {
         gen_expr(fp, expr);
     }
 
-    if (has_call) {
+    if (has_call || has_locals) {
         // restore stack
-        fprintf(fp, "    add rsp, 20h\n");
+        fprintf(fp, "    add rsp, 24\n");
         // epilog
         fprintf(fp, "    pop rbp\n");
-        // 返回
-        fprintf(fp, "    xor eax, eax\n");
     }
     fprintf(fp, "    ret\n");
 

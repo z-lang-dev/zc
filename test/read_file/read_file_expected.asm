@@ -7,12 +7,11 @@ includelib stdz.lib
 main proc
     push rbp
     mov rbp, rsp
-    sub rsp, 20h
+    sub rsp, 24
     lea rcx, ct0
     call read_file
-    add rsp, 20h
+    add rsp, 24
     pop rbp
-    xor eax, eax
     ret
 main endp
 end

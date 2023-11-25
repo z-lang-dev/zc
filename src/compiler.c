@@ -2,6 +2,7 @@
 #include "util.h"
 #include "parser.h"
 #include "codegen.h"
+#include "meta.h"
 
 void build(char *file) {
     printf("Building %s\n", file);
@@ -10,6 +11,8 @@ void build(char *file) {
     // 解析出AST
     Parser *parser = new_parser(code);
     Node *prog = parse(parser);
+    log_trace("Parsed total meta size: %d\n", total_meta_size());
+
     // 生成汇编
 #ifdef _WIN32
     codegen_win(prog);

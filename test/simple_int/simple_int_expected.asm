@@ -7,13 +7,12 @@ includelib legacy_stdio_definitions.lib
 main proc
     push rbp
     mov rbp, rsp
-    sub rsp, 20h
+    sub rsp, 24
     lea rcx, ct0
     mov rdx, 41
     call printf
-    add rsp, 20h
+    add rsp, 24
     pop rbp
-    xor eax, eax
     ret
 main endp
 end

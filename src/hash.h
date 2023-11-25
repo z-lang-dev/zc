@@ -17,13 +17,25 @@ typedef struct HashTable HashTable;
  * @brief 哈希表中的一项
  */
 typedef struct Entry Entry;
+typedef struct IntEntry IntEntry;
+typedef struct ObjEntry ObjEntry;
+typedef struct HashIter HashIter;
+
+struct Entry {
+    char *key;      /**< 用来索引的键 */
+};
 
 /**
  * @brief 哈希表中的一项
  */
-struct Entry {
-    char *key;      /**< 用来索引的键 */
-    int value;      /**< 需要存储的值 */
+struct IntEntry {
+    Entry base;      /**< 基类 */
+    int value;      /**< 存储的值 */
+};
+
+struct ObjEntry {
+    Entry base;      /**< 基类 */
+    void *value;      /**< 存储的值 */
 };
 
 /**
@@ -34,6 +46,15 @@ struct HashTable {
     int cap;            /**< 容量 */
     Entry **entries;/**< 实际的存储数组 */
 };
+
+struct HashIter {
+    int idx;
+    char *key;
+    void *value;
+};
+
+HashIter *hash_iter(HashTable *table);
+bool hash_next(HashTable *table, HashIter *iter);
 
 /**
  * @brief 新建一个哈希表
@@ -59,7 +80,8 @@ bool hash_has(HashTable *hash, char *key);
  * @param key 键匙
  * @param value 存值
  */
-void hash_set(HashTable *hash, char *key, int value);
+void hash_set_int(HashTable *hash, char *key, int value);
+void hash_set(HashTable *hash, char *key, void *value);
 
 /**
  * @brief 根据键匙获得存值
@@ -68,7 +90,8 @@ void hash_set(HashTable *hash, char *key, int value);
  * @param key 键匙
  * @return 存值
  */
-int hash_get(HashTable *hash, char *key);
+int hash_get_int(HashTable *hash, char *key);
+void *hash_get(HashTable *hash, char *key);
 
 
 #define DEFAULT_ARRAY_CAP 16

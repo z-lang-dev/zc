@@ -49,7 +49,7 @@ static HashTable *table;
 // static ValueArray *values;
 
 static void set_val(char *name, int val) {
-    hash_set(table, name, val);
+    hash_set_int(table, name, val);
     // array_set(values, name, val);
     // if (strcmp(name, "a") == 0) {
         // a = val;
@@ -57,7 +57,7 @@ static void set_val(char *name, int val) {
 }
 
 static int get_val(char *name) {
-    return hash_get(table, name);
+    return hash_get_int(table, name);
     // return array_get(values, name);
     // if (strcmp(name, "a") == 0) {
         // return a;

@@ -314,6 +314,10 @@ static bool do_locals(FILE *fp) {
     return has_locals;
 }
 
+static int align16(int n) {
+    return n % 16 == 0 ? n : n + 16 - n % 16;
+}
+
 // 将AST编译成汇编代码：windows/masm64
 void codegen_win(Node *prog) {
     do_meta(prog);
@@ -332,6 +336,8 @@ void codegen_win(Node *prog) {
 
     bool has_locals = do_locals(fp);
 
+    int reserve = align16(total_meta_size()) + 8;
+
     fprintf(fp, "main proc\n");
 
     if (has_call || has_locals) {
@@ -339,7 +345,7 @@ void codegen_win(Node *prog) {
         fprintf(fp, "    push rbp\n");
         fprintf(fp, "    mov rbp, rsp\n");
         // reserve stack for shadow space
-        fprintf(fp, "    sub rsp, 24\n");
+        fprintf(fp, "    sub rsp, %d\n", reserve);
     }
 
     for (int i = 0; i < prog->as.exprs.count; ++i) {
@@ -349,7 +355,7 @@ void codegen_win(Node *prog) {
 
     if (has_call || has_locals) {
         // restore stack
-        fprintf(fp, "    add rsp, 24\n");
+        fprintf(fp, "    add rsp, %d\n", reserve);
         // epilog
         fprintf(fp, "    pop rbp\n");
     }

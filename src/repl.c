@@ -70,7 +70,10 @@ void repl(void) {
         Parser *parser = new_parser(cmd);
         Node *expr = parse(parser);
         // 执行
-        execute(expr);
+        printf("executing...\n");
+        Value *val = execute(expr);
+        printf("result: ");
+        print_val(val);
     }
 }
 

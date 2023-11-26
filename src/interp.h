@@ -1,9 +1,10 @@
 #pragma once
 
 #include "zast.h"
+#include "value.h"
 
 // 解释代码
 void interp(char *code);
 
 // 执行AST
-int execute(Node *code);
+Value *execute(Node *code);

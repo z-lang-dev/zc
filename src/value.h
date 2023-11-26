@@ -5,8 +5,8 @@
  * @brief 存值的种类
  */
 typedef enum {
-    TP_INT, /**< 整数值 */
-    TP_BOOL /**< 布尔值 */
+    VAL_INT, /**< 整数值 */
+    VAL_BOOL /**< 布尔值 */
 } ValueKind;
 
 /**
@@ -20,3 +20,13 @@ struct Value {
         bool bul; /**< 布尔值 */
     } as;
 };
+
+Value *new_int(int num);
+Value *new_bool(bool bul);
+
+Value *neg_val(Value *val);
+Value *add_val(Value *a, Value *b);
+Value *mul_val(Value *a, Value *b);
+Value *div_val(Value *a, Value *b);
+
+void print_val(Value *val);

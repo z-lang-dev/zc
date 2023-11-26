@@ -1,9 +1,7 @@
 #pragma once
 #include <stdio.h>
 
-
 typedef struct Node Node;
-typedef struct Value Value;
 typedef struct CallExpr CallExpr;
 typedef struct BinOp BinOp;
 typedef struct Unary Unary;
@@ -68,6 +66,7 @@ struct Asn {
     Node *value; // EXPR
 };
 
+// AST节点
 struct Node {
     NodeKind kind;
     void* meta;

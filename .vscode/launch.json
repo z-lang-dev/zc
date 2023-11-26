@@ -12,7 +12,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "interp",
-                "let a = 10; a+5"
+                "print(\"hello\n\")",
             ],
             "stopAtEntry": false
         },
@@ -74,6 +74,17 @@
                 "run",
                 "py",
                 "use_case.z"
+            ],
+            "stopAtEntry": false
+        },
+        {
+            "type": "xmake",
+            "request": "launch",
+            "name": "repl",
+            "target": "z",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "repl",
             ],
             "stopAtEntry": false
         },

@@ -48,16 +48,16 @@ static void cat(char *path) {
 static HashTable *table;
 // static ValueArray *values;
 
-static void set_val(char *name, int val) {
-    hash_set_int(table, name, val);
+static void set_val(char *name, Value *val) {
+    hash_set(table, name, val);
     // array_set(values, name, val);
     // if (strcmp(name, "a") == 0) {
         // a = val;
     // }
 }
 
-static int get_val(char *name) {
-    return hash_get_int(table, name);
+static Value *get_val(char *name) {
+    return hash_get(table, name);
     // return array_get(values, name);
     // if (strcmp(name, "a") == 0) {
         // return a;
@@ -66,35 +66,35 @@ static int get_val(char *name) {
 }
 
 // 对表达式求值
-int eval(Node *expr) {
+Value *eval(Node *expr) {
     switch (expr->kind) {
     case ND_INT:
-        return expr->as.num;
+        return new_int(expr->as.num);
     case ND_NAME:
         return get_val(expr->as.str);
     case ND_NEG:
-        return -eval(expr->as.una.body);
+        return neg_val(eval(expr->as.una.body));
     case ND_LET: {
-        int val = eval(expr->as.asn.value);
+        Value *val = eval(expr->as.asn.value);
         char *name = expr->as.asn.name->as.str;
         set_val(name, val);
         return val;
     }
     case ND_BINOP:
         BinOp *bop = &expr->as.bop;
-        int res = 0;
+        Value *res = NULL;
         switch (bop->op) {
         case OP_ADD:
-            res = eval(bop->left) + eval(bop->right);
+            res = add_val(eval(bop->left), eval(bop->right));
             break;
         case OP_SUB:
-            res = eval(bop->left) - eval(bop->right);
+            res = add_val(eval(bop->left),  neg_val(eval(bop->right)));
             break;
         case OP_MUL:
-            res = eval(bop->left) * eval(bop->right);
+            res = mul_val(eval(bop->left), eval(bop->right));
             break;
         case OP_DIV:
-            res = eval(bop->left) / eval(bop->right);
+            res = div_val(eval(bop->left), eval(bop->right));
             break;
         default:
             printf("Unknown operator: %d\n", bop->op);
@@ -102,7 +102,7 @@ int eval(Node *expr) {
         return res;
     default:
         printf("Wrong NodeKind to eval: %d\n", expr->kind);
-        return 0;
+        return NULL;
     }
 }
 
@@ -140,10 +140,12 @@ bool call_stdlib(Node *expr) {
 }
 
 // 执行AST
-int execute(Node *expr) {
+Value *execute(Node *expr) {
+    if (table == NULL) table = new_hash_table();
+
     switch (expr->kind) {
     case ND_PROG:
-        int last = 0;
+        Value *last = NULL;
         for (int i = 0; i < expr->as.exprs.count; i++) {
             last = execute(expr->as.exprs.list[i]);
         }
@@ -153,24 +155,24 @@ int execute(Node *expr) {
         if (call_builtin(expr)) break;
         if (call_stdlib(expr)) break;
         printf("Unknown function: %s\n", expr->as.call.name->as.str);
-        return 0; // 函数调用暂时不返回值
+        return NULL; // 函数调用暂时不返回值
     default:
-        int val = eval(expr);
+        Value *val = eval(expr);
         return val;
     }
-    return 0;
+    return NULL;
 }
 
 // 解释并执行代码
 void interp(char *code) {
-    table = new_hash_table();
     // values = new_value_array();
     log_trace("Interpreting %s...\n", code);
     // 解析源码
     Parser *parser = new_parser(code);
     Node *prog = parse(parser);
     log_trace("Executing ...\n------------------\n");
-    int ret = execute(prog);
-    printf("%d\n", ret);
+    Value *ret = execute(prog);
+    print_val(ret);
+    printf("\n");
 }
 

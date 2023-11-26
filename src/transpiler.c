@@ -50,6 +50,21 @@ static void do_meta(Node *prog) {
 
 static void gen_expr(FILE *fp, Node *expr) {
     switch (expr->kind) {
+    case ND_LET:
+        char *name = expr->as.asn.name->as.str;
+        if (META.lan == LAN_C) {
+            fprintf(fp, "    ");
+            fprintf(fp, "int %s = ", name);
+        } else if (META.lan == LAN_PY) {
+            fprintf(fp, "%s = ", name);
+        } else if (META.lan == LAN_JS) {
+            fprintf(fp, "let %s = ", name);
+        }
+        gen_expr(fp, expr->as.asn.value);
+        return;
+    case ND_NAME:
+        fprintf(fp, "%s", expr->as.str);
+        return;
     case ND_INT:
         fprintf(fp, "%d", expr->as.num);
         return;

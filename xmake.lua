@@ -11,7 +11,6 @@ local skip_table = {
     ["write_file"] = {["js"] = true},
     ["alert"] = {["c"]=true, ["py"]=true, ["compiler"]=true},
     ["use"] = {["compiler"]=true},
-    ["let"] = {["c"]=true, ["py"]=true, ["js"]=true},
 }
 
 target("z")

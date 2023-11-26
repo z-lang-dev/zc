@@ -7,10 +7,8 @@ includelib legacy_stdio_definitions.lib
 main proc
     push rbp
     mov rbp, rsp
-    sub rsp, 24
     lea rcx, ct0
     call printf
-    add rsp, 24
     pop rbp
     ret
 main endp

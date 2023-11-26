@@ -11,6 +11,11 @@
 },
 {
   "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_compiler.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_compiler\\windows\\x64\\debug\\src\\hash.c.obj", "src\\hash.c"],
+  "file": "src\\hash.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
   "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_compiler.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_compiler\\windows\\x64\\debug\\src\\interp.c.obj", "src\\interp.c"],
   "file": "src\\interp.c"
 },
@@ -18,6 +23,11 @@
   "directory": "d:\\gitee\\z-lang\\zc",
   "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_compiler.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_compiler\\windows\\x64\\debug\\src\\lexer.c.obj", "src\\lexer.c"],
   "file": "src\\lexer.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_compiler.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_compiler\\windows\\x64\\debug\\src\\meta.c.obj", "src\\meta.c"],
+  "file": "src\\meta.c"
 },
 {
   "directory": "d:\\gitee\\z-lang\\zc",
@@ -61,6 +71,11 @@
 },
 {
   "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_interp.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_interp\\windows\\x64\\debug\\src\\hash.c.obj", "src\\hash.c"],
+  "file": "src\\hash.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
   "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_interp.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_interp\\windows\\x64\\debug\\src\\interp.c.obj", "src\\interp.c"],
   "file": "src\\interp.c"
 },
@@ -68,6 +83,11 @@
   "directory": "d:\\gitee\\z-lang\\zc",
   "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_interp.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_interp\\windows\\x64\\debug\\src\\lexer.c.obj", "src\\lexer.c"],
   "file": "src\\lexer.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_interp.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_interp\\windows\\x64\\debug\\src\\meta.c.obj", "src\\meta.c"],
+  "file": "src\\meta.c"
 },
 {
   "directory": "d:\\gitee\\z-lang\\zc",
@@ -101,11 +121,6 @@
 },
 {
   "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_stdz.pdb", "/Od", "/Ilib", "/Isrc", "/EHsc", "/Fobuild\\.objs\\test_stdz\\windows\\x64\\debug\\test\\test_stdz.c.obj", "test\\test_stdz.c"],
-  "file": "test\\test_stdz.c"
-},
-{
-  "directory": "d:\\gitee\\z-lang\\zc",
   "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\stdz.pdb", "/Od", "/Ilib", "/Isrc", "/EHsc", "/Fobuild\\.objs\\stdz\\windows\\x64\\debug\\lib\\stdz.c.obj", "lib\\stdz.c"],
   "file": "lib\\stdz.c"
 },
@@ -113,6 +128,66 @@
   "directory": "d:\\gitee\\z-lang\\zc",
   "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\stdz.pdb", "/Od", "/Ilib", "/Isrc", "/EHsc", "/Fobuild\\.objs\\stdz\\windows\\x64\\debug\\src\\util.c.obj", "src\\util.c"],
   "file": "src\\util.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\codegen.c.obj", "src\\codegen.c"],
+  "file": "src\\codegen.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\compiler.c.obj", "src\\compiler.c"],
+  "file": "src\\compiler.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\hash.c.obj", "src\\hash.c"],
+  "file": "src\\hash.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\interp.c.obj", "src\\interp.c"],
+  "file": "src\\interp.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\lexer.c.obj", "src\\lexer.c"],
+  "file": "src\\lexer.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\main.c.obj", "src\\main.c"],
+  "file": "src\\main.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\meta.c.obj", "src\\meta.c"],
+  "file": "src\\meta.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\parser.c.obj", "src\\parser.c"],
+  "file": "src\\parser.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\repl.c.obj", "src\\repl.c"],
+  "file": "src\\repl.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\transpiler.c.obj", "src\\transpiler.c"],
+  "file": "src\\transpiler.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\util.c.obj", "src\\util.c"],
+  "file": "src\\util.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\zast.c.obj", "src\\zast.c"],
+  "file": "src\\zast.c"
 },
 {
   "directory": "d:\\gitee\\z-lang\\zc",
@@ -126,6 +201,11 @@
 },
 {
   "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_transpiler.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_transpiler\\windows\\x64\\debug\\src\\hash.c.obj", "src\\hash.c"],
+  "file": "src\\hash.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
   "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_transpiler.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_transpiler\\windows\\x64\\debug\\src\\interp.c.obj", "src\\interp.c"],
   "file": "src\\interp.c"
 },
@@ -133,6 +213,11 @@
   "directory": "d:\\gitee\\z-lang\\zc",
   "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_transpiler.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_transpiler\\windows\\x64\\debug\\src\\lexer.c.obj", "src\\lexer.c"],
   "file": "src\\lexer.c"
+},
+{
+  "directory": "d:\\gitee\\z-lang\\zc",
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_transpiler.pdb", "/Od", "/Isrc", "/Ilib", "/EHsc", "/Fobuild\\.objs\\test_transpiler\\windows\\x64\\debug\\src\\meta.c.obj", "src\\meta.c"],
+  "file": "src\\meta.c"
 },
 {
   "directory": "d:\\gitee\\z-lang\\zc",
@@ -166,51 +251,6 @@
 },
 {
   "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\codegen.c.obj", "src\\codegen.c"],
-  "file": "src\\codegen.c"
-},
-{
-  "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\compiler.c.obj", "src\\compiler.c"],
-  "file": "src\\compiler.c"
-},
-{
-  "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\interp.c.obj", "src\\interp.c"],
-  "file": "src\\interp.c"
-},
-{
-  "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\lexer.c.obj", "src\\lexer.c"],
-  "file": "src\\lexer.c"
-},
-{
-  "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\main.c.obj", "src\\main.c"],
-  "file": "src\\main.c"
-},
-{
-  "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\parser.c.obj", "src\\parser.c"],
-  "file": "src\\parser.c"
-},
-{
-  "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\repl.c.obj", "src\\repl.c"],
-  "file": "src\\repl.c"
-},
-{
-  "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\transpiler.c.obj", "src\\transpiler.c"],
-  "file": "src\\transpiler.c"
-},
-{
-  "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\util.c.obj", "src\\util.c"],
-  "file": "src\\util.c"
-},
-{
-  "directory": "d:\\gitee\\z-lang\\zc",
-  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.z.pdb", "/Od", "/Ilib", "/DLOG_TRACE", "/EHsc", "/Fobuild\\.objs\\z\\windows\\x64\\debug\\src\\zast.c.obj", "src\\zast.c"],
-  "file": "src\\zast.c"
+  "arguments": ["C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.37.32822\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.test_stdz.pdb", "/Od", "/Ilib", "/Isrc", "/EHsc", "/Fobuild\\.objs\\test_stdz\\windows\\x64\\debug\\test\\test_stdz.c.obj", "test\\test_stdz.c"],
+  "file": "test\\test_stdz.c"
 }]

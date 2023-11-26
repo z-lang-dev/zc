@@ -8,11 +8,9 @@ includelib stdz.lib
 main proc
     push rbp
     mov rbp, rsp
-    sub rsp, 24
     lea rcx, ct0
     lea rdx, ct1
     call write_file
-    add rsp, 24
     pop rbp
     ret
 main endp

@@ -8,7 +8,6 @@ main:
     mov rsi, 41
     call printf
     pop rbp
-    xor rax, rax
     ret
 ct0:
     .asciz "%d\n"

@@ -40,13 +40,24 @@ static char *LINUX_REGS[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 static void gen_expr(FILE *fp, Node *expr) {
     if (expr->kind == ND_LET) {
         gen_expr(fp, expr->as.asn.value);
-        // fprintf(fp, "    mov DWORD PTR %s$[rsp], eax\n", expr->as.asn.name->as.str);
+#ifdef _WIN32
         fprintf(fp, "    mov %s$[rbp], eax\n", expr->as.asn.name->as.str);
+#else
+        Meta *m = get_meta(expr->as.asn.name->as.str);
+        fprintf(fp, "    mov dword ptr[rbp-%d], eax\n", m->offset);
+#endif
         return;
     }
     if (expr->kind == ND_NAME) {
+#ifdef _WIN32
         // 变量名，需要获取其值
         fprintf(fp, "    mov rax, %s$[rbp]\n", expr->as.str);
+#else
+        // 先获取变量地址
+        Meta *m = get_meta(expr->as.str);
+        // 再加载变量值
+        fprintf(fp, "    mov eax, [rbp-%d]\n", m->offset);
+#endif
         return;
     }
     if (expr->kind == ND_INT) {
@@ -261,6 +272,9 @@ static void do_data_linux(FILE *fp) {
     }
 }
 
+static int align16(int n) {
+    return n % 16 == 0 ? n : n + 16 - n % 16;
+}
 
 // 将AST编译成汇编代码：linux/gas
 void codegen_linux(Node *prog) {
@@ -277,10 +291,16 @@ void codegen_linux(Node *prog) {
     fprintf(fp, "    .global main\n");
     fprintf(fp, "main:\n");
     bool has_call = META.extern_count > 0;
-    if (has_call) {
+    int locals_size = total_meta_size();
+    if (has_call || locals_size > 0) {
         // prolog
         fprintf(fp, "    push rbp\n");
         fprintf(fp, "    mov rbp, rsp\n");
+    }
+    if (locals_size > 0) {
+        // size+8之后要16字节对齐，其中单独的8时`push rbp`导致的。
+        locals_size = align16(locals_size + 8) - 8;
+        fprintf(fp, "    sub rsp, %d\n", locals_size);
     }
 
     for (int i = 0; i < prog->as.exprs.count; ++i) {
@@ -288,11 +308,12 @@ void codegen_linux(Node *prog) {
         gen_expr(fp, expr);
     }
 
-    if (has_call) {
+    if (has_call || locals_size > 0) {
         // epilog
         fprintf(fp, "    pop rbp\n");
-        // 返回
-        fprintf(fp, "    xor rax, rax\n");
+    }
+    if (locals_size > 0) {
+        fprintf(fp, "    add rsp, %d\n", locals_size);
     }
     fprintf(fp, "    ret\n");
 
@@ -312,10 +333,6 @@ static bool do_locals(FILE *fp) {
         has_locals = true;
     }
     return has_locals;
-}
-
-static int align16(int n) {
-    return n % 16 == 0 ? n : n + 16 - n % 16;
 }
 
 // 将AST编译成汇编代码：windows/masm64
@@ -344,6 +361,8 @@ void codegen_win(Node *prog) {
         // prolog
         fprintf(fp, "    push rbp\n");
         fprintf(fp, "    mov rbp, rsp\n");
+    }
+    if (has_locals) {
         // reserve stack for shadow space
         fprintf(fp, "    sub rsp, %d\n", reserve);
     }
@@ -353,9 +372,11 @@ void codegen_win(Node *prog) {
         gen_expr(fp, expr);
     }
 
-    if (has_call || has_locals) {
+    if (has_locals) {
         // restore stack
         fprintf(fp, "    add rsp, %d\n", reserve);
+    }
+    if (has_call || has_locals) {
         // epilog
         fprintf(fp, "    pop rbp\n");
     }

@@ -15,7 +15,6 @@ main:
     pop rax
     add rax, rdi
     pop rbp
-    xor rax, rax
     ret
 ct0:
     .asciz "Hello\n"

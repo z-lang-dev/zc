@@ -65,15 +65,96 @@ static Value *get_val(char *name) {
     // return 0;
 }
 
+static bool check_num(Value *left, Value *right) {
+    return left->kind == VAL_INT && right->kind == VAL_INT;
+}
+
+static bool check_bool(Value *left, Value *right) {
+    return left->kind == VAL_BOOL && right->kind == VAL_BOOL;
+}
+
+static Value *eval_compare(Value *left, Value *right, Op op) {
+    if (!check_num(left, right)) {
+        printf("Type mismatch: %d %s %d\n", left->kind, op_to_str(op), right->kind);
+        return new_nil();
+    }
+    switch (op) {
+    case OP_GT:
+        return new_bool(left->as.num > right->as.num);
+    case OP_LT:
+        return new_bool(left->as.num < right->as.num);
+    case OP_GE:
+        return new_bool(left->as.num >= right->as.num);
+    case OP_LE:
+        return new_bool(left->as.num <= right->as.num);
+    case OP_EQ:
+        return new_bool(left->as.num == right->as.num);
+    case OP_NE:
+        return new_bool(left->as.num != right->as.num);
+    default:
+        printf("Unknown operator for compare: %d %s %d\n", left->as.num, op_to_str(op), right->as.num);
+        return new_nil();
+    }
+}
+
+static Value *eval_eq(Value *left, Value *right, Op op) {
+    if (left->kind != right->kind) {
+        printf("Type mismatch: %d %s %d\n", left->kind, op_to_str(op), right->kind);
+        return new_nil();
+    }
+    switch (left->kind) {
+    case VAL_INT: {
+        switch(op) {
+        case OP_EQ:
+            return new_bool(left->as.num == right->as.num);
+        case OP_NE:
+            return eval_compare(left, right, op);
+        }
+        break;
+    }
+    case VAL_BOOL:
+        switch (op) {
+        case OP_EQ:
+            return new_bool(left->as.bul == right->as.bul);
+        case OP_NE:
+            return new_bool(left->as.bul != right->as.bul);
+        }
+        break;
+    default:
+        printf("Unknown operator for eq: %d %s %d\n", left->as.num, op_to_str(op), right->as.num);
+        return new_nil();
+    }
+}
+
+static Value *eval_logic(Value *left, Value *right, Op op) {
+    if (!check_bool(left, right)) {
+        printf("Type mismatch: %d %s %d\n", left->kind, op_to_str(op), right->kind);
+        return new_nil();
+    }
+    switch (op) {
+    case OP_AND:
+        return new_bool(left->as.bul && right->as.bul);
+    case OP_OR:
+        return new_bool(left->as.bul || right->as.bul);
+    default:
+        printf("Unknown operator: %d\n", op);
+        return new_nil();
+    }
+}
+
 // 对表达式求值
 Value *eval(Node *expr) {
     switch (expr->kind) {
     case ND_INT:
         return new_int(expr->as.num);
+    case ND_BOOL:
+        return new_bool(expr->as.bul);
     case ND_NAME:
         return get_val(expr->as.str);
     case ND_NEG:
         return neg_val(eval(expr->as.una.body));
+    case ND_NOT:
+        return not(eval(expr->as.una.body));
     case ND_LET: {
         Value *val = eval(expr->as.asn.value);
         char *name = expr->as.asn.name->as.str;
@@ -96,8 +177,32 @@ Value *eval(Node *expr) {
         case OP_DIV:
             res = div_val(eval(bop->left), eval(bop->right));
             break;
+        case OP_GT:
+            res = eval_compare(eval(bop->left), eval(bop->right), OP_GT);
+            break;
+        case OP_LT:
+            res = eval_compare(eval(bop->left), eval(bop->right), OP_LT);
+            break;
+        case OP_GE:
+            res = eval_compare(eval(bop->left), eval(bop->right), OP_GE);
+            break;
+        case OP_LE:
+            res = eval_compare(eval(bop->left), eval(bop->right), OP_LE);
+            break;
+        case OP_EQ:
+            res = eval_eq(eval(bop->left), eval(bop->right), OP_EQ);
+            break;
+        case OP_NE:
+            res = eval_eq(eval(bop->left), eval(bop->right), OP_NE);
+            break;
+        case OP_AND:
+            res = eval_logic(eval(bop->left), eval(bop->right), OP_AND);
+            break;
+        case OP_OR:
+            res = eval_logic(eval(bop->left), eval(bop->right), OP_OR);
+            break;
         default:
-            printf("Unknown operator: %d\n", bop->op);
+            printf("Unknown operator: %d\n", op_to_str(bop->op));
         }
         return res;
     default:

@@ -1,5 +1,6 @@
 #pragma once
 #include <stdio.h>
+#include <stdbool.h>
 
 typedef struct Node Node;
 typedef struct CallExpr CallExpr;
@@ -15,6 +16,8 @@ typedef enum {
     ND_CALL, // 函数调用
     ND_LET, // 定量声明
     ND_INT, // 整数
+    ND_BOOL, // 布尔值
+    ND_NOT, // 非
     ND_NEG, // 负数
     ND_STR, // 字符串
     ND_NAME, // 名称，包括函数名、存量名、类名等
@@ -32,8 +35,19 @@ typedef enum {
     OP_SUB, // 减法
     OP_MUL, // 乘法
     OP_DIV, // 除法
+    OP_GT, // 大于
+    OP_LT, // 小于
+    OP_GE, // 大于等于
+    OP_LE, // 小于等于
+    OP_EQ, // 等于
+    OP_NE, // 不等于
+    OP_AND, // 逻辑与
+    OP_OR, // 逻辑或
+    OP_NOT, // 逻辑非
     OP_ILL, // 非法操作符
 } Op;
+
+char *op_to_str(Op op);
 
 struct BinOp {
     Node *left;
@@ -73,6 +87,7 @@ struct Node {
     union {
         CallExpr call;
         int num;
+        bool bul;
         char *str;
         BinOp bop;
         Unary una;

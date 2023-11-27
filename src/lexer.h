@@ -5,11 +5,16 @@ typedef struct Lexer Lexer;
 
 // 词符的类型
 typedef enum {
-    TK_NAME, // 名称
+    // keywords
     TK_LET, // let
+    TK_TRUE, // true
+    TK_FALSE, // false
+    TK_INT, // int
+    TK_BOOL, // bool
+    TK_NAME, // 名称
     TK_ASN, // =
     TK_USE, // 导入
-    TK_INT, // 整数
+    TK_INTEGER, // 整数
     TK_LPAREN, // (
     TK_RPAREN, // )
     TK_STR, // 字符串
@@ -17,11 +22,20 @@ typedef enum {
     TK_SUB, // -
     TK_MUL, // *
     TK_DIV, // /
+    TK_GT, // >
+    TK_LT, // <
+    TK_GE, // >=
+    TK_LE, // <=
+    TK_EQ, // ==
+    TK_NE, // !=
+    TK_NOT, // !
+    TK_AND, // &&
+    TK_OR, // ||
     TK_COMMA, // ,
     TK_NLINE, // \n
     TK_SEMI, // ;
     TK_DOT, // .
-    TK_EOF, // 源码结束
+    TK_EOF // 源码结束
 } TokenKind;
 
 // 词符

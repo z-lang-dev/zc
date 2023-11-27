@@ -3,7 +3,7 @@ add_rules("mode.debug", "mode.release")
 -- 测试用例列表
 local case_list = {
     "hello", "simple_int", "single_int", "simple_add", "add_sub", "calc", "neg_group", 
-    "read_file", "write_file", "alert", "two_exprs", "use", "let",
+    "read_file", "write_file", "alert", "two_exprs", "use", "let", "compare",
 }
 
 local skip_table = {
@@ -12,6 +12,13 @@ local skip_table = {
     ["alert"] = {["c"]=true, ["py"]=true, ["compiler"]=true},
     ["use"] = {["compiler"]=true},
 }
+
+target("stdz")
+    set_kind("static")
+    add_files("lib/*.c")
+    add_files("src/util.c")
+    add_includedirs("lib")
+    add_includedirs("src")
 
 target("z")
     set_kind("binary")
@@ -33,15 +40,9 @@ target("z")
             os.rm("test/"..d.."/app.*")
             os.rm("test/"..d.."/*.lnk")
             os.rm("test/"..d.."/*.tmp")
+            os.rm("test/"..d.."/a.out")
         end
     end)
-
-target("stdz")
-    set_kind("static")
-    add_files("lib/*.c")
-    add_files("src/util.c")
-    add_includedirs("lib")
-    add_includedirs("src")
 
 target("test_stdz")
     set_kind("binary")
@@ -74,6 +75,7 @@ target("test_interp")
     add_tests("calc", {runargs="2*3+4*5-1*7", trim_output=true, pass_outputs="19"})
     add_tests("neg_group", {runargs="-(3*5+-2-8)", trim_output=true, pass_outputs="-5"})
     add_tests("let", {runargs="let a=10;a+5", trim_output=true, pass_outputs="15"})
+    add_tests("compare", {runargs="let a=10;a>5", trim_output=true, pass_outputs="true"})
 
 
 -- 编译器compiler的测试用例

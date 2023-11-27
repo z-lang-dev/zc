@@ -12,7 +12,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "interp",
-                "print(\"hello\n\")",
+                "true && false",
             ],
             "stopAtEntry": false
         },
@@ -21,10 +21,10 @@
             "request": "launch",
             "name": "build",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/let",
+            "cwd": "${workspaceFolder}/test/compare",
             "args": [
                 "build",
-                "let_case.z"
+                "compare_case.z"
             ],
             "stopAtEntry": false
         },

@@ -79,7 +79,7 @@ void hash_set(HashTable *hash, char *key, void *value) {
     // 如果size/cap超过LOAD_FACTOR，就扩容一倍
     if ((double) hash->size / (double) hash->cap > LOAD_FACTOR) {
         hash->cap *= 2;
-        hash->entries = realloc(hash->entries, hash->cap * sizeof(ObjEntry*));
+        hash->entries = realloc(hash->entries, hash->cap * sizeof(ObjEntry));
     }
 
     int idx = hash_idx(hash, key);
@@ -101,10 +101,9 @@ void hash_set(HashTable *hash, char *key, void *value) {
         }
     }
     // 找到了空位，新建一项并写入
-    hash->entries[idx] = calloc(1, sizeof(ObjEntry*));
-    Entry *ent = hash->entries[idx];
-    ent->key = key;
-    ((ObjEntry*)ent)->value = value;
+    hash->entries[idx] = calloc(1, sizeof(ObjEntry));
+    hash->entries[idx]->key = key;
+    ((ObjEntry*)hash->entries[idx])->value = value;
 }
 
 int hash_get_int(HashTable *hash, char *key) {

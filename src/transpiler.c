@@ -68,8 +68,29 @@ static void gen_expr(FILE *fp, Node *expr) {
     case ND_INT:
         fprintf(fp, "%d", expr->as.num);
         return;
+    case ND_BOOL:
+        switch (META.lan) {
+        case LAN_C:
+            // 因为C里true/false还得单独引入stdbool.h，所以这里直接用1/0代替。
+            // 未来有了更完善的依赖库引入功能之后，再改回true/false
+            fprintf(fp, "%s", expr->as.bul ? "1" : "0"); 
+            break;
+        case LAN_PY:
+            fprintf(fp, "%s", expr->as.bul ? "True" : "False");
+            break;
+        default:
+            fprintf(fp, "%s", expr->as.bul ? "true" : "false");
+            break;
+        }
+        return;
     case ND_NEG:
         fprintf(fp, "-(");
+        gen_expr(fp, expr->as.una.body);
+        fprintf(fp, ")");
+        return;
+    case ND_NOT:
+        if (META.lan == LAN_PY) fprintf(fp, "not (");
+        else fprintf(fp, "!(");
         gen_expr(fp, expr->as.una.body);
         fprintf(fp, ")");
         return;
@@ -111,45 +132,51 @@ static void gen_expr(FILE *fp, Node *expr) {
     // 处理二元表达式
     // 左膀，gen_expr_win完成之后，结果存在rax中
     gen_expr(fp, expr->as.bop.left);
-    // 右臂，现在的语境下，右臂只可能是整数，因此可以当做立即数直接参与计算
-    if (expr->as.bop.right->kind == ND_INT) {
-        int right = expr->as.bop.right->as.num;
-        // 具体的二元运算
-        switch (expr->as.bop.op) {
-        case OP_ADD:
-            fprintf(fp, " + %d", right);
-            break;
-        case OP_SUB:
-            fprintf(fp, " - %d", right);
-            break;
-        case OP_MUL:
-            fprintf(fp, " * %d", right);
-            break;
-        case OP_DIV:
-            fprintf(fp, " / %d", right);
-            break;
-        default:
-            printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
-        }
-    } else {
-        switch (expr->as.bop.op) {
-        case OP_ADD:
-            fprintf(fp, " + ");
-            break;
-        case OP_SUB:
-            fprintf(fp, " - ");
-            break;
-        case OP_MUL:
-            fprintf(fp, " * ");
-            break;
-        case OP_DIV:
-            fprintf(fp, " / ");
-            break;
-        default:
-            printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
-        }
-        gen_expr(fp, expr->as.bop.right);
+    // 操作符
+    switch (expr->as.bop.op) {
+    case OP_ADD:
+        fprintf(fp, " + ");
+        break;
+    case OP_SUB:
+        fprintf(fp, " - ");
+        break;
+    case OP_MUL:
+        fprintf(fp, " * ");
+        break;
+    case OP_DIV:
+        fprintf(fp, " / ");
+        break;
+    case OP_GT:
+        fprintf(fp, " > ");
+        break;
+    case OP_LT:
+        fprintf(fp, " < ");
+        break;
+    case OP_GE:
+        fprintf(fp, " >= ");
+        break;
+    case OP_LE:
+        fprintf(fp, " <= ");
+        break;
+    case OP_EQ:
+        fprintf(fp, " == ");
+        break;
+    case OP_NE:
+        fprintf(fp, " != ");
+        break;
+    case OP_AND:
+        if (META.lan == LAN_PY) fprintf(fp, " and ");
+        else fprintf(fp, " && ");
+        break;
+    case OP_OR:
+        if (META.lan == LAN_PY) fprintf(fp, " or ");
+        else fprintf(fp, " || ");
+        break;
+    default:
+        printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
     }
+    // 右臂
+    gen_expr(fp, expr->as.bop.right);
 }
 
 static Node *last_expr(Node *prog) {

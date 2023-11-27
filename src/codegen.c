@@ -38,7 +38,8 @@ static char *WIN_REGS[4] = {"rcx", "rdx", "r8", "r9"};
 static char *LINUX_REGS[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 static void gen_expr(FILE *fp, Node *expr) {
-    if (expr->kind == ND_LET) {
+    switch(expr->kind) {
+    case ND_LET: {
         gen_expr(fp, expr->as.asn.value);
 #ifdef _WIN32
         fprintf(fp, "    mov %s$[rbp], eax\n", expr->as.asn.name->as.str);
@@ -48,7 +49,7 @@ static void gen_expr(FILE *fp, Node *expr) {
 #endif
         return;
     }
-    if (expr->kind == ND_NAME) {
+    case ND_NAME: {
 #ifdef _WIN32
         // 变量名，需要获取其值
         fprintf(fp, "    mov rax, %s$[rbp]\n", expr->as.str);
@@ -60,18 +61,31 @@ static void gen_expr(FILE *fp, Node *expr) {
 #endif
         return;
     }
-    if (expr->kind == ND_INT) {
+    case ND_INT: {
         fprintf(fp, "    mov rax, %d\n", expr->as.num);
         return;
     }
-
-    if (expr->kind == ND_NEG) {
+    case ND_NEG: {
         gen_expr(fp, expr->as.una.body);
         fprintf(fp, "    neg rax\n");
         return;
     }
-
-    if (expr->kind == ND_CALL) {
+    case ND_NOT: {
+        gen_expr(fp, expr->as.una.body);
+        fprintf(fp, "    xor al, -1\n");
+        fprintf(fp, "    and al, 1\n");
+        fprintf(fp, "    movzx rax, al\n");
+        return;
+    }
+    case ND_BOOL: {
+        if (expr->as.bul) {
+            fprintf(fp, "    mov rax, 1\n");
+        } else {
+            fprintf(fp, "    mov rax, 0\n");
+        }
+        return;
+    }
+    case ND_CALL: {
         // 处理函数名称
         CallExpr *call = &expr->as.call;
         char *name = call->name->as.str;
@@ -123,6 +137,7 @@ static void gen_expr(FILE *fp, Node *expr) {
 #endif
         return;
     }
+    }
 
     // 错误情况：
     if (expr->kind != ND_BINOP) {
@@ -153,6 +168,36 @@ static void gen_expr(FILE *fp, Node *expr) {
             fprintf(fp, "    cqo\n");
             fprintf(fp, "    idiv rdi\n");
             break;
+        case OP_EQ:
+            fprintf(fp, "    cmp rax, %d\n", right);
+            fprintf(fp, "    sete al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_NE:
+            fprintf(fp, "    cmp rax, %d\n", right);
+            fprintf(fp, "    setne al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_LT:
+            fprintf(fp, "    cmp rax, %d\n", right);
+            fprintf(fp, "    setl al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_LE: 
+            fprintf(fp, "    cmp rax, %d\n", right);
+            fprintf(fp, "    setle al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_GT:
+            fprintf(fp, "    cmp rax, %d\n", right);
+            fprintf(fp, "    setg al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_GE:
+            fprintf(fp, "    cmp rax, %d\n", right);
+            fprintf(fp, "    setge al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
         default:
             printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
         }
@@ -179,6 +224,42 @@ static void gen_expr(FILE *fp, Node *expr) {
         case OP_DIV:
             fprintf(fp, "    cqo\n");
             fprintf(fp, "    idiv rdi\n");
+            break;
+        case OP_EQ:
+            fprintf(fp, "    cmp rax, rdi\n");
+            fprintf(fp, "    sete al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_NE:
+            fprintf(fp, "    cmp rax, rdi\n");
+            fprintf(fp, "    setne al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_LT:
+            fprintf(fp, "    cmp rax, rdi\n");
+            fprintf(fp, "    setl al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_LE: 
+            fprintf(fp, "    cmp rax, rdi\n");
+            fprintf(fp, "    setle al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_GT:
+            fprintf(fp, "    cmp rax, rdi\n");
+            fprintf(fp, "    setg al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_GE:
+            fprintf(fp, "    cmp rax, rdi\n");
+            fprintf(fp, "    setge al\n");
+            fprintf(fp, "    movzx rax, al\n");
+            break;
+        case OP_AND:
+            fprintf(fp, "    and rax, rdi\n");
+            break;
+        case OP_OR:
+            fprintf(fp, "    or rax, rdi\n");
             break;
         default:
             printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
@@ -328,7 +409,7 @@ static bool do_locals(FILE *fp) {
     HashIter *i = hash_iter(table);
     bool has_locals = false;
     while (hash_next(table, i)) {
-        Meta *meta = i->value;
+        Meta *meta = (Meta*)i->value;
         fprintf(fp, "%s$ = -%d\n", meta->name, meta->offset);
         has_locals = true;
     }
@@ -386,5 +467,6 @@ void codegen_win(Node *prog) {
     fprintf(fp, "main endp\n");
     fprintf(fp, "end\n");
     fclose(fp);
+
     return;
 }

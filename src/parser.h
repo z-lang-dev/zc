@@ -14,9 +14,12 @@ struct Parser {
 
 typedef enum {
     PREC_NONE,
-    PREC_ADDSUB,
-    PREC_MULDIV,
-    PREC_NEG,
+    PREC_ANDOR, // &&, ||
+    PREC_COMPARE, // >, <, >=, <=, ==, !=
+    PREC_ADDSUB, // +, -
+    PREC_MULDIV, // *, /
+    PREC_NEG, // -
+    PREC_NOT, // !
 } Precedence;
 
 

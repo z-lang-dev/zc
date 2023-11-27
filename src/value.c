@@ -9,11 +9,20 @@ Value *new_int(int num) {
     return val;
 }
 
+const Value TRUE_VAL = {VAL_BOOL, {true}};
+const Value FALSE_VAL = {VAL_BOOL, {false}};
+const Value NIL_VAL = {VAL_NIL, {0}};
+
 Value *new_bool(bool bul) {
-    Value *val = calloc(1, sizeof(Value));
-    val->kind = VAL_BOOL;
-    val->as.bul = bul;
-    return val;
+    return bul ? &TRUE_VAL : &FALSE_VAL;
+}
+
+Value *new_nil() {
+    return &NIL_VAL;
+}
+
+Value *not(Value *val) {
+    return new_bool(!val->as.bul);
 }
 
 Value *neg_val(Value *val) {

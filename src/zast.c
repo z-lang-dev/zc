@@ -2,19 +2,6 @@
 #include "zast.h"
 #include <stdlib.h>
 
-static const char *op_to_str(Op op) {
-    switch (op) {
-    case OP_ADD:
-        return "+";
-    case OP_SUB:
-        return "-";
-    case OP_MUL:
-        return "*";
-    case OP_DIV:
-        return "/";
-    }
-}
-
 void fecho_node(FILE *fp, Node *node) {
     switch (node->kind) {
     case ND_PROG:
@@ -52,6 +39,13 @@ void fecho_node(FILE *fp, Node *node) {
         break;
     case ND_INT:
         fprintf(fp, "%d", node->as.num);
+        break;
+    case ND_BOOL:
+        fprintf(fp, "%s", node->as.bul ? "true" : "false");
+        break;
+    case ND_NOT:
+        fprintf(fp, "!");
+        fecho_node(fp, node->as.una.body);
         break;
     case ND_STR:
         fprintf(fp, "\"%s\"", node->as.str);
@@ -107,6 +101,14 @@ void fprint_node(FILE *fp, Node *node) {
         break;
     case ND_INT:
         fprintf(fp, "{kind: ND_INT, as.num: %d}", node->as.num);
+        break;
+    case ND_BOOL:
+        fprintf(fp, "%s", node->as.bul ? "true" : "false");
+        break;
+    case ND_NOT:
+        fprintf(fp, "{kind: ND_NOT, body: ");
+        fprint_node(fp, node->as.una.body);
+        fprintf(fp, " }");
         break;
     case ND_STR:
         fprintf(fp, "{kind: ND_STR, as.str: \"%s\"}", node->as.str);
@@ -166,4 +168,40 @@ void append_expr(Node *prog, Node *node) {
         exprs->list = realloc(exprs->list, exprs->cap * sizeof(Node *));
     }
     exprs->list[exprs->count++] = node;
+}
+
+
+char *op_to_str(Op op) {
+    switch (op) {
+    case OP_ADD:
+        return "+";
+    case OP_SUB:
+        return "-";
+    case OP_MUL:
+        return "*";
+    case OP_DIV:
+        return "/";
+    case OP_GT:
+        return ">";
+    case OP_LT:
+        return "<";
+    case OP_GE:
+        return ">=";
+    case OP_LE:
+        return "<=";
+    case OP_EQ:
+        return "==";
+    case OP_NE:
+        return "!=";
+    case OP_AND:
+        return "&&";
+    case OP_OR:
+        return "||";
+    case OP_NOT:
+        return "!";
+    case OP_ILL:
+        return "<ILL_OP>";
+    default:
+        return "<UNKOWN_OP>";
+    }
 }

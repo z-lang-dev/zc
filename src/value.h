@@ -6,7 +6,8 @@
  */
 typedef enum {
     VAL_INT, /**< 整数值 */
-    VAL_BOOL /**< 布尔值 */
+    VAL_BOOL, /**< 布尔值 */
+    VAL_NIL /**< 空值 */
 } ValueKind;
 
 /**
@@ -23,10 +24,13 @@ struct Value {
 
 Value *new_int(int num);
 Value *new_bool(bool bul);
+Value *new_nil();
 
 Value *neg_val(Value *val);
 Value *add_val(Value *a, Value *b);
 Value *mul_val(Value *a, Value *b);
 Value *div_val(Value *a, Value *b);
+
+Value *not(Value *val);
 
 void print_val(Value *val);

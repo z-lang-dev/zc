@@ -36,11 +36,30 @@ static Token *new_token(Lexer *lexer, TokenKind kind) {
     return token;
 }
 
+static Token *single_or_double_token(Lexer *lexer, char follow, TokenKind op1, TokenKind op2) {
+    if (peek(lexer) == follow) {
+        next_char(lexer);
+        return new_token(lexer, op2);
+    } else {
+        return new_token(lexer, op1);
+    }
+}
+
+static Token *double_token(Lexer *lexer, char c, TokenKind op) {
+    if (peek(lexer) == c) {
+        next_char(lexer);
+        return new_token(lexer, op);
+    } else {
+        log_trace("double token error: %c %c\n", c, peek(lexer));
+        return new_token(lexer, TK_EOF);
+    }
+}
+
 static Token *number(Lexer *lexer) {
     while (is_digit(*lexer->cur)) {
         next_char(lexer);
     }
-    return new_token(lexer, TK_INT);
+    return new_token(lexer, TK_INTEGER);
 }
 
 static Token *str(Lexer *lexer) {
@@ -57,14 +76,21 @@ typedef struct {
 } Keyword;
 
 static Keyword keywords[] = {
-    {"use", TK_USE},
+    {"bool", TK_BOOL},
+    {"false", TK_FALSE},
+    {"int", TK_INT},
     {"let", TK_LET},
+    {"true", TK_TRUE},
+    {"use", TK_USE},
 };
 
 // 查找关键字
 // TODO: 现在是顺序对比，以后可以考虑用hash表，或者用trie树
 static Token *lookup_keyword(Lexer *lexer) {
     for (int i = 0; i < sizeof(keywords) / sizeof(Keyword); i++) {
+        if (lexer->cur - lexer->start != strlen(keywords[i].name)) {
+            continue;
+        }
         if (strncmp(lexer->start, keywords[i].name, lexer->cur - lexer->start) == 0) {
             return new_token(lexer, keywords[i].kind);
         }
@@ -140,10 +166,19 @@ Token *next_token(Lexer *lexer) {
     case '.':
         return new_token(lexer, TK_DOT);
     case '=':
-        return new_token(lexer, TK_ASN);
+        return single_or_double_token(lexer, '=', TK_ASN, TK_EQ);
+    case '!':
+        return single_or_double_token(lexer, '=', TK_NOT, TK_NE);
+    case '>':
+        return single_or_double_token(lexer, '=', TK_GT, TK_GE);
+    case '<':
+        return single_or_double_token(lexer, '=', TK_LT, TK_LE);
+    case '&':
+        return double_token(lexer, c, TK_AND);
+    case '|':
+        return double_token(lexer, c, TK_OR);
     default:
         log_trace("Unexpected character: %c\n", c);
         return new_token(lexer, TK_EOF);
     }
-
 }

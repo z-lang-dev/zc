@@ -35,7 +35,7 @@ static char* token_to_str(TokenKind kind) {
         return "TK_MUL";
     case TK_DIV:
         return "TK_DIV";
-    case TK_INT:
+    case TK_INTEGER:
         return "TK_INT";
     case TK_LPAREN:
         return "TK_LPAREN";
@@ -175,6 +175,16 @@ static Node *integer(Parser *parser) {
     return expr;
 }
 
+static Node *bul(Parser *parser, bool val) {
+    Node *expr = calloc(1, sizeof(Node));
+    expr->kind = ND_BOOL;
+    expr->as.bul = val;
+    // 打印出AST
+    trace_node(expr);
+    advance(parser);
+    return expr;
+}
+
 static Node *group(Parser *parser) {
     advance(parser); // 跳过'('
     Node *expr = expression(parser);
@@ -187,6 +197,16 @@ static Node *neg(Parser *parser) {
     Node *expr = new_node(ND_NEG);
     expr->as.una.op = OP_SUB;
     expr->as.una.body = expr_prec(parser, PREC_NEG);
+    // 打印出AST
+    trace_node(expr);
+    return expr;
+}
+
+static Node *not(Parser *parser) {
+    advance(parser);
+    Node *expr = new_node(ND_NOT);
+    expr->as.una.op = OP_NOT;
+    expr->as.una.body = expr_prec(parser, PREC_NOT);
     // 打印出AST
     trace_node(expr);
     return expr;
@@ -244,14 +264,20 @@ static Node *unary(Parser *parser) {
         return group(parser);
     case TK_SUB:
         return neg(parser);
+    case TK_NOT:
+        return not(parser);
     case TK_STR:
         return string(parser);
-    case TK_INT:
+    case TK_INTEGER:
         return integer(parser);
+    case TK_TRUE:
+        return bul(parser, true);
+    case TK_FALSE:
+        return bul(parser, false);
     case TK_NAME:
         return name(parser);
     default:
-        printf("Unknown token: %d\n", parser->cur->kind);
+        printf("Unknown token: %s\n", token_to_str(parser->cur->kind));
         exit(1);
   }
 }
@@ -266,6 +292,24 @@ static Op get_op(TokenKind kind) {
         return OP_MUL;
     case TK_DIV:
         return OP_DIV;
+    case TK_GT:
+        return OP_GT;
+    case TK_LT:
+        return OP_LT;
+    case TK_GE:
+        return OP_GE;
+    case TK_LE:
+        return OP_LE;
+    case TK_EQ:
+        return OP_EQ;
+    case TK_NE:
+        return OP_NE;
+    case TK_AND:
+        return OP_AND;
+    case TK_OR:
+        return OP_OR;
+    case TK_NOT:
+        return OP_NOT;
     default:
         printf("Unknown operator: %d\n", kind);
         return OP_ILL;
@@ -282,6 +326,16 @@ static Precedence get_prec(TokenKind kind) {
         return PREC_MULDIV;
     case TK_EOF:
         return PREC_NONE;
+    case TK_GT:
+    case TK_LT:
+    case TK_GE:
+    case TK_LE:
+    case TK_EQ:
+    case TK_NE:
+        return PREC_COMPARE;
+    case TK_AND:
+    case TK_OR:
+        return PREC_ANDOR;
     default:
         printf("Unknown operator for prec: %d\n", kind);
         return PREC_NONE;
@@ -289,7 +343,11 @@ static Precedence get_prec(TokenKind kind) {
 }
 
 static bool is_binop(TokenKind kind) {
-    return kind == TK_ADD || kind == TK_SUB || kind == TK_MUL || kind == TK_DIV;
+    return 
+        kind == TK_ADD || kind == TK_SUB || kind == TK_MUL || kind == TK_DIV || 
+        kind == TK_GT || kind == TK_LT || kind == TK_GE || kind == TK_LE || 
+        kind == TK_EQ || kind == TK_NE || 
+        kind == TK_AND || kind == TK_OR;
 }
 
 static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
@@ -336,7 +394,6 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
         return left;
     }
 }
-
 
 
 // 解析一个表达式

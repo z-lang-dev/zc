@@ -11,12 +11,16 @@ typedef enum {
     TK_FALSE, // false
     TK_INT, // int
     TK_BOOL, // bool
+    TK_IF, // if
+    TK_ELSE, // else
     TK_NAME, // 名称
     TK_ASN, // =
     TK_USE, // 导入
     TK_INTEGER, // 整数
     TK_LPAREN, // (
     TK_RPAREN, // )
+    TK_LBRACE, // {
+    TK_RBRACE, // }
     TK_STR, // 字符串
     TK_ADD, // +
     TK_SUB, // -

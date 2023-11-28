@@ -161,6 +161,18 @@ Value *eval(Node *expr) {
         set_val(name, val);
         return val;
     }
+    case ND_IF: {
+        Value *cond = eval(expr->as.if_else.cond);
+        if (cond->kind != VAL_BOOL) {
+            printf("Type mismatch: %d\n", cond->kind);
+            return new_nil();
+        }
+        if (cond->as.bul) {
+            return eval(expr->as.if_else.then);
+        } else {
+            return eval(expr->as.if_else.els);
+        }
+    }
     case ND_BINOP:
         BinOp *bop = &expr->as.bop;
         Value *res = NULL;

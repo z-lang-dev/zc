@@ -77,7 +77,9 @@ typedef struct {
 
 static Keyword keywords[] = {
     {"bool", TK_BOOL},
+    {"else", TK_ELSE},
     {"false", TK_FALSE},
+    {"if", TK_IF},
     {"int", TK_INT},
     {"let", TK_LET},
     {"true", TK_TRUE},
@@ -149,6 +151,10 @@ Token *next_token(Lexer *lexer) {
         return new_token(lexer, TK_LPAREN);
     case ')':
         return new_token(lexer, TK_RPAREN);
+    case '{':
+        return new_token(lexer, TK_LBRACE);
+    case '}':
+        return new_token(lexer, TK_RBRACE);
     case '+':
         return new_token(lexer, TK_ADD);
     case '-':

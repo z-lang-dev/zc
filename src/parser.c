@@ -254,12 +254,30 @@ static Node *let(Parser *parser) {
     return expr;
 }
 
+static Node *if_else(Parser *parser) {
+    advance(parser); // 跳过'if'
+    Node *expr = new_node(ND_IF);
+    expr->as.if_else.cond = expression(parser);
+    expect(parser, TK_LBRACE);
+    expr->as.if_else.then = expression(parser);
+    expect(parser, TK_RBRACE);
+    if (match(parser, TK_ELSE)) {
+        advance(parser); // 跳过'else'
+        expect(parser, TK_LBRACE);
+        expr->as.if_else.els = expression(parser);
+        expect(parser, TK_RBRACE);
+    }
+    return expr;
+}
+
 static Node *unary(Parser *parser) {
   switch (parser->cur->kind) {
     case TK_LET:
         return let(parser);
     case TK_USE:
         return use(parser);
+    case TK_IF:
+        return if_else(parser);
     case TK_LPAREN:
         return group(parser);
     case TK_SUB:

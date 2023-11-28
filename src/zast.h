@@ -9,12 +9,14 @@ typedef struct Unary Unary;
 typedef struct Exprs Exprs;
 typedef struct Use Use;
 typedef struct Asn Asn;
+typedef struct IfElse IfElse;
 
 typedef enum {
     ND_PROG, // 一段程序
     ND_USE, // 导入模块
     ND_CALL, // 函数调用
     ND_LET, // 定量声明
+    ND_IF, // if-else语句
     ND_INT, // 整数
     ND_BOOL, // 布尔值
     ND_NOT, // 非
@@ -80,6 +82,12 @@ struct Asn {
     Node *value; // EXPR
 };
 
+struct IfElse {
+    Node *cond;
+    Node *then;
+    Node *els;
+};
+
 // AST节点
 struct Node {
     NodeKind kind;
@@ -94,6 +102,7 @@ struct Node {
         Exprs exprs;
         Use use;
         Asn asn;
+        IfElse if_else;
     } as;
 };
 

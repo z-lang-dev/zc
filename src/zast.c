@@ -19,6 +19,15 @@ void fecho_node(FILE *fp, Node *node) {
         fprintf(fp, "let %s = ", node->as.asn.name->as.str);
         fecho_node(fp, node->as.asn.value);
         break;
+    case ND_IF:
+        fprintf(fp, "if ");
+        fecho_node(fp, node->as.if_else.cond);
+        fprintf(fp, " {");
+        fecho_node(fp, node->as.if_else.then);
+        fprintf(fp, "} else {");
+        fecho_node(fp, node->as.if_else.els);
+        fprintf(fp, "}");
+        break;
     case ND_NEG:
         fprintf(fp, "-");
         fecho_node(fp, node->as.una.body);
@@ -80,6 +89,15 @@ void fprint_node(FILE *fp, Node *node) {
     case ND_LET:
         fprintf(fp, "{kind:ND_LET, name: %s, value: ", node->as.asn.name->as.str);
         fprint_node(fp, node->as.asn.value);
+        fprintf(fp, " }");
+        break;
+    case ND_IF:
+        fprintf(fp, "{kind:ND_IF, cond: ");
+        fprint_node(fp, node->as.if_else.cond);
+        fprintf(fp, ", then: ");
+        fprint_node(fp, node->as.if_else.then);
+        fprintf(fp, ", els: ");
+        fprint_node(fp, node->as.if_else.els);
         fprintf(fp, " }");
         break;
     case ND_NEG:

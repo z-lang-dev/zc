@@ -37,6 +37,11 @@ static struct CodegenMeta META;
 static char *WIN_REGS[4] = {"rcx", "rdx", "r8", "r9"};
 static char *LINUX_REGS[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
+static int count() {
+    static int i = 0;
+    return ++i;
+}
+
 static void gen_expr(FILE *fp, Node *expr) {
     switch(expr->kind) {
     case ND_LET: {
@@ -47,6 +52,20 @@ static void gen_expr(FILE *fp, Node *expr) {
         Meta *m = get_meta(expr->as.asn.name->as.str);
         fprintf(fp, "    mov dword ptr[rbp-%d], eax\n", m->offset);
 #endif
+        return;
+    }
+    case ND_IF: {
+        int c = count();
+        gen_expr(fp, expr->as.if_else.cond);
+        fprintf(fp, "    cmp rax, 0\n");
+        fprintf(fp, "    je _L_else%d\n", c);
+        gen_expr(fp, expr->as.if_else.then);
+        fprintf(fp, "    jmp _L_end%d\n", c);
+        fprintf(fp, "_L_else%d:\n", c);
+        if (expr->as.if_else.els != NULL) {
+            gen_expr(fp, expr->as.if_else.els);
+        }
+        fprintf(fp, "_L_end%d:\n", c);
         return;
     }
     case ND_NAME: {

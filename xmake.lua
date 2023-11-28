@@ -4,6 +4,7 @@ add_rules("mode.debug", "mode.release")
 local case_list = {
     "hello", "simple_int", "single_int", "simple_add", "add_sub", "calc", "neg_group", 
     "read_file", "write_file", "alert", "two_exprs", "use", "let", "compare",
+    "if_else",
 }
 
 local skip_table = {

@@ -27,42 +27,39 @@ static Node *new_node(NodeKind kind) {
 
 static char* token_to_str(TokenKind kind) {
     switch (kind) {
-    case TK_ADD:
-        return "TK_ADD";
-    case TK_SUB:
-        return "TK_SUB";
-    case TK_MUL:
-        return "TK_MUL";
-    case TK_DIV:
-        return "TK_DIV";
-    case TK_INTEGER:
-        return "TK_INT";
-    case TK_LPAREN:
-        return "TK_LPAREN";
-    case TK_RPAREN:
-        return "TK_RPAREN";
-    case TK_EOF:
-        return "TK_EOF";
-    case TK_NAME:
-        return "TK_NAME";
-    case TK_STR:
-        return "TK_STR";
-    case TK_COMMA:
-        return "TK_COMMA";
-    case TK_NLINE:
-        return "TK_NLINE";
-    case TK_SEMI:
-        return "TK_SEMI";
-    case TK_DOT:
-        return "TK_DOT";
-    case TK_USE:
-        return "TK_USE";
-    case TK_ASN:
-        return "TK_ASN";
-    case TK_LET:
-        return "TK_LET";
-    default:
-        return "TK_ILL";
+    case TK_ADD: return "TK_ADD";
+    case TK_SUB: return "TK_SUB";
+    case TK_MUL: return "TK_MUL";
+    case TK_DIV: return "TK_DIV";
+    case TK_INTEGER: return "TK_INT";
+    case TK_LPAREN: return "TK_LPAREN";
+    case TK_RPAREN: return "TK_RPAREN";
+    case TK_EOF: return "TK_EOF";
+    case TK_NAME: return "TK_NAME";
+    case TK_STR: return "TK_STR";
+    case TK_COMMA: return "TK_COMMA";
+    case TK_NLINE: return "TK_NLINE";
+    case TK_SEMI: return "TK_SEMI";
+    case TK_DOT: return "TK_DOT";
+    case TK_USE: return "TK_USE";
+    case TK_ASN: return "TK_ASN";
+    case TK_LET: return "TK_LET";
+    case TK_IF: return "TK_IF";
+    case TK_ELSE: return "TK_ELSE";
+    case TK_LBRACE: return "TK_LBRACE";
+    case TK_RBRACE: return "TK_RBRACE";
+    case TK_GT: return "TK_GT";
+    case TK_LT: return "TK_LT";
+    case TK_GE: return "TK_GE";
+    case TK_LE: return "TK_LE";
+    case TK_EQ: return "TK_EQ";
+    case TK_NE: return "TK_NE";
+    case TK_AND: return "TK_AND";
+    case TK_OR: return "TK_OR";
+    case TK_TRUE: return "TK_TRUE";
+    case TK_FALSE: return "TK_FALSE";
+    case TK_NOT: return "TK_NOT";
+    default: return "TK_UNKNOWN";
     }
 }
 

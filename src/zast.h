@@ -13,6 +13,7 @@ typedef struct IfElse IfElse;
 
 typedef enum {
     ND_PROG, // 一段程序
+    ND_BLOCK, // 一段代码块
     ND_USE, // 导入模块
     ND_CALL, // 函数调用
     ND_LET, // 定量声明
@@ -70,7 +71,8 @@ struct Exprs {
 };
 
 Node *new_prog();
-void append_expr(Node *prog, Node *expr);
+Node *new_block();
+void append_expr(Node *parent, Node *expr);
 
 struct Use {
     char *box;

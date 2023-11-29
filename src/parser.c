@@ -67,6 +67,15 @@ static bool match(Parser *parser, TokenKind kind) {
     return parser->cur->kind == kind;
 }
 
+static bool skip_empty_line(Parser *parser) {
+    bool has_end = false;
+    while (parser->cur->kind == TK_NLINE || parser->cur->kind == TK_SEMI) {
+        advance(parser);
+        has_end = true;
+    }
+    return has_end;
+}
+
 // 检查当前词符是否为kind，如果是，就跳过它，否则就报错
 static void expect(Parser *parser, TokenKind kind) {
     if (parser->cur->kind != kind) {
@@ -76,16 +85,13 @@ static void expect(Parser *parser, TokenKind kind) {
     advance(parser);
 }
 
-
 // 检查是否为表达式结束符（End Of Expression）
 static void expect_eoe(Parser *parser) {
-    TokenKind kind = parser->cur->kind;
-    if (kind == TK_NLINE || kind == TK_SEMI) {
-        advance(parser);
-    } else if (kind == TK_EOF) {
+    bool has_end = skip_empty_line(parser);
+    if (parser->cur->kind == TK_EOF || has_end) {
         return;
     } else {
-        printf("Expected %s, but got %s\n", token_to_str(kind), token_to_str(kind));
+        printf("Expected End of Expression, but got %s\n", token_to_str(parser->cur->kind));
         exit(1);
     }
 }
@@ -251,24 +257,43 @@ static Node *let(Parser *parser) {
     return expr;
 }
 
+static void *expect_eob(Parser *parser) {
+    bool has_end = skip_empty_line(parser);
+    if (has_end || parser->cur->kind == TK_RBRACE) {
+        return;
+    } else {
+        printf("Expected end of block, but got %s\n", token_to_str(parser->cur->kind));
+        exit(1);
+    }
+}
+
+static Node *block(Parser *parser) {
+    expect(parser, TK_LBRACE);
+    Node *block = new_block();
+    while (!match(parser, TK_RBRACE)) {
+        append_expr(block, expression(parser));
+        expect_eob(parser);
+    }
+    expect(parser, TK_RBRACE);
+    return block;
+}
+
 static Node *if_else(Parser *parser) {
     advance(parser); // 跳过'if'
     Node *expr = new_node(ND_IF);
     expr->as.if_else.cond = expression(parser);
-    expect(parser, TK_LBRACE);
-    expr->as.if_else.then = expression(parser);
-    expect(parser, TK_RBRACE);
+    expr->as.if_else.then = block(parser);
     if (match(parser, TK_ELSE)) {
         advance(parser); // 跳过'else'
-        expect(parser, TK_LBRACE);
-        expr->as.if_else.els = expression(parser);
-        expect(parser, TK_RBRACE);
+        expr->as.if_else.els = block(parser);
     }
     return expr;
 }
 
 static Node *unary(Parser *parser) {
   switch (parser->cur->kind) {
+    case TK_LBRACE:
+        return block(parser);
     case TK_LET:
         return let(parser);
     case TK_USE:
@@ -427,11 +452,7 @@ static Node *expr_prec(Parser *parser, Precedence base_prec) {
     }
 }
 
-static void skip_empty_line(Parser *parser) {
-    while (parser->cur->kind == TK_NLINE) {
-        advance(parser);
-    }
-}
+
 
 static Node *expression(Parser *parser) {
     skip_empty_line(parser);

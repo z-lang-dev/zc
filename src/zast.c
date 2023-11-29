@@ -12,6 +12,16 @@ void fecho_node(FILE *fp, Node *node) {
             fecho_node(fp, node->as.exprs.list[i]);
         }
         break;
+    case ND_BLOCK:
+        fprintf(fp, "{");
+        for (int i = 0; i < node->as.exprs.count; i++) {
+            if (i > 0) {
+                fprintf(fp, "\n");
+            }
+            fecho_node(fp, node->as.exprs.list[i]);
+        }
+        fprintf(fp, "}");
+        break;
     case ND_USE:
         fprintf(fp, "use %s.%s", node->as.use.box, node->as.use.name);
         break;
@@ -75,6 +85,16 @@ void fprint_node(FILE *fp, Node *node) {
     switch (node->kind) {
     case ND_PROG:
         fprintf(fp, "{kind:ND_PROG, exprs: [");
+        for (int i = 0; i < node->as.exprs.count; i++) {
+            if (i > 0) {
+                fprintf(fp, ", ");
+            }
+            fprint_node(fp, node->as.exprs.list[i]);
+        }
+        fprintf(fp, "]}");
+        break;
+    case ND_BLOCK:
+        fprintf(fp, "{kind:ND_BLOCK, exprs: [");
         for (int i = 0; i < node->as.exprs.count; i++) {
             if (i > 0) {
                 fprintf(fp, ", ");
@@ -169,6 +189,15 @@ void trace_node(Node *node) {
 #endif
 }
 
+Node *new_block() {
+    Node *prog = calloc(1, sizeof(Node));
+    prog->kind = ND_BLOCK;
+    prog->as.exprs.count = 0;
+    prog->as.exprs.cap = 1;
+    prog->as.exprs.list = calloc(1, sizeof(Node *));
+    return prog;
+}
+
 Node *new_prog() {
     Node *prog = calloc(1, sizeof(Node));
     prog->kind = ND_PROG;
@@ -178,8 +207,8 @@ Node *new_prog() {
     return prog;
 }
 
-void append_expr(Node *prog, Node *node) {
-    Exprs *exprs = &prog->as.exprs;
+void append_expr(Node *parent, Node *node) {
+    Exprs *exprs = &parent->as.exprs;
     if (exprs->count >= exprs->cap) { // grow if needed
         if (exprs->cap <= 0) exprs->cap = 1;
         else exprs->cap *= 2;

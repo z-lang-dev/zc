@@ -44,6 +44,11 @@ static int count() {
 
 static void gen_expr(FILE *fp, Node *expr) {
     switch(expr->kind) {
+    case ND_BLOCK:
+        for (int i = 0; i < expr->as.exprs.count; ++i) {
+            gen_expr(fp, expr->as.exprs.list[i]);
+        }
+        return;
     case ND_LET: {
         gen_expr(fp, expr->as.asn.value);
 #ifdef _WIN32

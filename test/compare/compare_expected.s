@@ -18,7 +18,15 @@ main:
     cmp rax, rdi
     setl al
     movzx rax, al
-    xor al, 01h
+    xor al, -1
+    and al, 1
+    movzx rax, al
+    push rax
+    mov rax, 1
+    push rax
+    pop rdi
+    pop rax
+    and rax, rdi
     pop rbp
     add rsp, 8
     ret

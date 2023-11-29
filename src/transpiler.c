@@ -50,6 +50,22 @@ static void do_meta(Node *prog) {
 
 static void gen_expr(FILE *fp, Node *expr) {
     switch (expr->kind) {
+    case ND_BLOCK:
+        char *tab = "    ";
+        if (META.lan != LAN_PY) fprintf(fp, "{\n");
+        for (int i = 0; i < expr->as.exprs.count; ++i) {
+            Node *e = expr->as.exprs.list[i];
+            if (e->kind == ND_USE) continue;
+            fprintf(fp, "%s", tab); // 暂时只支持一层缩进
+            if (META.lan == LAN_C && i == expr->as.exprs.count - 1) {
+                fprintf(fp, "return ");
+            }
+            gen_expr(fp, e);
+            if (META.lan == LAN_C) fprintf(fp, ";\n");
+            else fprintf(fp, "\n");
+        }
+        if (META.lan != LAN_PY) fprintf(fp, "}");
+        return;
     case ND_LET:
         char *name = expr->as.asn.name->as.str;
         if (META.lan == LAN_C) {
@@ -61,6 +77,27 @@ static void gen_expr(FILE *fp, Node *expr) {
             fprintf(fp, "let %s = ", name);
         }
         gen_expr(fp, expr->as.asn.value);
+        return;
+    case ND_IF:
+        switch (META.lan) {
+        case LAN_C:
+        case LAN_JS:
+            fprintf(fp, "if (");
+            gen_expr(fp, expr->as.if_else.cond);
+            fprintf(fp, ") ");
+            gen_expr(fp, expr->as.if_else.then);
+            fprintf(fp, " else ");
+            gen_expr(fp, expr->as.if_else.els);
+            break;
+        case LAN_PY:
+            fprintf(fp, "if ");
+            gen_expr(fp, expr->as.if_else.cond);
+            fprintf(fp, ":\n");
+            gen_expr(fp, expr->as.if_else.then);
+            fprintf(fp, "else:\n");
+            gen_expr(fp, expr->as.if_else.els);
+            break;
+        }
         return;
     case ND_NAME:
         fprintf(fp, "%s", expr->as.str);
@@ -209,14 +246,14 @@ static void codegen_c(Node *prog) {
 
     // 最后一条语句需要处理`return`
     Node *last = last_expr(prog);
-    if (last->kind == ND_CALL) {
-        gen_expr(fp, last);
-        fprintf(fp, ";\n");
-        fprintf(fp, "    return 0;\n");
-    } else {
+    if (last->kind == ND_INT || last->kind == ND_BOOL || last->kind == ND_BINOP || last->kind == ND_NEG) {
         fprintf(fp, "    return ");
         gen_expr(fp, last);
         fprintf(fp, ";\n");
+    } else {
+        gen_expr(fp, last);
+        fprintf(fp, ";\n");
+        fprintf(fp, "    return 0;\n");
     }
 
     // 结束

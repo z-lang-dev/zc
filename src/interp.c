@@ -161,6 +161,13 @@ Value *eval(Node *expr) {
         set_val(name, val);
         return val;
     }
+    case ND_BLOCK: {
+        Value *last = NULL;
+        for (int i = 0; i < expr->as.exprs.count; i++) {
+            last = eval(expr->as.exprs.list[i]);
+        }
+        return last;
+    }
     case ND_IF: {
         Value *cond = eval(expr->as.if_else.cond);
         if (cond->kind != VAL_BOOL) {

@@ -74,6 +74,17 @@ static void gen_expr(FILE *fp, Node *expr) {
         fprintf(fp, "_L_end%d:\n", c);
         return;
     }
+    case ND_FOR: {
+        int c = count();
+        fprintf(fp, "_L_begin%d:\n", c);
+        gen_expr(fp, expr->as.loop.cond);
+        fprintf(fp, "    cmp rax, 0\n");
+        fprintf(fp, "    je _L_end%d\n", c);
+        gen_expr(fp, expr->as.loop.body);
+        fprintf(fp, "    jmp _L_begin%d\n", c);
+        fprintf(fp, "_L_end%d:\n", c);
+        return;
+    }
     case ND_NAME: {
 #ifdef _WIN32
         // 变量名，需要获取其值
@@ -298,7 +309,7 @@ static void gen_expr(FILE *fp, Node *expr) {
             fprintf(fp, "    or rax, rdi\n");
             break;
         case OP_ASN:
-            fprintf(fp, "    mov [rax], rdi\n");
+            fprintf(fp, "    mov dword ptr[rax], edi\n");
             break;
         default:
             printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);

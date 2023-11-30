@@ -47,6 +47,13 @@ void fecho_node(FILE *fp, Node *node) {
         fecho_node(fp, node->as.if_else.els);
         fprintf(fp, "}");
         break;
+    case ND_FOR:
+        fprintf(fp, "for ");
+        fecho_node(fp, node->as.loop.cond);
+        fprintf(fp, " {");
+        fecho_node(fp, node->as.loop.body);
+        fprintf(fp, "}");
+        break;
     case ND_NEG:
         fprintf(fp, "-");
         fecho_node(fp, node->as.una.body);
@@ -63,6 +70,9 @@ void fecho_node(FILE *fp, Node *node) {
         fprintf(fp, ")");
         break;
     case ND_NAME:
+        fprintf(fp, "%s", node->as.str);
+        break;
+    case ND_LNAME:
         fprintf(fp, "%s", node->as.str);
         break;
     case ND_INT:
@@ -141,6 +151,13 @@ void fprint_node(FILE *fp, Node *node) {
         fprint_node(fp, node->as.if_else.els);
         fprintf(fp, " }");
         break;
+    case ND_FOR:
+        fprintf(fp, "{kind:ND_FOR, cond: ");
+        fprint_node(fp, node->as.loop.cond);
+        fprintf(fp, ", body: ");
+        fprint_node(fp, node->as.loop.body);
+        fprintf(fp, " }");
+        break;
     case ND_NEG:
         fprintf(fp, "{kind:ND_NEG, body: ");
         fprint_node(fp, node->as.una.body);
@@ -171,6 +188,9 @@ void fprint_node(FILE *fp, Node *node) {
         break;
     case ND_STR:
         fprintf(fp, "{kind: ND_STR, as.str: \"%s\"}", node->as.str);
+        break;
+    case ND_LNAME:
+        fprintf(fp, "{kind: ND_LNAME, as.str: %s}", node->as.str);
         break;
     case ND_NAME:
         fprintf(fp, "{kind: ND_NAME, as.str: %s}", node->as.str);
@@ -269,7 +289,9 @@ char *op_to_str(Op op) {
         return "!";
     case OP_ILL:
         return "<ILL_OP>";
+    case OP_ASN:
+        return "=";
     default:
-        return "<UNKOWN_OP>";
+        return "<UNKNOWN_OP>";
     }
 }

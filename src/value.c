@@ -61,9 +61,17 @@ void print_val(Value *val) {
     if (val == NULL) {
         return;
     }
-    if (val->kind == VAL_INT) {
+    switch (val->kind) {
+    case VAL_INT:
         printf("%d\n", val->as.num);
-    } else {
+        break;
+    case VAL_BOOL:
         printf("%s\n", val->as.bul ? "true" : "false");
+        break;
+    case VAL_NIL:
+        printf("nil\n");
+        break;
+    default:
+        printf("Unknown value kind: %d\n", val->kind);
     }
 }

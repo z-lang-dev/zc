@@ -12,7 +12,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "interp",
-                "mut a=10;a=25;a+4",
+                "print(\"Hello, world!\")",
             ],
             "stopAtEntry": false
         },
@@ -21,10 +21,10 @@
             "request": "launch",
             "name": "build",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/mut",
+            "cwd": "${workspaceFolder}/test/for",
             "args": [
                 "build",
-                "mut_case.z"
+                "for_case.z"
             ],
             "stopAtEntry": false
         },

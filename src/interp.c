@@ -5,14 +5,37 @@
 #include "stdz.h"
 #include "hash.h"
 
+// 用来模拟存量的查找
+static HashTable *table;
+
+static void set_val(char *name, Value *val) {
+    hash_set(table, name, val);
+}
+
+static Value *get_val(char *name) {
+    return hash_get(table, name);
+}
+
 // 内置函数
 
 // print
 static void print(Node *arg) {
-    if (arg->kind == ND_INT) {
+    switch (arg->kind) {
+    case ND_INT:
         printf("%d\n", arg->as.num);
-    } else {
+        break;
+    case ND_BOOL:
+        printf("%s\n", arg->as.bul ? "true" : "false");
+        break;
+    case ND_STR:
         printf("%s\n", arg->as.str);
+        break;
+    case ND_NAME:
+        Value *val = get_val(arg->as.str);
+        print_val(val);
+        break;
+    default:
+        printf("Unknown node kind: %d", arg->kind);
     }
 }
 
@@ -42,28 +65,6 @@ static void cat(char *path) {
     read_file(path);
 }
 
-// 用来模拟存量的查找
-// 需要用一个hashtable来替代。
-// static int a = 0;
-static HashTable *table;
-// static ValueArray *values;
-
-static void set_val(char *name, Value *val) {
-    hash_set(table, name, val);
-    // array_set(values, name, val);
-    // if (strcmp(name, "a") == 0) {
-        // a = val;
-    // }
-}
-
-static Value *get_val(char *name) {
-    return hash_get(table, name);
-    // return array_get(values, name);
-    // if (strcmp(name, "a") == 0) {
-        // return a;
-    // }
-    // return 0;
-}
 
 static bool check_num(Value *left, Value *right) {
     return left->kind == VAL_INT && right->kind == VAL_INT;
@@ -142,6 +143,39 @@ static Value *eval_logic(Value *left, Value *right, Op op) {
     }
 }
 
+bool call_builtin(Node *expr) {
+    char *name = expr->as.call.name->as.str;
+    if (strcmp(name, "print") == 0) {
+        print(expr->as.call.args[0]);
+        return true;
+    } else if (strcmp(name, "pwd") == 0) {
+        pwd();
+        return true;
+    } else if (strcmp(name, "ls") == 0) {
+        ls(expr->as.call.args[0]->as.str);
+        return true;
+    } else if (strcmp(name, "cd") == 0) {
+        cd(expr->as.call.args[0]->as.str);
+        return true;
+    } else if (strcmp(name, "cat") == 0) {
+        cat(expr->as.call.args[0]->as.str);
+        return true;
+    }
+    return false;
+}
+
+bool call_stdlib(Node *expr) {
+    char *name = expr->as.call.name->as.str;
+    if (strcmp(name, "read_file") == 0) {
+        read_file(expr->as.call.args[0]->as.str);
+        return true;
+    } else if (strcmp(name, "write_file") == 0) {
+        write_file(expr->as.call.args[0]->as.str, expr->as.call.args[1]->as.str);
+        return true;
+    }
+    return false;
+}
+
 // 对表达式求值
 Value *eval(Node *expr) {
     switch (expr->kind) {
@@ -186,7 +220,26 @@ Value *eval(Node *expr) {
             return eval(expr->as.if_else.els);
         }
     }
-    case ND_BINOP:
+    case ND_FOR: {
+        Value *cond = eval(expr->as.loop.cond);
+        if (cond->kind != VAL_BOOL) {
+            printf("Type mismatch: %d\n", cond->kind);
+            return new_nil();
+        }
+        while (cond->as.bul) {
+            eval(expr->as.loop.body);
+            cond = eval(expr->as.loop.cond);
+        }
+        // 没有实现数组和切片之前，for循环的返回值暂时当做nil;
+        return new_nil();
+    }
+    case ND_CALL: {
+        if (call_builtin(expr)) return new_nil();
+        if (call_stdlib(expr)) return new_nil();
+        printf("Unknown function: %s\n", expr->as.call.name->as.str);
+        return new_nil();
+    }
+    case ND_BINOP: {
         BinOp *bop = &expr->as.bop;
         Value *res = NULL;
         switch (bop->op) {
@@ -235,43 +288,11 @@ Value *eval(Node *expr) {
             printf("Unknown operator: %d\n", op_to_str(bop->op));
         }
         return res;
+    }
     default:
         printf("Wrong NodeKind to eval: %d\n", expr->kind);
         return NULL;
     }
-}
-
-bool call_builtin(Node *expr) {
-    char *name = expr->as.call.name->as.str;
-    if (strcmp(name, "print") == 0) {
-        print(expr->as.call.args[0]);
-        return true;
-    } else if (strcmp(name, "pwd") == 0) {
-        pwd();
-        return true;
-    } else if (strcmp(name, "ls") == 0) {
-        ls(expr->as.call.args[0]->as.str);
-        return true;
-    } else if (strcmp(name, "cd") == 0) {
-        cd(expr->as.call.args[0]->as.str);
-        return true;
-    } else if (strcmp(name, "cat") == 0) {
-        cat(expr->as.call.args[0]->as.str);
-        return true;
-    }
-    return false;
-}
-
-bool call_stdlib(Node *expr) {
-    char *name = expr->as.call.name->as.str;
-    if (strcmp(name, "read_file") == 0) {
-        read_file(expr->as.call.args[0]->as.str);
-        return true;
-    } else if (strcmp(name, "write_file") == 0) {
-        write_file(expr->as.call.args[0]->as.str, expr->as.call.args[1]->as.str);
-        return true;
-    }
-    return false;
 }
 
 // 执行AST
@@ -286,16 +307,10 @@ Value *execute(Node *expr) {
         }
         // 返回最后一个表达式的值
         return last;
-    case ND_CALL:
-        if (call_builtin(expr)) break;
-        if (call_stdlib(expr)) break;
-        printf("Unknown function: %s\n", expr->as.call.name->as.str);
-        return NULL; // 函数调用暂时不返回值
     default:
-        Value *val = eval(expr);
-        return val;
+        return eval(expr);
     }
-    return NULL;
+    return new_nil();
 }
 
 // 解释并执行代码
@@ -307,7 +322,9 @@ void interp(char *code) {
     Node *prog = parse(parser);
     log_trace("Executing ...\n------------------\n");
     Value *ret = execute(prog);
-    print_val(ret);
-    printf("\n");
+    if (ret->kind != VAL_NIL) {
+        print_val(ret);
+        printf("\n");
+    }
 }
 

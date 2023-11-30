@@ -10,6 +10,7 @@ typedef struct Exprs Exprs;
 typedef struct Use Use;
 typedef struct Asn Asn;
 typedef struct IfElse IfElse;
+typedef struct For For;
 
 typedef enum {
     ND_PROG, // 一段程序
@@ -20,6 +21,7 @@ typedef enum {
     ND_MUT, // 变量声明
     ND_ASN, // 赋值
     ND_IF, // if-else语句
+    ND_FOR, // for语句
     ND_INT, // 整数
     ND_BOOL, // 布尔值
     ND_NOT, // 非
@@ -94,6 +96,11 @@ struct IfElse {
     Node *els;
 };
 
+struct For {
+    Node *cond;
+    Node *body;
+};
+
 // AST节点
 struct Node {
     NodeKind kind;
@@ -109,6 +116,7 @@ struct Node {
         Use use;
         Asn asn;
         IfElse if_else;
+        For loop;
     } as;
 };
 

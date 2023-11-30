@@ -77,8 +77,11 @@ typedef struct {
 
 static Keyword keywords[] = {
     {"bool", TK_BOOL},
+    {"break", TK_BREAK},
+    {"continue", TK_CONTINUE},
     {"else", TK_ELSE},
     {"false", TK_FALSE},
+    {"for", TK_FOR},
     {"if", TK_IF},
     {"int", TK_INT},
     {"let", TK_LET},

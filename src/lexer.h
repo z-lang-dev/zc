@@ -13,6 +13,9 @@ typedef enum {
     TK_INT, // int
     TK_BOOL, // bool
     TK_IF, // if
+    TK_FOR, // for
+    TK_BREAK, // break
+    TK_CONTINUE, // continue
     TK_ELSE, // else
     TK_NAME, // 名称
     TK_ASN, // =

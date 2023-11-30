@@ -57,9 +57,9 @@ static void gen_expr(FILE *fp, Node *expr) {
             Node *e = expr->as.exprs.list[i];
             if (e->kind == ND_USE) continue;
             fprintf(fp, "%s", tab); // 暂时只支持一层缩进
-            if (META.lan == LAN_C && i == expr->as.exprs.count - 1) {
-                fprintf(fp, "return ");
-            }
+            // if (META.lan == LAN_C && i == expr->as.exprs.count - 1) {
+                // fprintf(fp, "return ");
+            // }
             gen_expr(fp, e);
             if (META.lan == LAN_C) fprintf(fp, ";\n");
             else fprintf(fp, "\n");
@@ -113,6 +113,24 @@ static void gen_expr(FILE *fp, Node *expr) {
             break;
         }
         return;
+    case ND_FOR: {
+        switch (META.lan) {
+        case LAN_C:
+        case LAN_JS:
+            fprintf(fp, "while (");
+            gen_expr(fp, expr->as.loop.cond);
+            fprintf(fp, ") ");
+            gen_expr(fp, expr->as.loop.body);
+            break;
+        case LAN_PY:
+            fprintf(fp, "while ");
+            gen_expr(fp, expr->as.loop.cond);
+            fprintf(fp, ":\n");
+            gen_expr(fp, expr->as.loop.body);
+            break;
+        }
+        return;
+    }
     case ND_LNAME:
     case ND_NAME:
         fprintf(fp, "%s", expr->as.str);

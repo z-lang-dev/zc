@@ -313,6 +313,14 @@ static Node *if_else(Parser *parser) {
     return expr;
 }
 
+static Node *for_loop(Parser *parser) {
+    advance(parser); // 跳过'for'
+    Node *expr = new_node(ND_FOR);
+    expr->as.loop.cond = expression(parser);
+    expr->as.loop.body = block(parser);
+    return expr;
+}
+
 static Node *unary(Parser *parser) {
   switch (parser->cur->kind) {
     case TK_LBRACE:
@@ -325,6 +333,8 @@ static Node *unary(Parser *parser) {
         return use(parser);
     case TK_IF:
         return if_else(parser);
+    case TK_FOR:
+        return for_loop(parser);
     case TK_LPAREN:
         return group(parser);
     case TK_SUB:

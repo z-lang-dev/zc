@@ -1,0 +1,7 @@
+mut i = 0
+mut sum = 0
+for i < 10 {
+    sum = sum + i
+    i = i + 1
+}
+sum

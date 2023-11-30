@@ -29,6 +29,15 @@ void fecho_node(FILE *fp, Node *node) {
         fprintf(fp, "let %s = ", node->as.asn.name->as.str);
         fecho_node(fp, node->as.asn.value);
         break;
+    case ND_MUT:
+        fprintf(fp, "mut %s = ", node->as.asn.name->as.str);
+        fecho_node(fp, node->as.asn.value);
+        break;
+    case ND_ASN:
+        fecho_node(fp, node->as.asn.name);
+        fprintf(fp, " = ");
+        fecho_node(fp, node->as.asn.value);
+        break;
     case ND_IF:
         fprintf(fp, "if ");
         fecho_node(fp, node->as.if_else.cond);
@@ -108,6 +117,18 @@ void fprint_node(FILE *fp, Node *node) {
         break;
     case ND_LET:
         fprintf(fp, "{kind:ND_LET, name: %s, value: ", node->as.asn.name->as.str);
+        fprint_node(fp, node->as.asn.value);
+        fprintf(fp, " }");
+        break;
+    case ND_MUT:
+        fprintf(fp, "{kind:ND_MUT, name: %s, value: ", node->as.asn.name->as.str);
+        fprint_node(fp, node->as.asn.value);
+        fprintf(fp, " }");
+        break;
+    case ND_ASN:
+        fprintf(fp, "{kind:ND_ASN, name: ");
+        fprint_node(fp, node->as.asn.name);
+        fprintf(fp, ", value: ");
         fprint_node(fp, node->as.asn.value);
         fprintf(fp, " }");
         break;

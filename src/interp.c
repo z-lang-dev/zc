@@ -161,6 +161,12 @@ Value *eval(Node *expr) {
         set_val(name, val);
         return val;
     }
+    case ND_MUT: {
+        Value *val = eval(expr->as.asn.value);
+        char *name = expr->as.asn.name->as.str;
+        set_val(name, val);
+        return val;
+    }
     case ND_BLOCK: {
         Value *last = NULL;
         for (int i = 0; i < expr->as.exprs.count; i++) {
@@ -219,6 +225,11 @@ Value *eval(Node *expr) {
             break;
         case OP_OR:
             res = eval_logic(eval(bop->left), eval(bop->right), OP_OR);
+            break;
+        case OP_ASN:
+            Value *val = eval(bop->right);
+            char *name = bop->left->as.str;
+            set_val(name, val);
             break;
         default:
             printf("Unknown operator: %d\n", op_to_str(bop->op));

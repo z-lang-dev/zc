@@ -66,7 +66,20 @@ static void gen_expr(FILE *fp, Node *expr) {
         }
         if (META.lan != LAN_PY) fprintf(fp, "}");
         return;
-    case ND_LET:
+    case ND_MUT: {
+        char *name = expr->as.asn.name->as.str;
+        if (META.lan == LAN_C) {
+            fprintf(fp, "    ");
+            fprintf(fp, "int %s = ", name);
+        } else if (META.lan == LAN_PY) {
+            fprintf(fp, "%s = ", name);
+        } else if (META.lan == LAN_JS) {
+            fprintf(fp, "var %s = ", name);
+        }
+        gen_expr(fp, expr->as.asn.value);
+        return;
+    }
+    case ND_LET: {
         char *name = expr->as.asn.name->as.str;
         if (META.lan == LAN_C) {
             fprintf(fp, "    ");
@@ -78,6 +91,7 @@ static void gen_expr(FILE *fp, Node *expr) {
         }
         gen_expr(fp, expr->as.asn.value);
         return;
+    }
     case ND_IF:
         switch (META.lan) {
         case LAN_C:
@@ -99,6 +113,7 @@ static void gen_expr(FILE *fp, Node *expr) {
             break;
         }
         return;
+    case ND_LNAME:
     case ND_NAME:
         fprintf(fp, "%s", expr->as.str);
         return;
@@ -209,6 +224,9 @@ static void gen_expr(FILE *fp, Node *expr) {
         if (META.lan == LAN_PY) fprintf(fp, " or ");
         else fprintf(fp, " || ");
         break;
+    case OP_ASN:
+        fprintf(fp, " = ");
+        break;
     default:
         printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
     }
@@ -246,7 +264,7 @@ static void codegen_c(Node *prog) {
 
     // 最后一条语句需要处理`return`
     Node *last = last_expr(prog);
-    if (last->kind == ND_INT || last->kind == ND_BOOL || last->kind == ND_BINOP || last->kind == ND_NEG) {
+    if (last->kind == ND_INT || last->kind == ND_BOOL || last->kind == ND_BINOP || last->kind == ND_NEG || last->kind == ND_NAME) {
         fprintf(fp, "    return ");
         gen_expr(fp, last);
         fprintf(fp, ";\n");

@@ -4,7 +4,7 @@ add_rules("mode.debug", "mode.release")
 local case_list = {
     "hello", "simple_int", "single_int", "simple_add", "add_sub", "calc", "neg_group", 
     "read_file", "write_file", "alert", "two_exprs", "use", "let", "compare",
-    "if_else",
+    "if_else", "mut"
 }
 
 local skip_table = {
@@ -77,7 +77,7 @@ target("test_interp")
     add_tests("neg_group", {runargs="-(3*5+-2-8)", trim_output=true, pass_outputs="-5"})
     add_tests("let", {runargs="let a=10;a+5", trim_output=true, pass_outputs="15"})
     add_tests("compare", {runargs="let a=10;a>5", trim_output=true, pass_outputs="true"})
-
+    add_tests("mut", {runargs="mut a=10;a=5;a", trim_output=true, pass_outputs="5"})
 
 -- 编译器compiler的测试用例
 target("test_compiler")

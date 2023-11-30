@@ -82,6 +82,7 @@ static Keyword keywords[] = {
     {"if", TK_IF},
     {"int", TK_INT},
     {"let", TK_LET},
+    {"mut", TK_MUT},
     {"true", TK_TRUE},
     {"use", TK_USE},
 };

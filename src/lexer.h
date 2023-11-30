@@ -7,6 +7,7 @@ typedef struct Lexer Lexer;
 typedef enum {
     // keywords
     TK_LET, // let
+    TK_MUT, // mut
     TK_TRUE, // true
     TK_FALSE, // false
     TK_INT, // int

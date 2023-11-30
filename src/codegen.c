@@ -49,6 +49,7 @@ static void gen_expr(FILE *fp, Node *expr) {
             gen_expr(fp, expr->as.exprs.list[i]);
         }
         return;
+    case ND_MUT: // 这里和ND_LET一样
     case ND_LET: {
         gen_expr(fp, expr->as.asn.value);
 #ifdef _WIN32
@@ -83,6 +84,14 @@ static void gen_expr(FILE *fp, Node *expr) {
         // 再加载变量值
         fprintf(fp, "    mov eax, [rbp-%d]\n", m->offset);
 #endif
+        return;
+    }
+    case ND_LNAME: {
+        Meta *m = get_meta(expr->as.str);
+        fprintf(fp, "    mov rax, rbp\n");
+        if (m->offset != 0) {
+            fprintf(fp, "    sub rax, %d\n", m->offset);
+        }
         return;
     }
     case ND_INT: {
@@ -222,6 +231,9 @@ static void gen_expr(FILE *fp, Node *expr) {
             fprintf(fp, "    setge al\n");
             fprintf(fp, "    movzx rax, al\n");
             break;
+        case OP_ASN:
+            fprintf(fp, "    mov dword ptr [rax], %d\n", right);
+            break;
         default:
             printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);
         }
@@ -284,6 +296,9 @@ static void gen_expr(FILE *fp, Node *expr) {
             break;
         case OP_OR:
             fprintf(fp, "    or rax, rdi\n");
+            break;
+        case OP_ASN:
+            fprintf(fp, "    mov [rax], rdi\n");
             break;
         default:
             printf("Error: unknown operator for binop expr: %d\n", expr->as.bop.op);

@@ -17,6 +17,8 @@ typedef enum {
     ND_USE, // 导入模块
     ND_CALL, // 函数调用
     ND_LET, // 定量声明
+    ND_MUT, // 变量声明
+    ND_ASN, // 赋值
     ND_IF, // if-else语句
     ND_INT, // 整数
     ND_BOOL, // 布尔值
@@ -24,6 +26,7 @@ typedef enum {
     ND_NEG, // 负数
     ND_STR, // 字符串
     ND_NAME, // 名称，包括函数名、存量名、类名等
+    ND_LNAME,  // 左值名称
     ND_BINOP, // 二元运算
 } NodeKind;
 
@@ -47,6 +50,7 @@ typedef enum {
     OP_AND, // 逻辑与
     OP_OR, // 逻辑或
     OP_NOT, // 逻辑非
+    OP_ASN, // 赋值
     OP_ILL, // 非法操作符
 } Op;
 

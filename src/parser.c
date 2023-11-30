@@ -44,6 +44,7 @@ static char* token_to_str(TokenKind kind) {
     case TK_USE: return "TK_USE";
     case TK_ASN: return "TK_ASN";
     case TK_LET: return "TK_LET";
+    case TK_MUT: return "TK_MUT";
     case TK_IF: return "TK_IF";
     case TK_ELSE: return "TK_ELSE";
     case TK_LBRACE: return "TK_LBRACE";
@@ -257,6 +258,28 @@ static Node *let(Parser *parser) {
     return expr;
 }
 
+static Node *mut(Parser *parser) {
+    // 跳过'mut'
+    advance(parser);
+    Node *expr = new_node(ND_MUT);
+
+    // 解析存量名称
+    Node *name = new_node(ND_NAME);
+    name->as.str = get_text(parser);
+    expr->as.asn.name = name;
+    advance(parser);
+
+    // 解析'='
+    expect(parser, TK_ASN);
+
+    // 解析数值表达式
+    expr->as.asn.value = expression(parser);
+
+    // 收集元信息
+    do_meta(parser, expr);
+    return expr;
+}
+
 static void *expect_eob(Parser *parser) {
     bool has_end = skip_empty_line(parser);
     if (has_end || parser->cur->kind == TK_RBRACE) {
@@ -296,6 +319,8 @@ static Node *unary(Parser *parser) {
         return block(parser);
     case TK_LET:
         return let(parser);
+    case TK_MUT:
+        return mut(parser);
     case TK_USE:
         return use(parser);
     case TK_IF:
@@ -350,6 +375,8 @@ static Op get_op(TokenKind kind) {
         return OP_OR;
     case TK_NOT:
         return OP_NOT;
+    case TK_ASN:
+        return OP_ASN;
     default:
         printf("Unknown operator: %d\n", kind);
         return OP_ILL;
@@ -376,6 +403,8 @@ static Precedence get_prec(TokenKind kind) {
     case TK_AND:
     case TK_OR:
         return PREC_ANDOR;
+    case TK_ASN:
+        return PREC_ASN;
     default:
         printf("Unknown operator for prec: %d\n", kind);
         return PREC_NONE;
@@ -387,7 +416,8 @@ static bool is_binop(TokenKind kind) {
         kind == TK_ADD || kind == TK_SUB || kind == TK_MUL || kind == TK_DIV || 
         kind == TK_GT || kind == TK_LT || kind == TK_GE || kind == TK_LE || 
         kind == TK_EQ || kind == TK_NE || 
-        kind == TK_AND || kind == TK_OR;
+        kind == TK_AND || kind == TK_OR ||
+        kind == TK_ASN;
 }
 
 static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
@@ -400,7 +430,11 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
         }
         Node *bop = calloc(1, sizeof(Node));
         bop->kind = ND_BINOP;
-        bop->as.bop.op = get_op(cur->kind);
+        Op op = get_op(cur->kind);
+        bop->as.bop.op = op;
+        if (op == OP_ASN && left->kind == ND_NAME) {
+            left->kind = ND_LNAME;
+        }
         bop->as.bop.left = left;
         advance(parser);
         Node *right = unary(parser);
@@ -451,8 +485,6 @@ static Node *expr_prec(Parser *parser, Precedence base_prec) {
         return binop(parser, left, base_prec);
     }
 }
-
-
 
 static Node *expression(Parser *parser) {
     skip_empty_line(parser);

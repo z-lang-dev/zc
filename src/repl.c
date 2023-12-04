@@ -67,13 +67,7 @@ void repl(void) {
         // 解析命令
         char *cmd = command(line);
         // 解析源码
-        Parser *parser = new_parser(cmd);
-        Node *expr = parse(parser);
-        // 执行
-        printf("executing...\n");
-        Value *val = execute(expr);
-        printf("result: ");
-        print_val(val);
+        interp(cmd);
     }
 }
 

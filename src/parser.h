@@ -2,6 +2,7 @@
 
 #include "zast.h"
 #include "lexer.h"
+#include "meta.h"
 
 typedef struct Parser Parser;
 
@@ -10,6 +11,7 @@ struct Parser {
     char *code;
     Token *cur;
     Token *next;
+    Scope *scope;
 };
 
 typedef enum {

@@ -21,10 +21,10 @@
             "request": "launch",
             "name": "build",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/for",
+            "cwd": "${workspaceFolder}/test/add_sub",
             "args": [
                 "build",
-                "for_case.z"
+                "add_sub_case.z"
             ],
             "stopAtEntry": false
         },

@@ -4,6 +4,7 @@
 #include "util.h"
 #include "stdz.h"
 #include "hash.h"
+#include "builtin.h"
 
 // 用来模拟存量的查找
 static HashTable *table;
@@ -313,12 +314,14 @@ Value *execute(Node *expr) {
     return new_nil();
 }
 
+
 // 解释并执行代码
 void interp(char *code) {
     // values = new_value_array();
     log_trace("Interpreting %s...\n", code);
     // 解析源码
     Parser *parser = new_parser(code);
+    make_builtins(global_scope());
     Node *prog = parse(parser);
     log_trace("Executing ...\n------------------\n");
     Value *ret = execute(prog);

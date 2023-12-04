@@ -3,6 +3,8 @@
 #include "parser.h"
 #include "codegen.h"
 #include "meta.h"
+#include "builtin.h"
+
 
 void build(char *file) {
     printf("Building %s\n", file);
@@ -10,6 +12,8 @@ void build(char *file) {
     char *code = read_src(file);
     // 解析出AST
     Parser *parser = new_parser(code);
+    make_builtins(global_scope());
+    use_stdz(global_scope());
     Node *prog = parse(parser);
     log_trace("Parsed total meta size: %d\n", total_meta_size());
 

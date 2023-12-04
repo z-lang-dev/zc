@@ -55,7 +55,7 @@ static void gen_expr(FILE *fp, Node *expr) {
 #ifdef _WIN32
         fprintf(fp, "    mov %s$[rbp], eax\n", expr->as.asn.name->as.str);
 #else
-        Meta *m = get_meta(expr->as.asn.name->as.str);
+        Meta *m = expr->meta;
         fprintf(fp, "    mov dword ptr[rbp-%d], eax\n", m->offset);
 #endif
         return;
@@ -91,14 +91,14 @@ static void gen_expr(FILE *fp, Node *expr) {
         fprintf(fp, "    mov rax, %s$[rbp]\n", expr->as.str);
 #else
         // 先获取变量地址
-        Meta *m = get_meta(expr->as.str);
+        Meta *m = expr->meta;
         // 再加载变量值
         fprintf(fp, "    mov eax, [rbp-%d]\n", m->offset);
 #endif
         return;
     }
     case ND_LNAME: {
-        Meta *m = get_meta(expr->as.str);
+        Meta *m = expr->meta;
         fprintf(fp, "    mov rax, rbp\n");
         if (m->offset != 0) {
             fprintf(fp, "    sub rax, %d\n", m->offset);
@@ -455,11 +455,16 @@ void codegen_linux(Node *prog) {
 }
 
 static bool do_locals(FILE *fp) {
-    HashTable *table = get_meta_table();
+    // TODO: 应该换一个遍历GlobalScope的方式
+    HashTable *table = global_scope()->metas;
     HashIter *i = hash_iter(table);
     bool has_locals = false;
     while (hash_next(table, i)) {
         Meta *meta = (Meta*)i->value;
+        if (meta->kind == MT_FN) {
+            // TODO: 处理自定义函数
+            continue;
+        }
         fprintf(fp, "%s$ = -%d\n", meta->name, meta->offset);
         has_locals = true;
     }

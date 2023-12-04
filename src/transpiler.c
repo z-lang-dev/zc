@@ -304,6 +304,8 @@ void trans_c(char *file) {
     char *code = read_src(file);
     // 解析出AST
     Parser *parser = new_parser(code);
+    make_builtins(global_scope());
+    use_stdz(global_scope());
     Node *prog = parse(parser);
     trace_node(prog);
     // 输出C代码
@@ -353,6 +355,8 @@ void trans_py(char *file) {
     char *code = read_src(file);
     // 解析出AST
     Parser *parser = new_parser(code);
+    make_builtins(global_scope());
+    use_stdz(global_scope());
     Node *prog = parse(parser);
     // 输出Python代码
     codegen_py(prog);
@@ -408,6 +412,8 @@ void trans_js(char *file) {
     char *code = read_src(file);
     // 解析出AST
     Parser *parser = new_parser(code);
+    make_builtins(global_scope());
+    use_stdz(global_scope());
     Node *prog = parse(parser);
     // 输出JS代码
     codegen_js(prog);

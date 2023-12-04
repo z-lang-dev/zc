@@ -295,3 +295,9 @@ char *op_to_str(Op op) {
         return "<UNKNOWN_OP>";
     }
 }
+
+Node *new_node(NodeKind kind) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    return node;
+}

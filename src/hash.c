@@ -16,8 +16,8 @@ HashTable *new_hash_table() {
  * @param key 需要计算哈希值的字符串。
  * @return int型的哈希值。
  */
-static int hash_code(char *key) {
-    int h = 0;
+static unsigned int hash_code(char *key) {
+    unsigned int h = 0;
     while (*key != '\0') {
         h = h * 31 + *key;
         key++;
@@ -33,10 +33,9 @@ static int hash_code(char *key) {
  * @return int型的索引
  */
 static int hash_idx(HashTable *hash, char *key) {
-    int h = hash_code(key);
+    unsigned int h = hash_code(key);
     return h % hash->cap;
 }
-
 
 bool hash_has(HashTable *hash, char *key) {
     int idx = hash_idx(hash, key);

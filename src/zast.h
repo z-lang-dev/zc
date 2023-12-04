@@ -17,6 +17,7 @@ typedef enum {
     ND_BLOCK, // 一段代码块
     ND_USE, // 导入模块
     ND_CALL, // 函数调用
+    ND_FN, // 函数定义
     ND_LET, // 定量声明
     ND_MUT, // 变量声明
     ND_ASN, // 赋值
@@ -76,6 +77,7 @@ struct Exprs {
     Node **list;
 };
 
+Node *new_node(NodeKind kind);
 Node *new_prog();
 Node *new_block();
 void append_expr(Node *parent, Node *expr);

@@ -19,11 +19,6 @@ static void advance(Parser *parser) {
     parser->next = next_token(parser->lexer);
 }
 
-static Node *new_node(NodeKind kind) {
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = kind;
-    return node;
-}
 
 static char* token_to_str(TokenKind kind) {
     switch (kind) {
@@ -142,6 +137,13 @@ static Node *name(Parser *parser) {
     Node *node = new_node(ND_NAME);
     node->as.str = get_text(parser);
     advance(parser);
+    // scope lookup
+    Meta *m = scope_lookup(parser->scope, node->as.str);
+    if (m == NULL) {
+        printf("Unknown name: %s\n", node->as.str);
+        exit(1);
+    }
+    node->meta = m;
     return node;
 }
 
@@ -230,10 +232,10 @@ static Node *use(Parser *parser) {
 }
 
 static void do_meta(Parser *parser, Node *expr) {
-    // 现在只需要收集定量`let`的元信息
-    Meta *m = new_meta(expr, MT_LET);
+    Meta *m = new_meta(expr);
     m->name = expr->as.asn.name->as.str;
-    set_meta(m);
+    scope_set(parser->scope, m->name, m);
+    expr->meta = m;
 }
 
 static Node *let(Parser *parser) {
@@ -544,6 +546,6 @@ Parser *new_parser(char *code) {
     parser->code = code;
     parser->cur = next_token(parser->lexer);
     parser->next = next_token(parser->lexer);
-    init_meta();
+    parser->scope = global_scope();
     return parser;
 }

@@ -92,6 +92,15 @@ static void expect_eoe(Parser *parser) {
     }
 }
 
+static void enter_scope(Parser *parser) {
+    Scope *scope = new_scope(parser->scope);
+    parser->scope = scope;
+}
+
+static void exit_scope(Parser *parser) {
+    parser->scope = parser->scope->parent;
+}
+
 typedef struct {
   int count;
   int cap;
@@ -294,12 +303,14 @@ static void *expect_eob(Parser *parser) {
 
 static Node *block(Parser *parser) {
     expect(parser, TK_LBRACE);
+    enter_scope(parser);
     Node *block = new_block();
     while (!match(parser, TK_RBRACE)) {
         append_expr(block, expression(parser));
         expect_eob(parser);
     }
     expect(parser, TK_RBRACE);
+    exit_scope(parser);
     return block;
 }
 

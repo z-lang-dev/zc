@@ -12,7 +12,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "interp",
-                "print(\"Hello, world!\")",
+                "{let a = 1}; a + 1",
             ],
             "stopAtEntry": false
         },

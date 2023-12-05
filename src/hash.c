@@ -109,6 +109,7 @@ int hash_get_int(HashTable *hash, char *key) {
     int idx = hash_idx(hash, key);
     Entry *ent = hash->entries[idx];
     if (ent == NULL) return 0;
+    if (strcmp(ent->key, key) != 0) return 0;
     return ((IntEntry*)ent)->value;
 }
 
@@ -116,6 +117,7 @@ void *hash_get(HashTable *hash, char *key) {
     int idx = hash_idx(hash, key);
     Entry *ent = hash->entries[idx];
     if (ent == NULL) return NULL;
+    if (strcmp(ent->key, key) != 0) return NULL;
     return ((ObjEntry*)ent)->value;
 }
 

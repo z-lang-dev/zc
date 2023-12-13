@@ -12,7 +12,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "interp",
-                "{let a = 1}; a + 1",
+                "let a=10;a+5",
             ],
             "stopAtEntry": false
         },
@@ -21,10 +21,10 @@
             "request": "launch",
             "name": "build",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/add_sub",
+            "cwd": "${workspaceFolder}/test/for",
             "args": [
                 "build",
-                "add_sub_case.z"
+                "for_case.z"
             ],
             "stopAtEntry": false
         },
@@ -57,10 +57,10 @@
             "request": "launch",
             "name": "z2js",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/let",
+            "cwd": "${workspaceFolder}/test/alert",
             "args": [
-                "build",
-                "let_case.z"
+                "js",
+                "alert_case.z"
             ],
             "stopAtEntry": false
         },

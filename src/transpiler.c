@@ -5,6 +5,7 @@
 #include "transpiler.h"
 #include "parser.h"
 #include "util.h"
+#include "builtin.h"
 
 #define MAX_USES 100
 typedef struct TransMeta TransMeta;
@@ -349,6 +350,10 @@ static void codegen_py(Node *prog) {
     fclose(fp);
 }
 
+static void use_charts() {
+    global_set("pie", new_stdfn("pie"));
+}
+
 void trans_py(char *file) {
     log_trace("Transpiling %s to Python\n", file);
     // 读取源码文件内容
@@ -357,6 +362,8 @@ void trans_py(char *file) {
     Parser *parser = new_parser(code);
     make_builtins(global_scope());
     use_stdz(global_scope());
+    // TODO: temp until support for use lib
+    use_charts();
     Node *prog = parse(parser);
     // 输出Python代码
     codegen_py(prog);
@@ -406,6 +413,10 @@ static void codegen_js(Node *prog) {
     fclose(fp);
 }
 
+static void use_js_stdz() {
+    global_set("alert", new_stdfn("alert"));
+}
+
 void trans_js(char *file) {
     log_trace("Transpiling %s to JS\n", file);
     // 读取源码文件内容
@@ -414,6 +425,7 @@ void trans_js(char *file) {
     Parser *parser = new_parser(code);
     make_builtins(global_scope());
     use_stdz(global_scope());
+    use_js_stdz();
     Node *prog = parse(parser);
     // 输出JS代码
     codegen_js(prog);

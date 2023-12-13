@@ -5,16 +5,15 @@
 #include "stdz.h"
 #include "hash.h"
 #include "builtin.h"
+#include "meta.h"
 
-// 用来模拟存量的查找
-static HashTable *table;
 
 static void set_val(char *name, Value *val) {
-    hash_set(table, name, val);
+    hash_set(global_scope()->values, name, val);
 }
 
 static Value *get_val(char *name) {
-    return hash_get(table, name);
+    return hash_get(global_scope()->values, name);
 }
 
 // 内置函数
@@ -281,9 +280,9 @@ Value *eval(Node *expr) {
             res = eval_logic(eval(bop->left), eval(bop->right), OP_OR);
             break;
         case OP_ASN:
-            Value *val = eval(bop->right);
             char *name = bop->left->as.str;
-            set_val(name, val);
+            res = eval(bop->right);
+            set_val(name, res);
             break;
         default:
             printf("Unknown operator: %d\n", op_to_str(bop->op));
@@ -298,8 +297,6 @@ Value *eval(Node *expr) {
 
 // 执行AST
 Value *execute(Node *expr) {
-    if (table == NULL) table = new_hash_table();
-
     switch (expr->kind) {
     case ND_PROG:
         Value *last = NULL;
@@ -313,7 +310,6 @@ Value *execute(Node *expr) {
     }
     return new_nil();
 }
-
 
 // 解释并执行代码
 void interp(char *code) {

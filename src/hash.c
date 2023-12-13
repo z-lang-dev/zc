@@ -16,8 +16,8 @@ HashTable *new_hash_table() {
  * @param key 需要计算哈希值的字符串。
  * @return int型的哈希值。
  */
-static unsigned int hash_code(char *key) {
-    unsigned int h = 0;
+static size_t hash_code(char *key) {
+    size_t h = 0;
     while (*key != '\0') {
         h = h * 31 + *key;
         key++;
@@ -32,13 +32,13 @@ static unsigned int hash_code(char *key) {
  * @param key 键值
  * @return int型的索引
  */
-static int hash_idx(HashTable *hash, char *key) {
-    unsigned int h = hash_code(key);
+static size_t hash_idx(HashTable *hash, char *key) {
+    size_t h = hash_code(key);
     return h % hash->cap;
 }
 
 bool hash_has(HashTable *hash, char *key) {
-    int idx = hash_idx(hash, key);
+    size_t idx = hash_idx(hash, key);
     return hash->entries[idx] != NULL && strcmp(hash->entries[idx]->key, key) == 0;
 }
 
@@ -49,7 +49,7 @@ void hash_set_int(HashTable *hash, char *key, int value) {
         hash->entries = realloc(hash->entries, hash->cap * sizeof(IntEntry));
     }
 
-    int idx = hash_idx(hash, key);
+    size_t idx = hash_idx(hash, key);
     if (hash->entries[idx] != NULL) {
         Entry *ent = hash->entries[idx];
         char *exist_key = ent->key;
@@ -81,7 +81,7 @@ void hash_set(HashTable *hash, char *key, void *value) {
         hash->entries = realloc(hash->entries, hash->cap * sizeof(ObjEntry));
     }
 
-    int idx = hash_idx(hash, key);
+    size_t idx = hash_idx(hash, key);
     if (hash->entries[idx] != NULL) {
         Entry *ent = hash->entries[idx];
         char *exist_key = ent->key;
@@ -106,7 +106,7 @@ void hash_set(HashTable *hash, char *key, void *value) {
 }
 
 int hash_get_int(HashTable *hash, char *key) {
-    int idx = hash_idx(hash, key);
+    size_t idx = hash_idx(hash, key);
     Entry *ent = hash->entries[idx];
     if (ent == NULL) return 0;
     if (strcmp(ent->key, key) != 0) return 0;
@@ -114,11 +114,17 @@ int hash_get_int(HashTable *hash, char *key) {
 }
 
 void *hash_get(HashTable *hash, char *key) {
-    int idx = hash_idx(hash, key);
-    Entry *ent = hash->entries[idx];
-    if (ent == NULL) return NULL;
-    if (strcmp(ent->key, key) != 0) return NULL;
-    return ((ObjEntry*)ent)->value;
+    size_t idx = hash_idx(hash, key);
+    size_t i = idx;
+    while (hash->entries[i] != NULL) {
+        Entry *ent = hash->entries[i];
+        if (strcmp(ent->key, key) == 0) {
+            return ((ObjEntry*)ent)->value;
+        }
+        i = (i + 1) % hash->cap;
+        if (i == idx) return NULL; // 找了一整圈都没找到。
+    }
+    return NULL;
 }
 
 ValueArray *new_value_array() {

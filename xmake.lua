@@ -11,7 +11,7 @@ local skip_table = {
     ["read_file"] = {["js"] = true},
     ["write_file"] = {["js"] = true},
     ["alert"] = {["c"]=true, ["py"]=true, ["compiler"]=true},
-    ["use"] = {["compiler"]=true},
+    ["use"] = {["compiler"]=true, ["c"]=true, ["js"]=true},
 }
 
 target("stdz")

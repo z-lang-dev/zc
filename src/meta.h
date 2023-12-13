@@ -23,6 +23,7 @@ struct Meta {
 
 struct Scope {
     HashTable *metas; // 元信息表
+    HashTable *values; // 运行时存值表
     Scope *parent;  // 父节点
     int cur_seq;
     int cur_offset;

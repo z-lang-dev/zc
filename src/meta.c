@@ -30,6 +30,7 @@ Scope *new_scope(Scope *parent) {
     Scope *scope = calloc(1, sizeof(Scope));
     scope->parent = parent;
     scope->metas = new_hash_table();
+    scope->values = new_hash_table();
     scope->cur_seq = 0;
     scope->cur_offset = 0;
     return scope;

@@ -11,6 +11,8 @@ typedef struct Use Use;
 typedef struct Asn Asn;
 typedef struct IfElse IfElse;
 typedef struct For For;
+typedef struct Params Params;
+typedef struct Fn Fn;
 
 typedef enum {
     ND_PROG, // 一段程序
@@ -103,6 +105,18 @@ struct For {
     Node *body;
 };
 
+struct Params {
+    int count;
+    int cap;
+    Node **list;
+};
+
+struct Fn {
+    char *name;
+    Params *params;
+    Node *body;
+};
+
 // AST节点
 struct Node {
     NodeKind kind;
@@ -119,6 +133,7 @@ struct Node {
         Asn asn;
         IfElse if_else;
         For loop;
+        Fn fn;
     } as;
 };
 

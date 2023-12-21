@@ -54,6 +54,18 @@ void fecho_node(FILE *fp, Node *node) {
         fecho_node(fp, node->as.loop.body);
         fprintf(fp, "}");
         break;
+    case ND_FN:
+        fprintf(fp, "fn %s(", node->as.fn.name);
+        for (int i = 0; i < node->as.fn.params->count; i++) {
+            if (i > 0) {
+                fprintf(fp, ", ");
+            }
+            fecho_node(fp, node->as.fn.params->list[i]);
+        }
+        fprintf(fp, ") {");
+        fecho_node(fp, node->as.fn.body);
+        fprintf(fp, "}");
+        break;
     case ND_NEG:
         fprintf(fp, "-");
         fecho_node(fp, node->as.una.body);
@@ -156,6 +168,18 @@ void fprint_node(FILE *fp, Node *node) {
         fprint_node(fp, node->as.loop.cond);
         fprintf(fp, ", body: ");
         fprint_node(fp, node->as.loop.body);
+        fprintf(fp, " }");
+        break;
+    case ND_FN:
+        fprintf(fp, "{kind:ND_FN, name: %s, params: [", node->as.fn.name);
+        for (int i = 0; i < node->as.fn.params->count; i++) {
+            if (i > 0) {
+                fprintf(fp, ", ");
+            }
+            fprint_node(fp, node->as.fn.params->list[i]);
+        }
+        fprintf(fp, "], body: ");
+        fprint_node(fp, node->as.fn.body);
         fprintf(fp, " }");
         break;
     case ND_NEG:

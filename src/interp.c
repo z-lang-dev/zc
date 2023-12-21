@@ -233,11 +233,31 @@ Value *eval(Node *expr) {
         // 没有实现数组和切片之前，for循环的返回值暂时当做nil;
         return new_nil();
     }
+    case ND_FN: {
+        Meta *m = expr->meta;
+        if (m == NULL) {
+            printf("Meta for %s is NULL\n", expr->as.fn.name);
+            return new_nil();
+        }
+        // TODO: return a Function Object 
+        return new_int(37);
+    }
     case ND_CALL: {
         if (call_builtin(expr)) return new_nil();
         if (call_stdlib(expr)) return new_nil();
-        printf("Unknown function: %s\n", expr->as.call.name->as.str);
-        return new_nil();
+        Meta *m = expr->meta;
+        if (m == NULL) {
+            printf("Unknown function: %s\n", expr->as.call.name->as.str);
+            return new_nil();
+        }
+        Node *fn = m->node;
+        Exprs *params = fn->as.fn.params;
+        for (int i = 0; i < params->count; ++i) {
+            Node *p = params->list[i];
+            char *n= p->as.str;
+            set_val(n, eval(expr->as.call.args[i]));
+        }
+        return eval(fn->as.fn.body);
     }
     case ND_BINOP: {
         BinOp *bop = &expr->as.bop;

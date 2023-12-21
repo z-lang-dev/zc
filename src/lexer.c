@@ -81,6 +81,7 @@ static Keyword keywords[] = {
     {"continue", TK_CONTINUE},
     {"else", TK_ELSE},
     {"false", TK_FALSE},
+    {"fn", TK_FN},
     {"for", TK_FOR},
     {"if", TK_IF},
     {"int", TK_INT},

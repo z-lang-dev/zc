@@ -167,6 +167,12 @@ static Node *call(Parser *parser, Node *left) {
   for (int i = 0; i < buf->count; i++) {
     node->as.call.args[i] = buf->data[i];
   }
+  Meta *m = scope_lookup(parser->scope, node->as.call.name->as.str);
+  if (m == NULL) {
+    printf("Error: Unknown call function name: %s\n", node->as.call.name->as.str);
+    exit(-1);
+  }
+  node->meta = m;
   trace_node(node);
   return node;
 }
@@ -242,9 +248,9 @@ static Node *use(Parser *parser) {
 
 static void do_meta(Parser *parser, Node *expr) {
     Meta *m = new_meta(expr);
-    m->name = expr->as.asn.name->as.str;
     scope_set(parser->scope, m->name, m);
     expr->meta = m;
+    m->node = expr;
 }
 
 static Node *let(Parser *parser) {
@@ -334,6 +340,51 @@ static Node *for_loop(Parser *parser) {
     return expr;
 }
 
+static void append_param(Params *p, Node *param) {
+    if (p->count == p->cap) {
+        p->cap *= 2;
+        p->list = realloc(p->list, p->cap * sizeof(Node *));
+    }
+    p->list[p->count++] = param;
+}
+
+static Params *params(Parser *parser) {
+    Params *p = calloc(1, sizeof(Params));
+    p->count = 0;
+    p->cap = 4;
+    p->list = calloc(1, sizeof(Node *));
+    while (parser->cur->kind != TK_RPAREN) {
+        Node *name = new_node(ND_NAME);
+        name->as.str = get_text(parser);
+        append_param(p, name);
+        advance(parser); // 跳过参数名
+        if (parser->cur->kind == TK_COMMA) {
+            advance(parser); // 跳过','
+        }
+    }
+    return p;
+}
+
+static Node *fn(Parser *parser) {
+    advance(parser); // 跳过'fn'
+    Node *expr = new_node(ND_FN);
+    expr->as.fn.name = get_text(parser);
+    advance(parser); // 跳过函数名
+    enter_scope(parser);
+    expect(parser, TK_LPAREN);
+    Params *p = params(parser);
+    expr->as.fn.params = p;
+    expect(parser, TK_RPAREN);
+    for (int i = 0; i < p->count; i++) {
+        Node *param = p->list[i];
+        scope_set(parser->scope, param->as.str, new_meta(param));
+    }
+    expr->as.fn.body = block(parser);
+    exit_scope(parser);
+    do_meta(parser, expr);
+    return expr;
+}
+
 static Node *unary(Parser *parser) {
   switch (parser->cur->kind) {
     case TK_LBRACE:
@@ -348,6 +399,8 @@ static Node *unary(Parser *parser) {
         return if_else(parser);
     case TK_FOR:
         return for_loop(parser);
+    case TK_FN:
+        return fn(parser);
     case TK_LPAREN:
         return group(parser);
     case TK_SUB:

@@ -8,12 +8,15 @@ Meta *new_meta(Node *expr) {
     switch (expr->kind) {
         case ND_LET:
             meta->kind = MT_LET;
+            meta->name = expr->as.asn.name->as.str;
             break;
         case ND_MUT:
             meta->kind = MT_MUT;
+            meta->name = expr->as.asn.name->as.str;
             break;
         case ND_FN:
             meta->kind = MT_FN;
+            meta->name = expr->as.fn.name;
             break;
         default:
             meta->kind = MT_ILL;

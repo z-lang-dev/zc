@@ -17,6 +17,7 @@ typedef enum {
     TK_BREAK, // break
     TK_CONTINUE, // continue
     TK_ELSE, // else
+    TK_FN, // fn
     TK_NAME, // 名称
     TK_ASN, // =
     TK_USE, // 导入

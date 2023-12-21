@@ -12,7 +12,7 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "interp",
-                "let a=10;a+5",
+                "fn add(a, b) {b + a}; add(14, 5)"
             ],
             "stopAtEntry": false
         },

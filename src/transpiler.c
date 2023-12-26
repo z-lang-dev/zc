@@ -49,18 +49,67 @@ static void do_meta(Node *prog) {
     }
 }
 
+static void gen_expr(FILE *fp, Node *expr);
+
+static void gen_fn(FILE *fp, Node *expr) {
+    char *name = expr->as.fn.name;
+    if (META.lan == LAN_C) {
+        fprintf(fp, "int %s(", name);
+    } else if (META.lan == LAN_PY) {
+        fprintf(fp, "def %s(", name);
+    } else if (META.lan == LAN_JS) {
+        fprintf(fp, "function %s(", name);
+    }
+    Params *params = expr->as.fn.params;
+    for (int i = 0; i < params->count; ++i) {
+        Node *param = params->list[i];
+        if (META.lan == LAN_C) {
+            fprintf(fp, "int %s", param->as.str);
+        } else if (META.lan == LAN_PY) {
+            fprintf(fp, "%s", param->as.str);
+        } else if (META.lan == LAN_JS) {
+            fprintf(fp, "%s", param->as.str);
+        }
+        if (i < params->count - 1) {
+            fprintf(fp, ", ");
+        }
+    }
+    if (META.lan == LAN_C) {
+        fprintf(fp, ") ");
+    } else if (META.lan == LAN_PY) {
+        fprintf(fp, "):\n");
+    } else if (META.lan == LAN_JS) {
+        fprintf(fp, ") ");
+    }
+    Meta *body_meta = expr->as.fn.body->meta;
+    if (body_meta == NULL) {
+        body_meta = new_meta(expr->as.fn.body);
+        body_meta->need_return = true;
+        expr->as.fn.body->meta = body_meta;
+    }
+    gen_expr(fp, expr->as.fn.body);
+    if (META.lan == LAN_C) {
+        fprintf(fp, "\n");
+    } else if (META.lan == LAN_PY) {
+        fprintf(fp, "\n");
+    } else if (META.lan == LAN_JS) {
+        fprintf(fp, "\n");
+    }
+}
+
 static void gen_expr(FILE *fp, Node *expr) {
     switch (expr->kind) {
     case ND_BLOCK:
         char *tab = "    ";
+        bool need_return = (expr->meta && ((Meta*)expr->meta)->need_return) ? true : false;
         if (META.lan != LAN_PY) fprintf(fp, "{\n");
         for (int i = 0; i < expr->as.exprs.count; ++i) {
             Node *e = expr->as.exprs.list[i];
             if (e->kind == ND_USE) continue;
             fprintf(fp, "%s", tab); // 暂时只支持一层缩进
-            // if (META.lan == LAN_C && i == expr->as.exprs.count - 1) {
-                // fprintf(fp, "return ");
-            // }
+            if (need_return && i == expr->as.exprs.count - 1) {
+                fprintf(fp, "return ");
+            }
             gen_expr(fp, e);
             if (META.lan == LAN_C) fprintf(fp, ";\n");
             else fprintf(fp, "\n");
@@ -129,6 +178,13 @@ static void gen_expr(FILE *fp, Node *expr) {
             fprintf(fp, ":\n");
             gen_expr(fp, expr->as.loop.body);
             break;
+        }
+        return;
+    }
+    case ND_FN: {
+        // C语言的函数声明必须放在上一层视野里。
+        if (META.lan != LAN_C) {
+            gen_fn(fp, expr);
         }
         return;
     }

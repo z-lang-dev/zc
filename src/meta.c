@@ -18,6 +18,9 @@ Meta *new_meta(Node *expr) {
             meta->kind = MT_FN;
             meta->name = expr->as.fn.name;
             break;
+        case ND_BLOCK:
+            meta->kind = MT_BLOCK;
+            break;
         default:
             meta->kind = MT_ILL;
             break;

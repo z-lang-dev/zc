@@ -5,6 +5,7 @@ local case_list = {
     "hello", "simple_int", "single_int", "simple_add", "add_sub", "calc", "neg_group", 
     "read_file", "write_file", "alert", "two_exprs", "use", "let", "compare",
     "if_else", "mut", "for",
+    "fn_add",
 }
 
 local skip_table = {
@@ -12,6 +13,7 @@ local skip_table = {
     ["write_file"] = {["js"] = true},
     ["alert"] = {["c"]=true, ["py"]=true, ["compiler"]=true},
     ["use"] = {["compiler"]=true, ["c"]=true, ["js"]=true},
+    ["fn_add"] = {["compiler"]=true},
 }
 
 target("stdz")

@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 #include "zast.h"
 #include "hash.h"
 
@@ -10,15 +11,18 @@ typedef enum {
     MT_LET,
     MT_MUT,
     MT_FN,
+    MT_BLOCK,
     MT_ILL,
 } MetaKind;
 
+// TODO: 把Meta改造成tagged-union
 struct Meta {
     MetaKind kind;
+    Node *node;
     char *name;
     int seq;
     int offset;
-    Node *node;
+    bool need_return; // for block
 };
 
 struct Scope {

@@ -65,7 +65,6 @@ static void cat(char *path) {
     read_file(path);
 }
 
-
 static bool check_num(Value *left, Value *right) {
     return left->kind == VAL_INT && right->kind == VAL_INT;
 }
@@ -239,25 +238,33 @@ Value *eval(Node *expr) {
             printf("Meta for %s is NULL\n", expr->as.fn.name);
             return new_nil();
         }
-        // TODO: return a Function Object 
-        return new_int(37);
+        Value *val = new_fn(&expr->as.fn);
+        set_val(expr->as.fn.name, val);
+        return val;
     }
     case ND_CALL: {
         if (call_builtin(expr)) return new_nil();
         if (call_stdlib(expr)) return new_nil();
+        /*
         Meta *m = expr->meta;
         if (m == NULL) {
             printf("Unknown function: %s\n", expr->as.call.name->as.str);
             return new_nil();
         }
         Node *fn = m->node;
-        Exprs *params = fn->as.fn.params;
+        */
+        Value *val = get_val(expr->as.call.name->as.str);
+        if (val == NULL) {
+            printf("Unknown function: %s\n", expr->as.call.name->as.str);
+            return new_nil();
+        }
+        Exprs *params = val->as.fn->params;
         for (int i = 0; i < params->count; ++i) {
             Node *p = params->list[i];
             char *n= p->as.str;
             set_val(n, eval(expr->as.call.args[i]));
         }
-        return eval(fn->as.fn.body);
+        return eval(val->as.fn->body);
     }
     case ND_BINOP: {
         BinOp *bop = &expr->as.bop;

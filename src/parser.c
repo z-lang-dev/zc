@@ -358,6 +358,9 @@ static Params *params(Parser *parser) {
         name->as.str = get_text(parser);
         append_param(p, name);
         advance(parser); // 跳过参数名
+        if (parser->cur->kind == TK_INT) {
+            advance(parser); // 暂时跳过类型标注
+        }
         if (parser->cur->kind == TK_COMMA) {
             advance(parser); // 跳过','
         }

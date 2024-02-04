@@ -21,6 +21,13 @@ Value *new_nil() {
     return &NIL_VAL;
 }
 
+Value *new_fn(Fn *fn) {
+    Value *val = calloc(1, sizeof(Value));
+    val->kind = VAL_FN;
+    val->as.fn = fn;
+    return val;
+}
+
 Value *not(Value *val) {
     return new_bool(!val->as.bul);
 }
@@ -70,6 +77,9 @@ void print_val(Value *val) {
         break;
     case VAL_NIL:
         printf("nil\n");
+        break;
+    case VAL_FN:
+        printf("fn %s\n", val->as.fn->name);
         break;
     default:
         printf("Unknown value kind: %d\n", val->kind);

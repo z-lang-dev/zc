@@ -23,6 +23,7 @@ struct Meta {
     int seq;
     int offset;
     bool need_return; // for block
+    bool is_def; // self defined function
 };
 
 struct Scope {

@@ -59,44 +59,58 @@ static void gen_expr(FILE *fp, Node *expr);
 
 static void gen_fn(FILE *fp, Node *expr) {
     char *name = expr->as.fn.name;
-    if (META.lan == LAN_C) {
+    Params *params = expr->as.fn.params;
+    switch (META.lan) {
+    case LAN_C: {
         // TODO: 由于还没有支持返回类型，这里暂时统一都写成int
         fprintf(fp, "int %s(", name);
-    } else if (META.lan == LAN_PY) {
-        fprintf(fp, "def %s(", name);
-    } else if (META.lan == LAN_JS) {
-        fprintf(fp, "function %s(", name);
-    }
-    Params *params = expr->as.fn.params;
-    if (params == NULL) {
-        if (META.lan == LAN_C) {
+        if (params == NULL) {
             fprintf(fp, "void");
+        } else {
+            for (int i = 0; i < params->count; ++i) {
+                Node *param = params->list[i];
+                fprintf(fp, "int %s", param->as.str);
+                if (i < params->count - 1) {
+                    fprintf(fp, ", ");
+                }
+            }
         }
-    } else {
-      for (int i = 0; i < params->count; ++i) {
-          Node *param = params->list[i];
-          if (META.lan == LAN_C) {
-              fprintf(fp, "int %s", param->as.str);
-          } else if (META.lan == LAN_PY) {
-              fprintf(fp, "%s", param->as.str);
-          } else if (META.lan == LAN_JS) {
-              fprintf(fp, "%s", param->as.str);
-          }
-          if (i < params->count - 1) {
-              fprintf(fp, ", ");
-          }
-      }
-    }
-    if (META.lan == LAN_C) {
         fprintf(fp, ") ");
-    } else if (META.lan == LAN_PY) {
-        fprintf(fp, "):\n");
-    } else if (META.lan == LAN_JS) {
-        fprintf(fp, ") ");
-    }
-    gen_expr(fp, expr->as.fn.body);
-    if (META.lan != LAN_PY) {
+        gen_expr(fp, expr->as.fn.body);
         fprintf(fp, "\n");
+        break;
+    }
+    case LAN_PY: {
+        fprintf(fp, "def %s(", name);
+        if (params != NULL) {
+            for (int i = 0; i < params->count; ++i) {
+                Node *param = params->list[i];
+                fprintf(fp, "%s", param->as.str);
+                if (i < params->count - 1) {
+                    fprintf(fp, ", ");
+                }
+            }
+        }
+        fprintf(fp, "):\n");
+        gen_expr(fp, expr->as.fn.body);
+        break;
+    }
+    case LAN_JS: {
+        fprintf(fp, "function %s(", name);
+        if (params != NULL) {
+            for (int i = 0; i < params->count; ++i) {
+                Node *param = params->list[i];
+                fprintf(fp, "%s", param->as.str);
+                if (i < params->count - 1) {
+                    fprintf(fp, ", ");
+                }
+            }
+        }
+        fprintf(fp, ") ");
+        gen_expr(fp, expr->as.fn.body);
+        fprintf(fp, "\n");
+        break;
+    }
     }
 }
 
@@ -527,6 +541,12 @@ static void codegen_js(Node *prog) {
             // 注意，print直接替换为console.log即可
             if (strcmp(name, "print") == 0) {
                 expr->as.call.name->as.str = "console.log";
+            } else if (expr->meta) {
+                Meta *m = (Meta*)expr->meta;
+                if (m->kind == MT_FN && m->is_def == false) {
+                    fprintf(fp, "import {%s} from \"./stdz.js\"\n", name);
+                    has_import = true;
+                }
             } else if (strcmp(name, name_in_use) != 0) {
                 fprintf(fp, "import {%s} from \"./stdz.js\"\n", name);
                 has_import = true;

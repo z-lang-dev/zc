@@ -246,11 +246,12 @@ static Node *use(Parser *parser) {
     return expr;
 }
 
-static void do_meta(Parser *parser, Node *expr) {
+static Meta *do_meta(Parser *parser, Node *expr) {
     Meta *m = new_meta(expr);
     scope_set(parser->scope, m->name, m);
     expr->meta = m;
     m->node = expr;
+    return m;
 }
 
 static Node *let(Parser *parser) {
@@ -388,7 +389,8 @@ static Node *fn(Parser *parser) {
     body_meta->need_return = true;
     expr->as.fn.body->meta = body_meta;
     exit_scope(parser);
-    do_meta(parser, expr);
+    Meta *m = do_meta(parser, expr);
+    m->is_def = true;
     return expr;
 }
 

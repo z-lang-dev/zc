@@ -7,7 +7,6 @@
 #include "builtin.h"
 #include "meta.h"
 
-
 static void set_val(char *name, Value *val) {
     hash_set(global_scope()->values, name, val);
 }

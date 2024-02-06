@@ -33,10 +33,10 @@
             "request": "launch",
             "name": "z2c",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/if_else",
+            "cwd": "${workspaceFolder}/test/simple_add",
             "args": [
                 "c",
-                "if_else_case.z"
+                "simple_add_case.z"
             ],
             "stopAtEntry": false
         },

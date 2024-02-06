@@ -383,6 +383,10 @@ static Node *fn(Parser *parser) {
         scope_set(parser->scope, param->as.str, new_meta(param));
     }
     expr->as.fn.body = block(parser);
+    // 注意：函数体需要处理返回值
+    Meta *body_meta = new_meta(expr->as.fn.body);
+    body_meta->need_return = true;
+    expr->as.fn.body->meta = body_meta;
     exit_scope(parser);
     do_meta(parser, expr);
     return expr;

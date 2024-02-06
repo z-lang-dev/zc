@@ -430,18 +430,6 @@ static void codegen_c(Node *prog) {
         }
     }
 
-    // // 最后一条语句需要处理`return`
-    // Node *last = last_expr(prog);
-    // if (last->kind == ND_INT || last->kind == ND_BOOL || last->kind == ND_BINOP || last->kind == ND_NEG || last->kind == ND_NAME) {
-    //     fprintf(fp, "    return ");
-    //     gen_expr(fp, last);
-    //     fprintf(fp, ";\n");
-    // } else {
-    //     gen_expr(fp, last);
-    //     fprintf(fp, ";\n");
-    //     fprintf(fp, "    return 0;\n");
-    // }
-
     // 结束
     // fprintf(fp, "}\n");
     // 保存并关闭文件

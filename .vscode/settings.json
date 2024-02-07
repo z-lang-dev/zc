@@ -11,6 +11,7 @@
         "codegen.h": "c",
         "interp.h": "c",
         "direct.h": "c",
-        "meta.h": "c"
+        "meta.h": "c",
+        "front.h": "c"
     }
 }

@@ -339,12 +339,13 @@ Value *execute(Node *expr) {
 
 // 解释并执行代码
 void interp(char *code) {
-    // values = new_value_array();
+    Front *front = new_front();
+    interp_once(front, code);
+}
+
+void interp_once(Front *front, char *code) {
     log_trace("Interpreting %s...\n", code);
-    // 解析源码
-    Parser *parser = new_parser(code);
-    make_builtins(global_scope());
-    Node *prog = parse(parser);
+    Node *prog = do_code(front, code);
     log_trace("Executing ...\n------------------\n");
     Value *ret = execute(prog);
     if (ret->kind != VAL_NIL) {
@@ -352,4 +353,3 @@ void interp(char *code) {
         printf("\n");
     }
 }
-

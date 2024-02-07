@@ -5,6 +5,7 @@
 #include "util.h"
 #include "parser.h"
 #include "interp.h"
+#include "front.h"
 
 // REPL内置的命令
 char *commands[] = {
@@ -50,6 +51,7 @@ static char *command(char *line) {
 
 // 交互式环境REPL
 void repl(void) {
+    Front *front = new_front();
     printf("Z REPL v0.1\n");
 
     for (;;) {
@@ -67,7 +69,7 @@ void repl(void) {
         // 解析命令
         char *cmd = command(line);
         // 解析源码
-        interp(cmd);
+        interp_once(front, cmd);
     }
 }
 

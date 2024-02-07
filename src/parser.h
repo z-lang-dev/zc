@@ -11,7 +11,7 @@ struct Parser {
     char *code;
     Token *cur;
     Token *next;
-    Scope *scope;
+    Scope *scope; // 当前的视野
 };
 
 typedef enum {

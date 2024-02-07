@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include "value.h"
 
-
 Value *new_int(int num) {
     Value *val = calloc(1, sizeof(Value));
     val->kind = VAL_INT;

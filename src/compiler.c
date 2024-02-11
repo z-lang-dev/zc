@@ -5,7 +5,8 @@
 
 void build(char *file) {
     printf("Building %s\n", file);
-    Node *prog = do_file(new_front(), file);
+    Mod *mod = do_file(new_front(), file);
+    Node *prog = mod->prog;
     log_trace("Parsed total meta size: %d\n", total_meta_size());
 
     // 生成汇编

@@ -3,6 +3,7 @@
 #include "zast.h"
 #include "lexer.h"
 #include "meta.h"
+#include "front.h"
 
 typedef struct Parser Parser;
 
@@ -12,6 +13,8 @@ struct Parser {
     Token *cur;
     Token *next;
     Scope *scope; // 当前的视野
+    Scope *root_scope; // parser对应的顶层视野，即模块视野
+    Front *front;
 };
 
 typedef enum {
@@ -23,6 +26,7 @@ typedef enum {
     PREC_MULDIV, // *, /
     PREC_NEG, // -
     PREC_NOT, // !
+    PREC_DOT, // .
 } Precedence;
 
 

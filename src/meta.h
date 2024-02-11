@@ -12,6 +12,7 @@ typedef enum {
     MT_MUT,
     MT_FN,
     MT_BLOCK,
+    MT_USE,
     MT_ILL,
 } MetaKind;
 
@@ -63,7 +64,7 @@ Scope *new_scope(Scope *parent);
 Meta *scope_lookup(Scope *scope, const char *name);
 bool scope_set(Scope *scope, const char *name, Meta *meta);
 
-Meta *global_get(const char *name);
+Meta *global_lookup(const char *name);
 bool global_set(const char *name, Meta *meta);
 
 Scope *global_scope();

@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 typedef struct Node Node;
-typedef struct Mod Mod;
+typedef struct Name Name;
 typedef struct CallExpr CallExpr;
 typedef struct BinOp BinOp;
 typedef struct Unary Unary;
@@ -14,12 +14,14 @@ typedef struct IfElse IfElse;
 typedef struct For For;
 typedef struct Params Params;
 typedef struct Fn Fn;
+typedef struct Path Path;
 
 typedef enum {
     ND_PROG, // 一段程序（可以包含一个或多个模块，也可以只是一个程序片段）
     ND_MOD, // 模块
     ND_BLOCK, // 代码块
     ND_USE, // 导入模块
+    ND_PATH, // 名路径，如http.server.async
     ND_CALL, // 函数调用
     ND_FN, // 函数定义
     ND_LET, // 定量声明
@@ -58,6 +60,7 @@ typedef enum {
     OP_OR, // 逻辑或
     OP_NOT, // 逻辑非
     OP_ASN, // 赋值
+    OP_DOT, // .
     OP_ILL, // 非法操作符
 } Op;
 
@@ -87,7 +90,7 @@ Node *new_block();
 void append_expr(Node *parent, Node *expr);
 
 struct Use {
-    char *box;
+    char *mod; // TODO: 先只支持一层模块，未来再扩充
     char *name;
 };
 
@@ -119,10 +122,23 @@ struct Fn {
     Node *body;
 };
 
-struct Mod {
-    char *name; // 模块名称，一般即源码文件名
-    Mod *parent; // 父模块，顶层模块的父模块为NULL
-    Node *prog; // 模块的代码
+typedef enum {
+    NM_NAME, // 普通名称
+    NM_FN, // 函数名
+    NM_MOD, // 模块名
+    NM_MEMB, // 成员名
+    NM_TYPE, // 类型名
+} NameKind;
+
+struct Name {
+    NameKind kind;
+    char *name;
+};
+
+#define MAX_PATH_LEN 6
+struct Path {
+    int len;
+    Name names[MAX_PATH_LEN];
 };
 
 // AST节点
@@ -142,7 +158,7 @@ struct Node {
         IfElse if_else;
         For loop;
         Fn fn;
-        Mod mod;
+        Path path;
     } as;
 };
 
@@ -155,3 +171,7 @@ void fprint_node(FILE* f, Node *node);
 void trace_node(Node *node);
 // 在开启LOG_TRACE开关时，打印节点信息。用于开发阶段辅助调试
 void echo_node(Node *node);
+
+// util
+
+char *get_name(Node *name);

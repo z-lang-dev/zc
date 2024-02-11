@@ -1,0 +1,4 @@
+use mat
+use mat1
+let sum = mat.add(5, 7)
+mat1.mul(sum, 3)

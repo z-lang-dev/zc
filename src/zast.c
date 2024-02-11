@@ -23,7 +23,10 @@ void fecho_node(FILE *fp, Node *node) {
         fprintf(fp, "}");
         break;
     case ND_USE:
-        fprintf(fp, "use %s.%s", node->as.use.box, node->as.use.name);
+        fprintf(fp, "use %s", node->as.use.mod);
+        if (node->as.use.name != NULL) {
+            fprintf(fp, ".%s", node->as.use.name);
+        }
         break;
     case ND_LET:
         fprintf(fp, "let %s = ", node->as.asn.name->as.str);
@@ -84,6 +87,14 @@ void fecho_node(FILE *fp, Node *node) {
     case ND_NAME:
         fprintf(fp, "%s", node->as.str);
         break;
+    case ND_PATH:
+        for (int i = 0; i < node->as.path.len; i++) {
+            if (i > 0) {
+                fprintf(fp, ".");
+            }
+            fprintf(fp, "%s", node->as.path.names[i].name);
+        }
+        break;
     case ND_LNAME:
         fprintf(fp, "%s", node->as.str);
         break;
@@ -135,7 +146,10 @@ void fprint_node(FILE *fp, Node *node) {
         fprintf(fp, "]}");
         break;
     case ND_USE:
-        fprintf(fp, "{kind:ND_USE, box: %s, name: %s}", node->as.use.box, node->as.use.name);
+        fprintf(fp, "{kind:ND_USE, mod: %s", node->as.use.mod);
+        if (node->as.use.name != NULL) {
+            fprintf(fp, ", name: %s", node->as.use.name);
+        }
         break;
     case ND_LET:
         fprintf(fp, "{kind:ND_LET, name: %s, value: ", node->as.asn.name->as.str);
@@ -218,6 +232,16 @@ void fprint_node(FILE *fp, Node *node) {
         break;
     case ND_NAME:
         fprintf(fp, "{kind: ND_NAME, as.str: %s}", node->as.str);
+        break;
+    case ND_PATH:
+        fprintf(fp, "{kind: ND_PATH, as.str: ");
+        for (int i = 0; i < node->as.path.len; i++) {
+            if (i > 0) {
+                fprintf(fp, ".");
+            }
+            fprintf(fp, "%s", node->as.path.names[i].name);
+        }
+        fprintf(fp, "}");
         break;
     case ND_BINOP:
         fprintf(fp, "{kind: ND_BINOP, op: %s", op_to_str(node->as.bop.op));
@@ -324,4 +348,15 @@ Node *new_node(NodeKind kind) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = kind;
     return node;
+}
+
+char *get_name(Node *name) {
+    switch (name->kind) {
+    case ND_NAME:
+        return name->as.str;
+    case ND_PATH:
+        return name->as.path.names[name->as.path.len - 1].name;
+    default:
+        return "<UNKNOWN_NAME_TYPE>";
+    }
 }

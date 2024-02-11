@@ -21,6 +21,8 @@ Meta *new_meta(Node *expr) {
         case ND_BLOCK:
             meta->kind = MT_BLOCK;
             break;
+        case ND_USE:
+            meta->kind = MT_USE;
         default:
             meta->kind = MT_ILL;
             break;

@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 #include "util.h"
 
 bool is_digit(char c) {
@@ -50,6 +51,32 @@ bool starts_with(char *str, char *prefix) {
         }
     }
     return true;
+}
+
+char *remove_ext(char *path) {
+    char *ret_str, *last_ext, *last_path;
+    // Error checks and allocate string.
+    if (path == NULL) return NULL;
+    if ((ret_str = malloc(strlen(path) + 1)) == NULL) return NULL;
+    // Make a copy and find the relevant characters.
+    strcpy(ret_str, path);
+    last_ext = strrchr(ret_str, '.');
+    last_path = ('/' == 0) ? NULL : strrchr (ret_str, '/');
+    // If it has an extension separator.
+    if (last_ext != NULL) {
+        // and it's to the right of the path separator.
+        if (last_path != NULL) {
+            if (last_path < last_ext) {
+                // then remove it.
+                *last_ext = '\0';
+            }
+        } else {
+            // Has extension separator with no path separator.
+            *last_ext = '\0';
+        }
+    }
+    // Return the modified string.
+    return ret_str;
 }
 
 // 根据LOG_TRACE开关决定是否打印编译器详细信息

@@ -34,3 +34,6 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 
 // 比较两个文件的内容
 int compare_file(char *file1, char *file2);
+
+// 删除字符串最后的文件扩展名
+char *remove_ext(char *path);

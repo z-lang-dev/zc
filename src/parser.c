@@ -7,6 +7,7 @@
 #include "util.h"
 #include "lexer.h"
 #include "meta.h"
+#include "front.h"
 
 static Node *expression(Parser *parser);
 static Node *expr_prec(Parser *parser, Precedence base_prec);
@@ -142,40 +143,77 @@ static char *get_text(Parser *parser) {
     return strip(parser->cur->pos, parser->cur->len);
 }
 
+static Meta *mod_lookup(Parser *parser, Node *name) {
+    return new_meta(name);
+}
+
 static Node *name(Parser *parser) {
     Node *node = new_node(ND_NAME);
-    node->as.str = get_text(parser);
+    char *n = get_text(parser);
     advance(parser);
-    // scope lookup
-    Meta *m = scope_lookup(parser->scope, node->as.str);
-    if (m == NULL) {
-        printf("Unknown name: %s\n", node->as.str);
-        exit(1);
+    if (match(parser, TK_DOT)) {
+        node->kind = ND_PATH;
+        node->as.path.names[0].name =  n;
+        int count = 1;
+        while (match(parser, TK_DOT)) {
+            advance(parser); // skip '.'
+            node->as.path.names[count++].name = get_text(parser);
+            advance(parser); // skip name
+            if (count > MAX_PATH_LEN) {
+                printf("Too many names in path: \n");
+                print_node(node);
+                exit(1);
+            }
+        }
+        node->as.path.len = count;
+        // TODO: 确定路径中每个名称的类型
+        print_node(node);
+        return node;
+    } else {
+        node->as.str = n;
+        // scope lookup
+        Meta *m = scope_lookup(parser->scope, node->as.str);
+        if (m == NULL) {
+            printf("Unknown name: %s\n", node->as.str);
+            exit(1);
+        }
+        node->meta = m;
+        return node;
     }
-    node->meta = m;
-    return node;
 }
 
 static Node *call(Parser *parser, Node *left) {
-  expect(parser, TK_LPAREN);
-  ArgBuf *buf = args(parser);
-  expect(parser, TK_RPAREN); 
-  Node *node = malloc(sizeof(Node) + buf->count * sizeof(Node *));
-  node->kind = ND_CALL;
-  node->as.call.name = left;
-  node->as.call.argc = buf->count;
-  for (int i = 0; i < buf->count; i++) {
-    node->as.call.args[i] = buf->data[i];
-  }
-  Meta *m = scope_lookup(parser->scope, node->as.call.name->as.str);
-  if (m == NULL) {
-    printf("Error: Unknown call function name: %s\n", node->as.call.name->as.str);
-    exit(-1);
-  }
-  node->meta = m;
-  trace_node(node);
-  return node;
+    expect(parser, TK_LPAREN);
+    ArgBuf *buf = args(parser);
+    expect(parser, TK_RPAREN);
+    Node *node = malloc(sizeof(Node) + buf->count * sizeof(Node *));
+    node->kind = ND_CALL;
+    node->as.call.name = left;
+    node->as.call.argc = buf->count;
+    for (int i = 0; i < buf->count; i++) {
+        node->as.call.args[i] = buf->data[i];
+    }
+    Node *name = node->as.call.name;
+    if (name->kind == ND_NAME) {
+        Meta *m = scope_lookup(parser->scope, node->as.call.name->as.str);
+        if (m == NULL) {
+            printf("Error: Unknown call function name: %s\n", node->as.call.name->as.str);
+            exit(-1);
+        }
+        node->meta = m;
+        trace_node(node);
+        return node;
+    } else if (name->kind == ND_PATH) {
+        printf("Mod: %s\n", name->as.path.names[0].name);
+        return node;
+    } else {
+        printf("Error: Unknown call name kind: %d for name ", name->kind);
+        echo_node(name);
+        printf("\n");
+        exit(-1);
+    }
 }
+
 
 static Node* string(Parser *parser) {
   Node *node = new_node(ND_STR);
@@ -233,16 +271,35 @@ static Node *not(Parser *parser) {
     return expr;
 }
 
+// 加载模块的内容
+static Node *load_mod(Parser *parser, Node *use) {
+    // 构造文件名
+    char* mod_name = use->as.use.mod;
+    char *path = calloc(strlen(mod_name) + 3, sizeof(char));
+    strcpy(path, mod_name);
+    strcat(path, ".z");
+
+    log_trace("Loading mod: %s\n", path);
+    Mod *mod = do_file(parser->front, path);
+    Node *prog = mod->prog;
+    return prog;
+}
+
 static Node *use(Parser *parser) {
     advance(parser); // skip 'use'
     Node *expr = new_node(ND_USE);
-    expr->as.use.box = get_text(parser);
+    expr->as.use.mod = get_text(parser);
+    Meta *m = new_meta(expr);
+    expr->meta = m;
+    scope_set(parser->scope, expr->as.use.mod, m);
     advance(parser); // skip TK_NAME
     if (match(parser, TK_DOT)) {
         advance(parser); // skip '.'
         expr->as.use.name = get_text(parser);
         advance(parser); // skip TK_NAME
     }
+    // 加载模块的内容
+    load_mod(parser, expr);
     return expr;
 }
 
@@ -462,6 +519,8 @@ static Op get_op(TokenKind kind) {
         return OP_NOT;
     case TK_ASN:
         return OP_ASN;
+    case TK_DOT:
+        return OP_DOT;
     default:
         printf("Unknown operator: %d\n", kind);
         return OP_ILL;
@@ -478,6 +537,8 @@ static Precedence get_prec(TokenKind kind) {
         return PREC_MULDIV;
     case TK_EOF:
         return PREC_NONE;
+    case TK_DOT:
+        return PREC_DOT;
     case TK_GT:
     case TK_LT:
     case TK_GE:
@@ -502,7 +563,8 @@ static bool is_binop(TokenKind kind) {
         kind == TK_GT || kind == TK_LT || kind == TK_GE || kind == TK_LE || 
         kind == TK_EQ || kind == TK_NE || 
         kind == TK_AND || kind == TK_OR ||
-        kind == TK_ASN;
+        kind == TK_ASN ||
+        kind == TK_DOT;
 }
 
 static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
@@ -619,6 +681,7 @@ Parser *new_parser(char *code) {
     parser->code = code;
     parser->cur = next_token(parser->lexer);
     parser->next = next_token(parser->lexer);
-    parser->scope = global_scope();
+    parser->root_scope = new_scope(NULL);
+    parser->scope = parser->root_scope;
     return parser;
 }

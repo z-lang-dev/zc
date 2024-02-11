@@ -1,7 +1,8 @@
+#include <stdlib.h>
 #include "front.h"
 #include "util.h"
 #include "builtin.h"
-#include <stdlib.h>
+#include "parser.h"
 
 Front *new_front() {
     Front *front = calloc(1, sizeof(Front));
@@ -9,28 +10,38 @@ Front *new_front() {
     front->sources->count = 0;
     front->sources->cap = 4;
     front->sources->list = calloc(4, sizeof(Source *));
+    front->mods = new_hash_table();
     return front;
 }
 
-static Node *process_code(Front *front, const char *code) {
-    Parser *parser = new_parser(code);
+static Mod *process_src(Front *front, Source *src) {
+    Parser *parser = new_parser(src->code);
+    parser->front = front;
     make_builtins(global_scope());
     use_stdz(global_scope());
     Node *prog = parse(parser);
-    return prog;
+    Mod *mod = calloc(1, sizeof(Mod));
+    mod->prog = prog;
+    mod->scope = parser->scope;
+    mod->name = remove_ext(src->name);
+    return mod;
 }
 
-Node *do_file(Front *front, const char *path) {
+Mod *do_file(Front *front, const char *path) {
     // 先读取文件
     Source *src = load_source(front, path);
     char *code = src->code;
-    return process_code(front, code);
+    Mod *mod = process_src(front, src);
+    hash_set(front->mods, mod->name, mod);
+    return mod;
 }
 
-Node *do_code(Front *front, const char *code) {
+// TODO: code需要指定对应的mod，而不是次次都新建mod
+Mod *do_code(Front *front, const char *code) {
     // 解析出AST
-    add_source(front, code);
-    return process_code(front, code);
+    Source *src = add_source(front, code);
+    Mod *mod = process_src(front, src);
+    hash_set(front->mods, mod->name, mod);
 }
 
 static void append_source(SourceQueue *sq, Source *src) {
@@ -59,4 +70,12 @@ Source *add_source(Front *front, const char *code) {
     append_source(front->sources, src);
     src->code = code;
     return src;
+}
+
+Meta *name_lookup(Front *front, const char *name) {
+    return NULL;
+}
+
+Meta *path_lookup(Front *front, const char *path) {
+    return NULL;
 }

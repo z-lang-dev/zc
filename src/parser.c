@@ -143,10 +143,6 @@ static char *get_text(Parser *parser) {
     return strip(parser->cur->pos, parser->cur->len);
 }
 
-static Meta *mod_lookup(Parser *parser, Node *name) {
-    return new_meta(name);
-}
-
 static Node *name(Parser *parser) {
     Node *node = new_node(ND_NAME);
     char *n = get_text(parser);
@@ -166,7 +162,7 @@ static Node *name(Parser *parser) {
             }
         }
         node->as.path.len = count;
-        // TODO: 确定路径中每个名称的类型
+        Meta *m = mod_lookup(parser->front, node);
         print_node(node);
         return node;
     } else {
@@ -272,17 +268,17 @@ static Node *not(Parser *parser) {
 }
 
 // 加载模块的内容
-static Node *load_mod(Parser *parser, Node *use) {
+static Mod *load_mod(Parser *parser, Node *use) {
     // 构造文件名
     char* mod_name = use->as.use.mod;
     char *path = calloc(strlen(mod_name) + 3, sizeof(char));
     strcpy(path, mod_name);
     strcat(path, ".z");
 
+    // 调用Front前端的do_file加载模块
     log_trace("Loading mod: %s\n", path);
     Mod *mod = do_file(parser->front, path);
-    Node *prog = mod->prog;
-    return prog;
+    return mod;
 }
 
 static Node *use(Parser *parser) {

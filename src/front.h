@@ -24,12 +24,15 @@ typedef enum {
     MOD_APP,
 } ModKind;
 
+/**
+ * @brief 模块：用来存储一个模块的前端解析结果
+*/
 struct Mod {
-    ModKind kind;
-    char *name;
-    Source *source;
-    Scope *scope;
-    Node *prog;
+    ModKind kind; // 种类：库文件或应用文件
+    char *name; // 模块名称
+    Source *source; // 对应的源码
+    Scope *scope; // 模块的视野
+    Node *prog; // 模块的AST
 };
 
 /**
@@ -46,8 +49,7 @@ Front *new_front();
 Mod *do_file(Front *front, const char *path);
 Mod *do_code(Front *front, const char *code);
 
-Meta *name_lookup(Front *front, const char *name);
-Meta *path_lookup(Front *front, const char *path);
+Meta *mod_lookup(Front *front, Node *path);
 
 // 添加文本形式的源码
 Source *add_source(Front *front, const char *code);

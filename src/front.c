@@ -72,10 +72,12 @@ Source *add_source(Front *front, const char *code) {
     return src;
 }
 
-Meta *name_lookup(Front *front, const char *name) {
-    return NULL;
-}
-
-Meta *path_lookup(Front *front, const char *path) {
-    return NULL;
+Meta *mod_lookup(Front *front, Node *path) {
+    if (path->kind != ND_PATH) return NULL;
+    if (path->as.path.len < 2) return NULL;
+    char *mod = path->as.path.names[0].name;
+    char *name = path->as.path.names[1].name;
+    Mod *m = hash_get(front->mods, mod);
+    if (m == NULL) return NULL;
+    return scope_lookup(m->scope, name);
 }

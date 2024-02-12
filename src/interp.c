@@ -345,7 +345,8 @@ void interp(char *code) {
 
 void interp_once(Front *front, char *code) {
     log_trace("Interpreting %s...\n", code);
-    Node *prog = do_code(front, code);
+    Mod *mod= do_code(front, code);
+    Node *prog = mod->prog;
     log_trace("Executing ...\n------------------\n");
     Value *ret = execute(prog);
     if (ret->kind != VAL_NIL) {

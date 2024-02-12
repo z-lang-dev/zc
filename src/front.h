@@ -11,6 +11,7 @@ typedef struct SourceQueue SourceQueue;
 struct Source {
     const char *name; // 源码的名称，一般即文件名。
     const char *code; // 源码的文本。
+    Scope *scope; // 源码的视野，这里的源码可能是整个源码的一部分（例如REPL的一段），因此它可能有先天的共享视野
 };
 
 struct SourceQueue {

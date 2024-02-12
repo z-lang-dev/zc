@@ -532,13 +532,13 @@ void trans_c(char *file) {
     Mod *mod = do_file(front, file);
     mod->name = "app";
     trace_node(mod->prog);
-    // TODO: 遍历Front的所有模块，一一生成对应的C代码
     // 输出C代码
     codegen_c(front);
 }
 
 // 将AST编译成Python代码
-static void codegen_py(Node *prog) {
+static void codegen_py_mod(Mod *mod) {
+    Node *prog = mod->prog;
     META.lan = LAN_PY;
     // 打开输出文件
     FILE *fp = fopen("app.py", "w");
@@ -574,29 +574,35 @@ static void codegen_py(Node *prog) {
     fclose(fp);
 }
 
+static void codegen_py(Front *front) {
+    // 遍历front的所有模块：
+    HashIter *i = hash_iter(front->mods);
+    while (hash_next(front->mods, i)) {
+        Mod *mod = (Mod*)i->value;
+        codegen_py_mod(mod);
+    }
+}
+
 static void use_charts() {
     global_set("pie", new_stdfn("pie"));
 }
 
 void trans_py(char *file) {
     log_trace("Transpiling %s to Python\n", file);
-    // 读取源码文件内容
-    char *code = read_src(file);
-    // 解析出AST
+    // 新建前端
     Front *front = new_front();
-    Parser *parser = new_parser(code);
-    parser->front = front;
-    make_builtins(global_scope());
-    use_stdz(global_scope());
-    // TODO: temp until support for use lib
     use_charts();
-    Node *prog = parse(parser);
-    // 输出Python代码
-    codegen_py(prog);
+    // 解析文件并生成模块
+    Mod *mod = do_file(front, file);
+    scope_set(mod->scope, "pie", new_stdfn("pie"));
+    mod->name = "app";
+    trace_node(mod->prog);
+    codegen_py(front);
 }
 
 // 将AST编译成JS代码
-static void codegen_js(Node *prog) {
+static void codegen_js_mod(Mod *mod) {
+    Node *prog = mod->prog;
     META.lan = LAN_JS;
     Node *expr = prog->as.exprs.list[0];
     // 打开输出文件
@@ -645,22 +651,27 @@ static void codegen_js(Node *prog) {
     fclose(fp);
 }
 
+static void codegen_js(Front *front) {
+    // 遍历front的所有模块：
+    HashIter *i = hash_iter(front->mods);
+    while (hash_next(front->mods, i)) {
+        Mod *mod = (Mod*)i->value;
+        codegen_js_mod(mod);
+    }
+}
+
 static void use_js_stdz() {
     global_set("alert", new_stdfn("alert"));
 }
 
 void trans_js(char *file) {
     log_trace("Transpiling %s to JS\n", file);
-    // 读取源码文件内容
-    char *code = read_src(file);
-    // 解析出AST
+    // 新建前端
     Front *front = new_front();
-    Parser *parser = new_parser(code);
-    parser->front = front;
-    make_builtins(global_scope());
-    use_stdz(global_scope());
     use_js_stdz();
-    Node *prog = parse(parser);
-    // 输出JS代码
-    codegen_js(prog);
+    // 解析文件并生成模块
+    Mod *mod = do_file(front, file);
+    mod->name = "app";
+    trace_node(mod->prog);
+    codegen_js(front);
 }

@@ -7,11 +7,11 @@ Meta *new_builtin(char *name) {
 }
 
 void make_builtins(Scope *scope) {
-    global_set("print", new_builtin("print"));
-    global_set("pwd", new_builtin("pwd"));
-    global_set("ls", new_builtin("ls"));
-    global_set("cd", new_builtin("cd"));
-    global_set("cat", new_builtin("cat"));
+    scope_set(scope, "print", new_builtin("print"));
+    scope_set(scope, "pwd", new_builtin("pwd"));
+    scope_set(scope, "ls", new_builtin("ls"));
+    scope_set(scope, "cd", new_builtin("cd"));
+    scope_set(scope, "cat", new_builtin("cat"));
 }
 
 
@@ -25,6 +25,6 @@ Meta *new_stdfn(char *name) {
 }
 
 void use_stdz(Scope *scope) {
-   global_set("read_file", new_stdfn("read_file"));
-   global_set("write_file", new_stdfn("write_file"));
+   scope_set(scope, "read_file", new_stdfn("read_file"));
+   scope_set(scope, "write_file", new_stdfn("write_file"));
 }

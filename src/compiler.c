@@ -5,7 +5,10 @@
 
 void build(char *file) {
     printf("Building %s\n", file);
-    Mod *mod = do_file(new_front(), file);
+    Front *front = new_front();
+    Mod *mod = do_file(front, file);
+    // TODO: 需要真正的全局视野，而不只是模块视野
+    GlobalScope = mod->scope;
     Node *prog = mod->prog;
     log_trace("Parsed total meta size: %d\n", total_meta_size());
 

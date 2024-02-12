@@ -30,5 +30,5 @@ typedef enum {
 } Precedence;
 
 
-Parser *new_parser(char *code);
+Parser *new_parser(char *code, Scope *scope);
 Node *parse(Parser *parser);

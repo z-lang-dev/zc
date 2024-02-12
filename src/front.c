@@ -11,18 +11,19 @@ Front *new_front() {
     front->sources->cap = 4;
     front->sources->list = calloc(4, sizeof(Source *));
     front->mods = new_hash_table();
+
+    make_builtins(global_scope());
+    use_stdz(global_scope());
     return front;
 }
 
 static Mod *process_src(Front *front, Source *src) {
-    Parser *parser = new_parser(src->code);
+    Parser *parser = new_parser(src->code, src->scope);
     parser->front = front;
-    make_builtins(global_scope());
-    use_stdz(global_scope());
     Node *prog = parse(parser);
     Mod *mod = calloc(1, sizeof(Mod));
     mod->prog = prog;
-    mod->scope = parser->scope;
+    mod->scope = parser->root_scope;
     mod->name = remove_ext(src->name);
     return mod;
 }
@@ -36,12 +37,13 @@ Mod *do_file(Front *front, const char *path) {
     return mod;
 }
 
-// TODO: code需要指定对应的mod，而不是次次都新建mod
 Mod *do_code(Front *front, const char *code) {
     // 解析出AST
     Source *src = add_source(front, code);
+    src->scope = global_scope(); // TODO：未来如果要做增量编译，这里的视野就不是全局视野了。
     Mod *mod = process_src(front, src);
     hash_set(front->mods, mod->name, mod);
+    return mod;
 }
 
 static void append_source(SourceQueue *sq, Source *src) {

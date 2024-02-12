@@ -294,8 +294,10 @@ static Node *use(Parser *parser) {
         expr->as.use.name = get_text(parser);
         advance(parser); // skip TK_NAME
     }
-    // 加载模块的内容
-    load_mod(parser, expr);
+    // 就加载模块的内容
+    if (expr->as.use.name == NULL) {
+        load_mod(parser, expr);
+    }
     return expr;
 }
 
@@ -671,13 +673,13 @@ Node *parse(Parser *parser) {
  * @param code The code to be parsed.
  * @return A pointer to the newly created Parser object.
  */
-Parser *new_parser(char *code) {
+Parser *new_parser(char *code, Scope *scope) {
     Parser *parser = calloc(1, sizeof(Parser));
     parser->lexer = new_lexer(code);
     parser->code = code;
     parser->cur = next_token(parser->lexer);
     parser->next = next_token(parser->lexer);
-    parser->root_scope = new_scope(NULL);
+    parser->root_scope = scope == NULL ? new_scope(global_scope()) : scope;
     parser->scope = parser->root_scope;
     return parser;
 }

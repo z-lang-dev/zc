@@ -455,7 +455,6 @@ void codegen_linux(Node *prog) {
 }
 
 static bool do_locals(FILE *fp) {
-    // TODO: 应该换一个遍历GlobalScope的方式
     HashTable *table = global_scope()->metas;
     HashIter *i = hash_iter(table);
     bool has_locals = false;

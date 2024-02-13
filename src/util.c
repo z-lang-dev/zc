@@ -197,4 +197,10 @@ int compare_file(char *file1, char *file2) {
     fclose(fp2);
     return result;
 }
-    
+
+char* sfmt(const char* fmt, char *msg) {
+    size_t needed = snprintf(NULL, 0, fmt, msg, strerror(errno), errno) + 1;
+    char *buffer = malloc(needed);
+    sprintf(buffer, fmt, msg, strerror(errno), errno);
+    return buffer;
+}

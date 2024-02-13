@@ -37,3 +37,5 @@ int compare_file(char *file1, char *file2);
 
 // 删除字符串最后的文件扩展名
 char *remove_ext(char *path);
+
+char* sfmt(const char* fmt, char *msg);

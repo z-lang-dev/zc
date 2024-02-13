@@ -15,6 +15,7 @@ struct Parser {
     Scope *scope; // 当前的视野
     Scope *root_scope; // parser对应的顶层视野，即模块视野
     Front *front;
+    HashTable *uses;
 };
 
 typedef enum {

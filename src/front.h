@@ -34,6 +34,7 @@ struct Mod {
     Source *source; // 对应的源码
     Scope *scope; // 模块的视野
     Node *prog; // 模块的AST
+    HashTable *uses; // 对其他模块的引用
 };
 
 /**

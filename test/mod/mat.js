@@ -1,5 +1,4 @@
 export function add(a, b) {
-    return b + a
+    a + b
 }
 
-add(5, 7)

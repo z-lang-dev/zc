@@ -25,6 +25,7 @@ static Mod *process_src(Front *front, Source *src) {
     mod->prog = prog;
     mod->scope = parser->root_scope;
     mod->name = remove_ext(src->name);
+    mod->uses = parser->uses;
     return mod;
 }
 

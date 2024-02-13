@@ -143,6 +143,16 @@ static char *get_text(Parser *parser) {
     return strip(parser->cur->pos, parser->cur->len);
 }
 
+static void register_use(HashTable *uses, Node *path) {
+    if (path->kind != ND_PATH) return;
+    if (path->as.path.len < 2) return;
+    char *mod = path->as.path.names[0].name;
+    char *name = path->as.path.names[1].name;
+    char *key = calloc(1, strlen(mod) + strlen(name) + 2, sizeof(char));
+    sprintf(key, "%s.%s", mod, name);
+    hash_set(uses, key, path);
+}
+
 static Node *name(Parser *parser) {
     Node *node = new_node(ND_NAME);
     char *n = get_text(parser);
@@ -164,6 +174,7 @@ static Node *name(Parser *parser) {
         node->as.path.len = count;
         Meta *m = mod_lookup(parser->front, node);
         print_node(node);
+        register_use(parser->uses, node);
         return node;
     } else {
         node->as.str = n;
@@ -681,5 +692,6 @@ Parser *new_parser(char *code, Scope *scope) {
     parser->next = next_token(parser->lexer);
     parser->root_scope = scope == NULL ? new_scope(global_scope()) : scope;
     parser->scope = parser->root_scope;
+    parser->uses = new_hash_table();
     return parser;
 }

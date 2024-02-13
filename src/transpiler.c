@@ -17,22 +17,15 @@ typedef enum {
     LAN_PY,
     LAN_JS,
 } LAN;
+
 struct TransMeta {
     int indent;
     int use_count;
     char *uses[MAX_USES];
-
     LAN lan;
 };
 
 static TransMeta META;
-
-char* sfmt(const char* fmt, char *msg) {
-    size_t needed = snprintf(NULL, 0, fmt, msg, strerror(errno), errno) + 1;
-    char  *buffer = malloc(needed);
-    sprintf(buffer, fmt, msg, strerror(errno), errno);
-    return buffer;
-}
 
 // 检查是否需要引入标准库
 static void do_meta(Node *prog) {
@@ -61,8 +54,9 @@ static void do_meta(Node *prog) {
     }
 }
 
-static void gen_expr(FILE *fp, Node *expr);
+void gen_expr(FILE *fp, Node *expr);
 
+// 生成函数定义
 static void gen_fn(FILE *fp, Node *expr) {
     char *name = expr->as.fn.name;
     Params *params = expr->as.fn.params;
@@ -102,7 +96,7 @@ static void gen_fn(FILE *fp, Node *expr) {
         break;
     }
     case LAN_JS: {
-        fprintf(fp, "function %s(", name);
+        fprintf(fp, "export function %s(", name);
         if (params != NULL) {
             for (int i = 0; i < params->count; ++i) {
                 Node *param = params->list[i];
@@ -145,6 +139,7 @@ static bool is_void_call(Node *expr) {
     );
 }
 
+// 生成一个语句
 static void gen_expr(FILE *fp, Node *expr) {
     switch (expr->kind) {
     case ND_BLOCK:
@@ -179,6 +174,7 @@ static void gen_expr(FILE *fp, Node *expr) {
                     }
                 } else {
                     print_indent(fp);
+                    fprintf(fp, "return ");
                     gen_expr(fp, last);
                     fprintf(fp, "\n");
                 }
@@ -541,25 +537,39 @@ static void codegen_py_mod(Mod *mod) {
     Node *prog = mod->prog;
     META.lan = LAN_PY;
     // 打开输出文件
-    FILE *fp = fopen("app.py", "w");
+    char *fname = sfmt("%s.py", mod->name);
+    FILE *fp = fopen(fname, "w");
     bool has_import = false;
     char *name_in_use = "";
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_USE) {
             char *name = expr->as.use.name;
-            if (strcmp(name, name_in_use) != 0) {
+            if (name && strcmp(name, name_in_use) != 0) {
                 fprintf(fp, "from %s import %s\n", expr->as.use.mod, expr->as.use.name);
                 has_import = true;
             }
             name_in_use = name;
         } else if (expr->kind == ND_CALL) {
-            char *name = expr->as.call.name->as.str;
-            if (strcmp(name, "print") != 0 && strcmp(name, name_in_use) != 0) {
-                fprintf(fp, "from stdz import *\n", META.uses[i]);
-                has_import = true;
+            Node *name_node = expr->as.call.name;
+            if (name_node->kind == ND_NAME) {
+                char *name = expr->as.call.name->as.str;
+                if (strcmp(name, "print") != 0 && strcmp(name, name_in_use) != 0) {
+                    fprintf(fp, "from stdz import *\n", META.uses[i]);
+                    has_import = true;
+                }
             }
         }
+    }
+    HashIter *i = hash_iter(mod->uses);
+    while (hash_next(mod->uses, i)) {
+        Node *path = (Node*)i->value;
+        if (path->kind != ND_PATH) continue;
+        if (path->as.path.len < 2) continue;
+        char *mod = path->as.path.names[0].name;
+        char *name = path->as.path.names[1].name;
+        fprintf(fp, "from %s import %s\n", mod, name);
+        has_import = true;
     }
     if (has_import) {
         fprintf(fp, "\n");
@@ -606,35 +616,50 @@ static void codegen_js_mod(Mod *mod) {
     META.lan = LAN_JS;
     Node *expr = prog->as.exprs.list[0];
     // 打开输出文件
-    FILE *fp = fopen("app.js", "w");
+    char *fname = sfmt("%s.js", mod->name);
+    FILE *fp = fopen(fname, "w");
     // 第一道收集信息，顺便打出import语句
     bool has_import = false;
     char *name_in_use = "";
+    // TODO: 把这些逻辑统一移到parser.uses中
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_USE) {
             char *name = expr->as.use.name;
-            if (strcmp(name, name_in_use) != 0) {
+            if (name != NULL && strcmp(name, name_in_use) != 0) {
                 fprintf(fp, "import {%s} from \"./%s\"\n", expr->as.use.name, expr->as.use.mod);
                 has_import = true;
             }
             name_in_use = name;
         } else if (expr->kind == ND_CALL) {
-            char *name = expr->as.call.name->as.str;
-            // 注意，print直接替换为console.log即可
-            if (strcmp(name, "print") == 0) {
-                expr->as.call.name->as.str = "console.log";
-            } else if (expr->meta) {
-                Meta *m = (Meta*)expr->meta;
-                if (m->kind == MT_FN && m->is_def == false) {
+            Node *name_node = expr->as.call.name;
+            if (name_node->kind == ND_NAME) {
+                char *name = get_name(expr->as.call.name);
+                // 注意，print直接替换为console.log即可
+                if (strcmp(name, "print") == 0) {
+                    expr->as.call.name->as.str = "console.log";
+                } else if (expr->meta) {
+                    Meta *m = (Meta*)expr->meta;
+                    if (m->kind == MT_FN && m->is_def == false) {
+                        fprintf(fp, "import {%s} from \"./stdz.js\"\n", name);
+                        has_import = true;
+                    }
+                } else if (strcmp(name, name_in_use) != 0) {
                     fprintf(fp, "import {%s} from \"./stdz.js\"\n", name);
                     has_import = true;
                 }
-            } else if (strcmp(name, name_in_use) != 0) {
-                fprintf(fp, "import {%s} from \"./stdz.js\"\n", name);
-                has_import = true;
             }
         }
+    }
+    HashIter *i = hash_iter(mod->uses);
+    while (hash_next(mod->uses, i)) {
+        Node *path = (Node*)i->value;
+        if (path->kind != ND_PATH) continue;
+        if (path->as.path.len < 2) continue;
+        char *mod = path->as.path.names[0].name;
+        char *name = path->as.path.names[1].name;
+        fprintf(fp, "import {%s} from \"./%s\"\n", name, mod);
+        has_import = true;
     }
     if (has_import) {
         fprintf(fp, "\n");

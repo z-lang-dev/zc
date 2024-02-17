@@ -56,6 +56,10 @@ static char* token_to_str(TokenKind kind) {
     case TK_TRUE: return "TK_TRUE";
     case TK_FALSE: return "TK_FALSE";
     case TK_NOT: return "TK_NOT";
+    case TK_INT: return "TK_INT";
+    case TK_FOR: return "TK_FOR";
+    case TK_FN: return "TK_FN";
+    case TK_BOOL: return "TK_BOOL";
     default: return "TK_UNKNOWN";
     }
 }
@@ -320,16 +324,33 @@ static Meta *do_meta(Parser *parser, Node *expr) {
     return m;
 }
 
+static Type *type_lookup(Parser *parser, Node *type_name) {
+    return &TYPE_INT;
+}
+
+static bool is_type_name(Parser *parser) {
+    return parser->cur->kind == TK_INT ||
+        parser->cur->kind == TK_BOOL ||
+        parser->cur->kind == TK_NAME;
+}
+
 static Node *let(Parser *parser) {
     // 跳过'let'
     advance(parser);
     Node *expr = new_node(ND_LET);
 
     // 解析存量名称
-    Node *name = new_node(ND_NAME);
-    name->as.str = get_text(parser);
-    expr->as.asn.name = name;
+    Node *store_name = new_node(ND_NAME);
+    store_name->as.str = get_text(parser);
+    expr->as.asn.name = store_name;
     advance(parser);
+
+    Type *type;
+    // 解析存量类型
+    if (is_type_name(parser)) {
+        Node *type_name = name(parser);
+        type = type_lookup(parser, type_name);
+    }
 
     // 解析'='
     expect(parser, TK_ASN);
@@ -338,7 +359,12 @@ static Node *let(Parser *parser) {
     expr->as.asn.value = expression(parser);
 
     // 收集元信息
-    do_meta(parser, expr);
+    Meta *m = do_meta(parser, expr);
+    if (type) {
+        m->type = type;
+    } else {
+        m->type = &TYPE_INT; // 当前阶段，默认类型是int
+    }
     return expr;
 }
 

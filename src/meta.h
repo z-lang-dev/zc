@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "zast.h"
 #include "hash.h"
+#include "types.h"
 
 static const int SIZE_INT = 4;
 typedef struct Meta Meta;
@@ -13,6 +14,7 @@ typedef enum {
     MT_FN,
     MT_BLOCK,
     MT_USE,
+    MT_TYPE,
     MT_ILL,
 } MetaKind;
 
@@ -20,6 +22,7 @@ typedef enum {
 struct Meta {
     MetaKind kind;
     Node *node;
+    Type *type;
     char *name;
     int seq;
     int offset;
@@ -38,33 +41,12 @@ struct Scope {
 Scope *GlobalScope; // 全局视野
 
 Meta *new_meta(Node *expr);
-
-/**
- * @brief Sets the meta information for the given object.
- *
- * This function sets the meta information for the object pointed to by the `meta` parameter.
- *
- * @param meta A pointer to the Meta object.
- */
-// void set_meta(Meta *meta);
-
-/**
- * Retrieves the Meta object associated with the given name.
- *
- * @param name The name of the Meta object to retrieve.
- * @return A pointer to the Meta object, or nullptr if not found.
- */
-// Meta *get_meta(char *name);
-
-// int total_meta_size();
-// HashTable *get_meta_table();
+Meta *new_type_meta(Type *type);
 
 Scope *new_scope(Scope *parent);
-
 Meta *scope_lookup(Scope *scope, const char *name);
 bool scope_set(Scope *scope, const char *name, Meta *meta);
 
 Meta *global_lookup(const char *name);
 bool global_set(const char *name, Meta *meta);
-
 Scope *global_scope();

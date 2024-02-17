@@ -141,10 +141,13 @@ struct Path {
     Name names[MAX_PATH_LEN];
 };
 
+extern struct Meta;
+typedef struct Meta Meta;
+
 // AST节点
 struct Node {
     NodeKind kind;
-    void* meta; // 节点的元信息。TODO：改为Meta类型？
+    Meta* meta; // 节点的元信息。TODO：改为Meta类型？
     union {
         CallExpr call;
         int num;

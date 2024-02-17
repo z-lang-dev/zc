@@ -1,6 +1,8 @@
 #include <stdio.h>
-#include "zast.h"
 #include <stdlib.h>
+#include "zast.h"
+#include "types.h"
+#include "meta.h"
 
 void fecho_node(FILE *fp, Node *node) {
     switch (node->kind) {
@@ -29,7 +31,8 @@ void fecho_node(FILE *fp, Node *node) {
         }
         break;
     case ND_LET:
-        fprintf(fp, "let %s = ", node->as.asn.name->as.str);
+        Type *type = node->meta->type;
+        fprintf(fp, "let %s %s = ", node->as.asn.name->as.str, type->name);
         fecho_node(fp, node->as.asn.value);
         break;
     case ND_MUT:
@@ -152,7 +155,8 @@ void fprint_node(FILE *fp, Node *node) {
         }
         break;
     case ND_LET:
-        fprintf(fp, "{kind:ND_LET, name: %s, value: ", node->as.asn.name->as.str);
+        Type *type = node->meta->type;
+        fprintf(fp, "{kind:ND_LET, name: %s, type: %s, value: ", node->as.asn.name->as.str, type->name);
         fprint_node(fp, node->as.asn.value);
         fprintf(fp, " }");
         break;

@@ -12,8 +12,11 @@ Front *new_front() {
     front->sources->list = calloc(4, sizeof(Source *));
     front->mods = new_hash_table();
 
+    // 注册内置类型
+    init_builtin_types(global_scope());
     make_builtins(global_scope());
     use_stdz(global_scope());
+
     return front;
 }
 

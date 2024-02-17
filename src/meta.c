@@ -30,6 +30,13 @@ Meta *new_meta(Node *expr) {
     return meta;
 }
 
+Meta *new_type_meta(Type *type) {
+    Meta *m = calloc(1, sizeof(Meta));
+    m->type = type;
+    m->kind = MT_TYPE;
+    return m;
+}
+
 int total_meta_size() {
     return GlobalScope->cur_offset;
 }
@@ -46,12 +53,8 @@ Scope *new_scope(Scope *parent) {
 
 Meta *scope_lookup(Scope *scope, const char *name) {
     Meta *meta = hash_get(scope->metas, name);
-    if (meta) {
-        return meta;
-    }
-    if (scope->parent) {
-        return scope_lookup(scope->parent, name);
-    }
+    if (meta) return meta;
+    if (scope->parent) return scope_lookup(scope->parent, name);
     return NULL;
 }
 

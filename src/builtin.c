@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "types.h"
 
 Meta *new_builtin(char *name) {
     Node *fn = new_node(ND_FN);
@@ -27,4 +28,12 @@ Meta *new_stdfn(char *name) {
 void use_stdz(Scope *scope) {
    scope_set(scope, "read_file", new_stdfn("read_file"));
    scope_set(scope, "write_file", new_stdfn("write_file"));
+}
+
+void init_builtin_types() {
+    global_set("int", new_type_meta(&TYPE_INT));
+    global_set("bool", new_type_meta(&TYPE_BOOL));
+    global_set("byte", new_type_meta(&TYPE_BYTE));
+    global_set("float", new_type_meta(&TYPE_FLOAT));
+    global_set("double", new_type_meta(&TYPE_DOUBLE));
 }

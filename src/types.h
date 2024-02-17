@@ -3,15 +3,18 @@
 typedef struct Type Type;
 typedef struct TypeNum TypeNum;
 typedef struct TypeUser TypeUser;
+typedef struct TypeFn TypeFn;
 
 // 类型系统
 typedef enum {
+    TY_VOID, // 空类型
     TY_INT, // int
     TY_BOOL,
     TY_BYTE,
     TY_FLOAT,
     TY_DOUBLE,
     TY_USER, // 自定义类型
+    TY_FN, // 函数类型
 } TypeKind;
 
 // 数字类型，包括int/bool/byte/float/double
@@ -25,6 +28,12 @@ struct TypeUser {
     int field_count; // 成员字段个数
 };
 
+struct TypeFn {
+    int param_count;
+    Type **params;
+    Type *ret;
+};
+
 // 类型
 struct Type {
     TypeKind kind;
@@ -32,6 +41,7 @@ struct Type {
     union {
         TypeNum num;
         TypeUser user;
+        TypeFn fn;
     } as;
 };
 

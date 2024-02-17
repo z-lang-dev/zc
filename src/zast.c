@@ -66,7 +66,11 @@ void fecho_node(FILE *fp, Node *node) {
             if (i > 0) {
                 fprintf(fp, ", ");
             }
-            fecho_node(fp, node->as.fn.params->list[i]);
+            Node *p = node->as.fn.params->list[i];
+            fecho_node(fp, p);
+            if (p->meta->type != NULL) {
+                fprintf(fp, " %s", p->meta->type->name);
+            }
         }
         fprintf(fp, ") {");
         fecho_node(fp, node->as.fn.body);
@@ -188,18 +192,24 @@ void fprint_node(FILE *fp, Node *node) {
         fprint_node(fp, node->as.loop.body);
         fprintf(fp, " }");
         break;
-    case ND_FN:
+    case ND_FN: {
         fprintf(fp, "{kind:ND_FN, name: %s, params: [", node->as.fn.name);
         for (int i = 0; i < node->as.fn.params->count; i++) {
             if (i > 0) {
                 fprintf(fp, ", ");
             }
-            fprint_node(fp, node->as.fn.params->list[i]);
+            Node *p = node->as.fn.params->list[i];
+            fprint_node(fp, p);
+            Type *ptype = p->meta->type;
+            if (ptype != NULL) {
+                fprintf(fp, " %s", ptype->name);
+            }
         }
         fprintf(fp, "], body: ");
         fprint_node(fp, node->as.fn.body);
         fprintf(fp, " }");
         break;
+    }
     case ND_NEG:
         fprintf(fp, "{kind:ND_NEG, body: ");
         fprint_node(fp, node->as.una.body);

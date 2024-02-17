@@ -12,6 +12,7 @@
         "interp.h": "c",
         "direct.h": "c",
         "meta.h": "c",
-        "front.h": "c"
+        "front.h": "c",
+        "corecrt.h": "c"
     }
 }

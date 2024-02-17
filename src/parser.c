@@ -334,10 +334,10 @@ static bool is_type_name(Parser *parser) {
         parser->cur->kind == TK_NAME;
 }
 
-static Node *let(Parser *parser) {
+static Node *symbol_def(Parser *parser, NodeKind kind) {
     // 跳过'let'
     advance(parser);
-    Node *expr = new_node(ND_LET);
+    Node *expr = new_node(kind);
 
     // 解析存量名称
     Node *store_name = new_node(ND_NAME);
@@ -368,26 +368,12 @@ static Node *let(Parser *parser) {
     return expr;
 }
 
+static Node *let(Parser *parser) {
+    return symbol_def(parser, ND_LET);
+}
+
 static Node *mut(Parser *parser) {
-    // 跳过'mut'
-    advance(parser);
-    Node *expr = new_node(ND_MUT);
-
-    // 解析存量名称
-    Node *name = new_node(ND_NAME);
-    name->as.str = get_text(parser);
-    expr->as.asn.name = name;
-    advance(parser);
-
-    // 解析'='
-    expect(parser, TK_ASN);
-
-    // 解析数值表达式
-    expr->as.asn.value = expression(parser);
-
-    // 收集元信息
-    do_meta(parser, expr);
-    return expr;
+    return symbol_def(parser, ND_MUT);
 }
 
 static void *expect_eob(Parser *parser) {
@@ -447,13 +433,17 @@ static Params *params(Parser *parser) {
     p->cap = 4;
     p->list = calloc(1, sizeof(Node *));
     while (parser->cur->kind != TK_RPAREN) {
-        Node *name = new_node(ND_NAME);
-        name->as.str = get_text(parser);
-        append_param(p, name);
-        advance(parser); // 跳过参数名
-        if (parser->cur->kind == TK_INT) {
-            advance(parser); // 暂时跳过类型标注
+        Node *pname = new_node(ND_NAME);
+        pname->as.str = get_text(parser);
+        pname->meta = new_meta(pname);
+        advance(parser);
+        Type *ptype = NULL;
+        if (!match(parser, TK_DOT)) {
+            Node *type_name = name(parser);
+            ptype = type_lookup(parser, type_name);
         }
+        pname->meta->type = ptype != NULL ? ptype : &TYPE_INT;
+        append_param(p, pname);
         if (parser->cur->kind == TK_COMMA) {
             advance(parser); // 跳过','
         }
@@ -475,6 +465,23 @@ static Node *fn(Parser *parser) {
         Node *param = p->list[i];
         scope_set(parser->scope, param->as.str, new_meta(param));
     }
+    // 处理函数类型
+    Type *fn_type = calloc(1, sizeof(Type));
+    fn_type->kind = TY_FN;
+    fn_type->as.fn.param_count = p->count;
+    fn_type->as.fn.params = calloc(p->count, sizeof(Type *));
+    for (int i = 0; i < p->count; i++) {
+        fn_type->as.fn.params[i] = p->list[i]->meta->type;
+    }
+    // 返回类型
+    if (!match(parser, TK_LBRACE)) {
+        Node *type_name = name(parser);
+        Type *ret_type = type_lookup(parser, type_name);
+        fn_type->as.fn.ret = ret_type;
+    } else {
+        fn_type->as.fn.ret = &TYPE_INT; // 暂时默认返回类型是int，未来需要改为void
+    }
+    // 函数体
     expr->as.fn.body = block(parser);
     // 注意：函数体需要处理返回值
     Meta *body_meta = new_meta(expr->as.fn.body);

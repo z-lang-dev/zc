@@ -12,7 +12,8 @@
             "cwd": "${workspaceFolder}",
             "args": [
                 "interp",
-                "let a int = 10; a + 5"
+                // "mut a int = 10; a + 5"
+                "fn mul(a int, b int){a*b}; mul(5, 8)"
             ],
             "stopAtEntry": false
         },

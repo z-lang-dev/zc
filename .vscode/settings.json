@@ -13,6 +13,7 @@
         "direct.h": "c",
         "meta.h": "c",
         "front.h": "c",
-        "corecrt.h": "c"
+        "corecrt.h": "c",
+        "lexer.h": "c"
     }
 }

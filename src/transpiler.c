@@ -194,7 +194,9 @@ static void gen_expr(FILE *fp, Node *expr) {
     case ND_MUT: {
         char *name = expr->as.asn.name->as.str;
         if (META.lan == LAN_C) {
-            fprintf(fp, "int %s = ", name);
+            Type *type = expr->as.asn.name->meta->type;
+            if (type == NULL) type = &TYPE_INT;
+            fprintf(fp, "%s %s = ", type->name, name);
         } else if (META.lan == LAN_PY) {
             fprintf(fp, "%s = ", name);
         } else if (META.lan == LAN_JS) {
@@ -206,7 +208,9 @@ static void gen_expr(FILE *fp, Node *expr) {
     case ND_LET: {
         char *name = expr->as.asn.name->as.str;
         if (META.lan == LAN_C) {
-            fprintf(fp, "int %s = ", name);
+            Type *type = expr->as.asn.name->meta->type;
+            if (type == NULL) type = &TYPE_INT;
+            fprintf(fp, "%s %s = ", type->name, name);
         } else if (META.lan == LAN_PY) {
             fprintf(fp, "%s = ", name);
         } else if (META.lan == LAN_JS) {
@@ -263,7 +267,13 @@ static void gen_expr(FILE *fp, Node *expr) {
         fprintf(fp, "%s", expr->as.str);
         return;
     case ND_INT:
-        fprintf(fp, "%d", expr->as.num);
+        fprintf(fp, "%s", expr->as.num.lit);
+        return;
+    case ND_FLOAT:
+        fprintf(fp, "%s", expr->as.float_num.lit);
+        return;
+    case ND_DOUBLE:
+        fprintf(fp, "%s", expr->as.double_num.lit);
         return;
     case ND_BOOL:
         switch (META.lan) {
@@ -296,10 +306,43 @@ static void gen_expr(FILE *fp, Node *expr) {
     case ND_CALL:
         if (META.lan == LAN_C && strcmp(get_name(expr->as.call.name), "print") == 0) {
             Node *val = expr->as.call.args[0];
-            if (val->kind == ND_INT) {
-                fprintf(fp, "printf(\"%%d\\n\", %d)", val->as.num);
-            } else {
+            switch (val->kind) {
+            case ND_INT:
+                fprintf(fp, "printf(\"%%d\\n\", %s)", val->as.num.lit);
+                break;
+            case ND_FLOAT:
+                fprintf(fp, "printf(\"%%f\\n\", %s)", val->as.float_num.lit);
+                break;
+            case ND_DOUBLE:
+                fprintf(fp, "printf(\"%%lf\\n\", %s)", val->as.double_num.lit);
+                break;
+            case ND_BOOL:
+                fprintf(fp, "printf(\"%%s\\n\", %s)", val->as.bul ? "true" : "false");
+                break;
+            case ND_STR:
                 fprintf(fp, "printf(\"%s\\n\")", val->as.str);
+                break;
+            case ND_BINOP:
+                Type *type = val->as.bop.left->meta->type;
+                if (type == NULL) type = &TYPE_INT;
+                switch (type->kind) {
+                case TY_INT:
+                    fprintf(fp, "printf(\"%%d\\n\", ");
+                    break;
+                case TY_BOOL:
+                    fprintf(fp, "printf(\"%%s\\n\", ");
+                    break;
+                case TY_FLOAT:
+                    fprintf(fp, "printf(\"%%f\\n\", ");
+                    break;
+                case TY_DOUBLE:
+                    fprintf(fp, "printf(\"%%lf\\n\", ");
+                    break;
+                }
+                gen_expr(fp, val);
+                if (type == TY_BOOL) fprintf(fp, " ? \"true\" : \"false\"");
+                fprintf(fp, ")");
+                break;
             }
             return;
         } else {
@@ -308,13 +351,25 @@ static void gen_expr(FILE *fp, Node *expr) {
                 Node *arg = expr->as.call.args[i];
                 switch (arg->kind) {
                 case ND_INT:
-                    fprintf(fp, "%d", arg->as.num);
+                    fprintf(fp, "%s", arg->as.num.lit);
+                    break;
+                case ND_BOOL:
+                    fprintf(fp, "%s", arg->as.bul ? "true" : "false");
+                    break;
+                case ND_FLOAT:
+                    fprintf(fp, "%s", arg->as.float_num.lit);
+                    break;
+                case ND_DOUBLE:
+                    fprintf(fp, "%s", arg->as.double_num.lit);
                     break;
                 case ND_STR:
                     fprintf(fp, "\"%s\"", arg->as.str);
                     break;
                 case ND_NAME:
                     fprintf(fp, "%s", arg->as.str);
+                    break;
+                case ND_BINOP:
+                    gen_expr(fp, arg);
                     break;
                 default:
                     fprintf(fp, "unknown kind of arg: %d\n", arg->kind);

@@ -21,7 +21,13 @@ static Value *get_val(char *name) {
 static void print(Node *arg) {
     switch (arg->kind) {
     case ND_INT:
-        printf("%d\n", arg->as.num);
+        printf("%d\n", arg->as.num.val);
+        break;
+    case ND_FLOAT:
+        printf("%f\n", arg->as.float_num.val);
+        break;
+    case ND_DOUBLE:
+        printf("%lf\n", arg->as.double_num.val);
         break;
     case ND_BOOL:
         printf("%s\n", arg->as.bul ? "true" : "false");
@@ -178,7 +184,11 @@ bool call_stdlib(Node *expr) {
 Value *eval(Node *expr) {
     switch (expr->kind) {
     case ND_INT:
-        return new_int(expr->as.num);
+        return new_int(expr->as.num.val);
+    case ND_FLOAT:
+        return new_float(expr->as.float_num.val);
+    case ND_DOUBLE:
+        return new_double(expr->as.double_num.val);
     case ND_BOOL:
         return new_bool(expr->as.bul);
     case ND_NAME:

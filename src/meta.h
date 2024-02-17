@@ -9,8 +9,8 @@ typedef struct Meta Meta;
 typedef struct Scope Scope;
 
 typedef enum {
-    MT_LET,
-    MT_MUT,
+    MT_NAME,
+    MT_PATH,
     MT_FN,
     MT_BLOCK,
     MT_USE,

@@ -13,7 +13,9 @@
             "args": [
                 "interp",
                 // "mut a int = 10; a + 5"
-                "fn mul(a int, b int){a*b}; mul(5, 8)"
+                //"fn mul(a int, b int){a*b}; mul(5, 8)"
+                // "let f double = 10.2d; f + 5.2"
+                "print(41)"
             ],
             "stopAtEntry": false
         },
@@ -34,10 +36,10 @@
             "request": "launch",
             "name": "z2c",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/mod",
+            "cwd": "${workspaceFolder}/test/simple_double",
             "args": [
                 "c",
-                "mod_case.z"
+                "simple_double_case.z"
             ],
             "stopAtEntry": false
         },

@@ -108,6 +108,12 @@ void fecho_node(FILE *fp, Node *node) {
     case ND_INT:
         fprintf(fp, "%d", node->as.num);
         break;
+    case ND_FLOAT:
+        fprintf(fp, "%f", node->as.float_num);
+        break;
+    case ND_DOUBLE:
+        fprintf(fp, "%lf", node->as.double_num);
+        break;
     case ND_BOOL:
         fprintf(fp, "%s", node->as.bul ? "true" : "false");
         break;
@@ -228,10 +234,16 @@ void fprint_node(FILE *fp, Node *node) {
         fprintf(fp, " }");
         break;
     case ND_INT:
-        fprintf(fp, "{kind: ND_INT, as.num: %d}", node->as.num);
+        fprintf(fp, "{kind: ND_INT, as.num: %d}", node->as.num.lit);
         break;
     case ND_BOOL:
         fprintf(fp, "%s", node->as.bul ? "true" : "false");
+        break;
+    case ND_FLOAT:
+        fprintf(fp, "{kind: ND_FLOAT, as.float_num: %f}", node->as.float_num.lit);
+        break;
+    case ND_DOUBLE:
+        fprintf(fp, "{kind: ND_DOUBLE, as.double_num: %lf}", node->as.double_num.lit);
         break;
     case ND_NOT:
         fprintf(fp, "{kind: ND_NOT, body: ");

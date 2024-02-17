@@ -20,14 +20,15 @@ static void advance(Parser *parser) {
     parser->next = next_token(parser->lexer);
 }
 
-
 static char* token_to_str(TokenKind kind) {
     switch (kind) {
     case TK_ADD: return "TK_ADD";
     case TK_SUB: return "TK_SUB";
     case TK_MUL: return "TK_MUL";
     case TK_DIV: return "TK_DIV";
-    case TK_INTEGER: return "TK_INT";
+    case TK_INT_NUM: return "TK_INT_NUM";
+    case TK_FLOAT_NUM: return "TK_FLOAT_NUM";
+    case TK_DOUBLE_NUM: return "TK_DOUBLE_NUM";
     case TK_LPAREN: return "TK_LPAREN";
     case TK_RPAREN: return "TK_RPAREN";
     case TK_EOF: return "TK_EOF";
@@ -57,6 +58,8 @@ static char* token_to_str(TokenKind kind) {
     case TK_FALSE: return "TK_FALSE";
     case TK_NOT: return "TK_NOT";
     case TK_INT: return "TK_INT";
+    case TK_FLOAT : return "TK_FLOAT";
+    case TK_DOUBLE: return "TK_DOUBLE";
     case TK_FOR: return "TK_FOR";
     case TK_FN: return "TK_FN";
     case TK_BOOL: return "TK_BOOL";
@@ -177,6 +180,7 @@ static Node *name(Parser *parser) {
         }
         node->as.path.len = count;
         Meta *m = mod_lookup(parser->front, node);
+        node->meta = m;
         print_node(node);
         register_use(parser->uses, node);
         return node;
@@ -237,8 +241,35 @@ static Node *integer(Parser *parser) {
     Node *expr = calloc(1, sizeof(Node));
     expr->kind = ND_INT;
     char *num_text = get_text(parser);
+    expr->as.num.lit = num_text;
     log_trace("Parsing int text: %s\n", num_text);
-    expr->as.num = atoll(num_text);
+    expr->as.num.val = atoll(num_text);
+    // 打印出AST
+    trace_node(expr);
+    advance(parser);
+    return expr;
+}
+
+static Node *float_num(Parser *parser) {
+    Node *expr = calloc(1, sizeof(Node));
+    expr->kind = ND_FLOAT;
+    char *num_text = get_text(parser);
+    expr->as.float_num.lit = num_text;
+    log_trace("Parsing float text: %s\n", num_text);
+    expr->as.float_num.val = atof(num_text);
+    // 打印出AST
+    trace_node(expr);
+    advance(parser);
+    return expr;
+}
+
+static Node *double_num(Parser *parser) {
+    Node *expr = calloc(1, sizeof(Node));
+    expr->kind = ND_DOUBLE;
+    char *num_text = get_text(parser);
+    expr->as.double_num.lit = num_text;
+    log_trace("Parsing double text: %s\n", num_text);
+    expr->as.double_num.val = atof(num_text);
     // 打印出AST
     trace_node(expr);
     advance(parser);
@@ -325,12 +356,16 @@ static Meta *do_meta(Parser *parser, Node *expr) {
 }
 
 static Type *type_lookup(Parser *parser, Node *type_name) {
-    return &TYPE_INT;
+    Meta *m = global_lookup(type_name->as.str);
+    if (m == NULL) return NULL;
+    return m->type;
 }
 
 static bool is_type_name(Parser *parser) {
     return parser->cur->kind == TK_INT ||
         parser->cur->kind == TK_BOOL ||
+        parser->cur->kind == TK_FLOAT ||
+        parser->cur->kind == TK_DOUBLE ||
         parser->cur->kind == TK_NAME;
 }
 
@@ -359,7 +394,7 @@ static Node *symbol_def(Parser *parser, NodeKind kind) {
     expr->as.asn.value = expression(parser);
 
     // 收集元信息
-    Meta *m = do_meta(parser, expr);
+    Meta *m = do_meta(parser, store_name);
     if (type) {
         m->type = type;
     } else {
@@ -517,8 +552,12 @@ static Node *unary(Parser *parser) {
         return not(parser);
     case TK_STR:
         return string(parser);
-    case TK_INTEGER:
+    case TK_INT_NUM:
         return integer(parser);
+    case TK_FLOAT_NUM:
+        return float_num(parser);
+    case TK_DOUBLE_NUM:
+        return double_num(parser);
     case TK_TRUE:
         return bul(parser, true);
     case TK_FALSE:

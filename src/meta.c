@@ -6,13 +6,13 @@ Meta *new_meta(Node *expr) {
     Meta *meta = calloc(1, sizeof(Meta));
     meta->node = expr;
     switch (expr->kind) {
-        case ND_LET:
-            meta->kind = MT_LET;
-            meta->name = expr->as.asn.name->as.str;
+        case ND_NAME:
+            meta->kind = MT_NAME;
+            meta->name = get_name(expr);
             break;
-        case ND_MUT:
-            meta->kind = MT_MUT;
-            meta->name = expr->as.asn.name->as.str;
+        case ND_PATH:
+            meta->kind = MT_PATH;
+            meta->name = get_name(expr);
             break;
         case ND_FN:
             meta->kind = MT_FN;
@@ -60,7 +60,7 @@ Meta *scope_lookup(Scope *scope, const char *name) {
 
 bool scope_set(Scope *scope, const char *name, Meta *meta) {
     // 进行统计
-    if (meta->kind == MT_LET || meta->kind == MT_MUT) { 
+    if (meta->kind == MT_NAME || meta->kind == MT_PATH) { 
         int size = SIZE_INT; // 现在只有int类型，它的尺寸是4字节
         meta->offset = scope->cur_offset;
         scope->cur_offset += size;

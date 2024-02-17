@@ -12,6 +12,8 @@ typedef enum {
     TK_FALSE, // false
     TK_INT, // int
     TK_BOOL, // bool
+    TK_FLOAT, // float
+    TK_DOUBLE, // double
     TK_IF, // if
     TK_FOR, // for
     TK_BREAK, // break
@@ -21,7 +23,9 @@ typedef enum {
     TK_NAME, // 名称
     TK_ASN, // =
     TK_USE, // 导入
-    TK_INTEGER, // 整数
+    TK_INT_NUM, // 整数
+    TK_FLOAT_NUM, // 32位浮点数
+    TK_DOUBLE_NUM, // 64位浮点数
     TK_LPAREN, // (
     TK_RPAREN, // )
     TK_LBRACE, // {

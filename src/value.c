@@ -8,6 +8,20 @@ Value *new_int(int num) {
     return val;
 }
 
+Value *new_float(float num) {
+    Value *val = calloc(1, sizeof(Value));
+    val->kind = VAL_FLOAT;
+    val->as.float_num = num;
+    return val;
+}
+
+Value *new_double(double num) {
+    Value *val = calloc(1, sizeof(Value));
+    val->kind = VAL_DOUBLE;
+    val->as.double_num = num;
+    return val;
+}
+
 const Value TRUE_VAL = {VAL_BOOL, {true}};
 const Value FALSE_VAL = {VAL_BOOL, {false}};
 const Value NIL_VAL = {VAL_NIL, {0}};
@@ -32,34 +46,71 @@ Value *not(Value *val) {
 }
 
 Value *neg_val(Value *val) {
-    if (val->kind == VAL_INT) {
+    switch (val->kind) {
+    case VAL_INT:
         return new_int(-val->as.num);
-    } else {
+    case VAL_FLOAT:
+        return new_float(-val->as.float_num);
+    case VAL_DOUBLE:
+        return new_double(-val->as.double_num);
+    case VAL_BOOL:
         return new_bool(!val->as.bul);
+    default:
+        return new_nil();
     }
 }
 
 Value *add_val(Value *a, Value *b) {
-    if (a->kind == VAL_INT && b->kind == VAL_INT) {
+    if (a->kind != b->kind) {
+        return new_nil();
+    }
+    switch (a->kind) {
+    case VAL_INT:
         return new_int(a->as.num + b->as.num);
-    } else {
+    case VAL_FLOAT:
+        return new_float(a->as.float_num + b->as.float_num);
+    case VAL_DOUBLE:
+        return new_double(a->as.double_num + b->as.double_num);
+    case VAL_BOOL:
         return new_bool(a->as.bul || b->as.bul);
+    default:
+        return new_nil();
     }
 }
 
 Value *mul_val(Value *a, Value *b) {
-    if (a->kind == VAL_INT && b->kind == VAL_INT) {
+    if (a->kind != b->kind) {
+        return new_nil();
+    }
+    switch (a->kind) {
+    case VAL_INT:
         return new_int(a->as.num * b->as.num);
-    } else {
+    case VAL_FLOAT:
+        return new_float(a->as.float_num * b->as.float_num);
+    case VAL_DOUBLE:
+        return new_double(a->as.double_num * b->as.double_num);
+    case VAL_BOOL:
         return new_bool(a->as.bul && b->as.bul);
+    default:
+        return new_nil();
     }
 }
 
 Value *div_val(Value *a, Value *b) {
-    if (a->kind == VAL_INT && b->kind == VAL_INT) {
+    if (a->kind != b->kind) {
+        return new_nil();
+    }
+    switch (a->kind) {
+    case VAL_INT:
         return new_int(a->as.num / b->as.num);
-    } else {
+    case VAL_FLOAT:
+        return new_float(a->as.float_num / b->as.float_num);
+    case VAL_DOUBLE:
+        return new_double(a->as.double_num / b->as.double_num);
+    case VAL_BOOL:
         return new_bool(a->as.bul && !b->as.bul);
+    default:
+        return new_nil();
     }
 }
 
@@ -70,6 +121,12 @@ void print_val(Value *val) {
     switch (val->kind) {
     case VAL_INT:
         printf("%d\n", val->as.num);
+        break;
+    case VAL_FLOAT:
+        printf("%f\n", val->as.float_num);
+        break;
+    case VAL_DOUBLE:
+        printf("%lf\n", val->as.double_num);
         break;
     case VAL_BOOL:
         printf("%s\n", val->as.bul ? "true" : "false");

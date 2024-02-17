@@ -55,11 +55,36 @@ static Token *double_token(Lexer *lexer, char c, TokenKind op) {
     }
 }
 
+// 解析整数或浮点数
 static Token *number(Lexer *lexer) {
-    while (is_digit(*lexer->cur)) {
+    bool has_dot = false;
+    while (is_digit(*lexer->cur) || peek(lexer) == '.') {
+        if (peek(lexer) == '.') {
+            if (has_dot) {
+                log_trace("Unexpected twice dot: %c\n", *lexer->cur);
+                return new_token(lexer, TK_EOF);
+            } else {
+                has_dot = true;
+            }
+        }
         next_char(lexer);
     }
-    return new_token(lexer, TK_INTEGER);
+    if (has_dot) {
+        if (peek(lexer) == 'f') {
+            Token * ret = new_token(lexer, TK_FLOAT_NUM);
+            next_char(lexer);
+            return ret;
+        } else if (peek(lexer) == 'd') {
+            Token *ret = new_token(lexer, TK_DOUBLE_NUM);
+            next_char(lexer);
+            return ret;
+        } else {
+            // 浮点数默认64位。TODO: lib场景下，应当必须声明f或d结尾。
+            return new_token(lexer, TK_DOUBLE_NUM);
+        }
+    } else {
+        return new_token(lexer, TK_INT_NUM);
+    }
 }
 
 static Token *str(Lexer *lexer) {
@@ -81,6 +106,8 @@ static Keyword keywords[] = {
     {"continue", TK_CONTINUE},
     {"else", TK_ELSE},
     {"false", TK_FALSE},
+    {"float", TK_FLOAT},
+    {"double", TK_DOUBLE},
     {"fn", TK_FN},
     {"for", TK_FOR},
     {"if", TK_IF},

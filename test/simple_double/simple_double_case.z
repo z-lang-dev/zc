@@ -1,0 +1,2 @@
+let f double = 3.141593d
+print(f+5.2)

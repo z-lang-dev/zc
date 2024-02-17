@@ -106,7 +106,7 @@ static void gen_expr(FILE *fp, Node *expr) {
         return;
     }
     case ND_INT: {
-        fprintf(fp, "    mov rax, %d\n", expr->as.num);
+        fprintf(fp, "    mov rax, %d\n", expr->as.num.val);
         return;
     }
     case ND_NEG: {
@@ -140,7 +140,7 @@ static void gen_expr(FILE *fp, Node *expr) {
             ConstData *data = (ConstData*)arg->meta;
             if (arg->kind == ND_INT) {
                 fprintf(fp, "    lea rcx, ct%d\n", data->idx);
-                fprintf(fp, "    mov rdx, %d\n", call->args[0]->as.num);
+                fprintf(fp, "    mov rdx, %d\n", call->args[0]->as.num.val);
             } else {
                 fprintf(fp, "    lea rcx, ct%d\n", data->idx);
             }
@@ -150,7 +150,7 @@ static void gen_expr(FILE *fp, Node *expr) {
                 Node *arg = call->args[i];
                 ConstData *data = (ConstData*)arg->meta;
                 if (arg->kind == ND_INT) {
-                    fprintf(fp, "    mov %s, %d\n", WIN_REGS[i], arg->as.num);
+                    fprintf(fp, "    mov %s, %d\n", WIN_REGS[i], arg->as.num.val);
                 } else {
                     fprintf(fp, "    lea %s, ct%d\n", WIN_REGS[i], data->idx);
                 }
@@ -163,7 +163,7 @@ static void gen_expr(FILE *fp, Node *expr) {
             ConstData *data = (ConstData*)arg->meta;
             fprintf(fp, "    lea rdi, [rip+ct%d]\n", data->idx);
             if (arg->kind == ND_INT) {
-                fprintf(fp, "    mov rsi, %d\n", arg->as.num);
+                fprintf(fp, "    mov rsi, %d\n", arg->as.num.val);
             }
             fprintf(fp, "    call printf\n");
         } else {
@@ -171,7 +171,7 @@ static void gen_expr(FILE *fp, Node *expr) {
                 Node *arg = call->args[i];
                 ConstData *data = (ConstData*)arg->meta;
                 if (arg->kind == ND_INT) {
-                    fprintf(fp, "    mov %s, %d\n", LINUX_REGS[i], arg->as.num);
+                    fprintf(fp, "    mov %s, %d\n", LINUX_REGS[i], arg->as.num.val);
                 } else {
                     fprintf(fp, "    lea %s, [rip+ct%d]\n", LINUX_REGS[i], i);
                 }
@@ -195,7 +195,7 @@ static void gen_expr(FILE *fp, Node *expr) {
     gen_expr(fp, expr->as.bop.left);
     // 右臂，现在的语境下，右臂只可能是整数，因此可以当做立即数直接参与计算
     if (expr->as.bop.right->kind == ND_INT) {
-        int right = expr->as.bop.right->as.num;
+        int right = expr->as.bop.right->as.num.val;
         // 具体的二元运算
         switch (expr->as.bop.op) {
         case OP_ADD:

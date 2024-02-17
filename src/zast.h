@@ -1,6 +1,7 @@
 #pragma once
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct Node Node;
 typedef struct Name Name;
@@ -8,6 +9,9 @@ typedef struct CallExpr CallExpr;
 typedef struct BinOp BinOp;
 typedef struct Unary Unary;
 typedef struct Exprs Exprs;
+typedef struct IntNum IntNum;
+typedef struct FloatNum FloatNum;
+typedef struct DoubleNum DoubleNum;
 typedef struct Use Use;
 typedef struct Asn Asn;
 typedef struct IfElse IfElse;
@@ -29,8 +33,10 @@ typedef enum {
     ND_ASN, // 赋值
     ND_IF, // if-else语句
     ND_FOR, // for语句
-    ND_INT, // 整数
+    ND_INT, // 32位整数
     ND_BOOL, // 布尔值
+    ND_FLOAT, // 32位浮点数
+    ND_DOUBLE, // 64位浮点数
     ND_NOT, // 非
     ND_NEG, // 负数
     ND_STR, // 字符串
@@ -88,6 +94,21 @@ Node *new_node(NodeKind kind);
 Node *new_prog();
 Node *new_block();
 void append_expr(Node *parent, Node *expr);
+
+struct IntNum {
+    int32_t val;
+    char *lit;
+};
+
+struct FloatNum {
+    float val;
+    char *lit;
+};
+
+struct DoubleNum {
+    double val;
+    char *lit;
+};
 
 struct Use {
     char *mod; // TODO: 先只支持一层模块，未来再扩充
@@ -150,7 +171,9 @@ struct Node {
     Meta* meta; // 节点的元信息。TODO：改为Meta类型？
     union {
         CallExpr call;
-        int num;
+        IntNum num;
+        FloatNum float_num;
+        DoubleNum double_num;
         bool bul;
         char *str;
         BinOp bop;

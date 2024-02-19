@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include "zast.h"
 #include "hash.h"
-#include "types.h"
+#include "type.h"
 
 static const int SIZE_INT = 4;
 typedef struct Meta Meta;
@@ -16,6 +16,8 @@ typedef enum {
     MT_USE,
     MT_TYPE,
     MT_BINOP,
+    MT_ARRAY,
+    MT_INDEX,
     MT_ILL,
 } MetaKind;
 

@@ -1,9 +1,11 @@
 #pragma once
+#include "zast.h"
 
 typedef struct Type Type;
 typedef struct TypeNum TypeNum;
 typedef struct TypeUser TypeUser;
 typedef struct TypeFn TypeFn;
+typedef struct TypeArray TypeArray;
 
 // 类型系统
 typedef enum {
@@ -15,6 +17,7 @@ typedef enum {
     TY_DOUBLE,
     TY_USER, // 自定义类型
     TY_FN, // 函数类型
+    TY_ARRAY, // 数组类型
 } TypeKind;
 
 // 数字类型，包括int/bool/byte/float/double
@@ -34,6 +37,11 @@ struct TypeFn {
     Type *ret;
 };
 
+struct TypeArray {
+    Type *item;
+    int size;
+};
+
 // 类型
 struct Type {
     TypeKind kind;
@@ -42,6 +50,7 @@ struct Type {
         TypeNum num;
         TypeUser user;
         TypeFn fn;
+        TypeArray array;
     } as;
 };
 
@@ -53,3 +62,8 @@ extern const Type TYPE_DOUBLE;
 
 // 新建一个类型，必然是TY_USER类型
 Type *new_type(char *name);
+
+// 注意，每个不同尺寸和元素类型的数组都是不同的类型
+Type *new_array_type(Type *item, int size);
+
+Type *check_type(Node *node);

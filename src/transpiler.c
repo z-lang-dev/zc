@@ -145,6 +145,17 @@ static void cprintf(FILE *fp, Node *val) {
     if (val->meta) {
         type = val->meta->type;
     }
+    if (type && type->kind == TY_ARRAY) {
+        fprintf(fp, "printf(\"[");
+        for (int i = 0; i < type->as.array.size; ++i) {
+            gen_expr(fp, val->as.array.items[i]);
+            if (i < type->as.array.size - 1) {
+                fprintf(fp, ", ");
+            }
+        }
+        fprintf(fp, "]\\n\")");
+        return;
+    }
     switch (val->kind) {
     case ND_INT:
         fprintf(fp, "printf(\"%%d\\n\", ");
@@ -161,7 +172,8 @@ static void cprintf(FILE *fp, Node *val) {
     case ND_STR:
         fprintf(fp, "printf(\"%%s\\n\", ");
         break;
-    case ND_BINOP:
+    case ND_INDEX:
+    case ND_BINOP: {
         if (type == NULL) break;
         switch (type->kind) {
         case TY_INT:
@@ -177,6 +189,11 @@ static void cprintf(FILE *fp, Node *val) {
             fprintf(fp, "printf(\"%%lf\\n\", ");
             break;
         }
+        break;
+    }
+    default:
+        fprintf(fp, "printf(\"%%d\\n\", ");
+        break;
     }
     gen_expr(fp, val);
     if (type && type->kind == TY_BOOL) fprintf(fp, " ? \"true\" : \"false\"");
@@ -186,7 +203,7 @@ static void cprintf(FILE *fp, Node *val) {
 // 生成一个语句
 static void gen_expr(FILE *fp, Node *expr) {
     switch (expr->kind) {
-    case ND_BLOCK:
+    case ND_BLOCK: {
         bool need_return = (expr->meta && ((Meta*)expr->meta)->need_return) ? true : false;
         add_indent();
         if (META.lan != LAN_PY) fprintf(fp, "{\n");
@@ -235,6 +252,28 @@ static void gen_expr(FILE *fp, Node *expr) {
           fprintf(fp, "}");
         }
         return;
+    }
+    case ND_ARRAY: {
+        if (META.lan == LAN_C) fprintf(fp, "{");
+        else fprintf(fp, "[");
+
+        for (int i = 0; i < expr->as.array.size; ++i) {
+            gen_expr(fp, expr->as.array.items[i]);
+            if (i < expr->as.array.size - 1) {
+                fprintf(fp, ", ");
+            }
+        }
+        if (META.lan == LAN_C) fprintf(fp, "}");
+        else fprintf(fp, "]");
+        return;
+    }
+    case ND_INDEX: {
+        gen_expr(fp, expr->as.index.array);
+        fprintf(fp, "[");
+        gen_expr(fp, expr->as.index.idx);
+        fprintf(fp, "]");
+        return;
+    }
     case ND_MUT: {
         char *name = expr->as.asn.name->as.str;
         if (META.lan == LAN_C) {
@@ -254,7 +293,11 @@ static void gen_expr(FILE *fp, Node *expr) {
         if (META.lan == LAN_C) {
             Type *type = expr->as.asn.name->meta->type;
             if (type == NULL) type = &TYPE_INT;
-            fprintf(fp, "%s %s = ", type->name, name);
+            if (type->kind == TY_ARRAY) {
+                fprintf(fp, "%s %s[%d] = ", type->as.array.item->name, name, type->as.array.size);
+            } else {
+                fprintf(fp, "%s %s = ", type->name, name);
+            }
         } else if (META.lan == LAN_PY) {
             fprintf(fp, "%s = ", name);
         } else if (META.lan == LAN_JS) {
@@ -381,8 +424,14 @@ static void gen_expr(FILE *fp, Node *expr) {
                 case ND_BINOP:
                     gen_expr(fp, arg);
                     break;
+                case ND_INDEX:
+                    gen_expr(fp, arg);
+                    break;
+                case ND_ARRAY:
+                    gen_expr(fp, arg);
+                    break;
                 default:
-                    fprintf(fp, "unknown kind of arg: %d\n", arg->kind);
+                    fprintf(fp, "print: unknown kind of arg: %d\n", arg->kind);
                 }
                 if (i < expr->as.call.argc - 1) {
                     fprintf(fp, ", ");

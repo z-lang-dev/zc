@@ -46,6 +46,8 @@ static char* token_to_str(TokenKind kind) {
     case TK_ELSE: return "TK_ELSE";
     case TK_LBRACE: return "TK_LBRACE";
     case TK_RBRACE: return "TK_RBRACE";
+    case TK_LSQUARE: return "TK_LSQUARE";
+    case TK_RSQUARE: return "TK_RSQUARE";
     case TK_GT: return "TK_GT";
     case TK_LT: return "TK_LT";
     case TK_GE: return "TK_GE";
@@ -184,17 +186,17 @@ static Node *name(Parser *parser) {
         print_node(node);
         register_use(parser->uses, node);
         return node;
-    } else {
-        node->as.str = n;
-        // scope lookup
-        Meta *m = scope_lookup(parser->scope, node->as.str);
-        if (m == NULL) {
-            printf("Unknown name: %s\n", node->as.str);
-            exit(1);
-        }
-        node->meta = m;
-        return node;
     }
+
+    node->as.str = n;
+    // scope lookup
+    Meta *m = scope_lookup(parser->scope, node->as.str);
+    if (m == NULL) {
+        printf("Unknown name: %s\n", node->as.str);
+        exit(1);
+    }
+    node->meta = m;
+    return node;
 }
 
 static Node *call(Parser *parser, Node *left) {
@@ -391,7 +393,11 @@ static Node *symbol_def(Parser *parser, NodeKind kind) {
     expect(parser, TK_ASN);
 
     // 解析数值表达式
-    expr->as.asn.value = expression(parser);
+    Node *value_node = expression(parser);
+    expr->as.asn.value = value_node;
+    if (type == NULL && value_node->meta) { // 如果没有指定类型，就尝试用右侧值的类型来推导
+        type = value_node->meta->type;
+    }
 
     // 收集元信息
     Meta *m = do_meta(parser, store_name);
@@ -432,6 +438,53 @@ static Node *block(Parser *parser) {
     expect(parser, TK_RBRACE);
     exit_scope(parser);
     return block;
+}
+
+static void expect_sep_array(Parser *parser) {
+    if (parser->cur->kind == TK_COMMA) {
+        advance(parser);
+    } else if (parser->cur->kind == TK_RSQUARE) {
+        return;
+    } else {
+        printf("Expected ',' or ']' between array items, but got %s\n", token_to_str(parser->cur->kind));
+        exit(1);
+    }
+}
+
+// 暂时只支持基本类型的推导
+static Type *infer_type(Node *node) {
+    Type *primary = check_type(node);
+    if (primary) {
+        if (node->meta == NULL) node->meta = new_meta(node);
+        node->meta->type == primary;
+        return primary;
+    } else {
+        printf("Error: Unknown type for node: \n");
+        print_node(node);
+        exit(1);
+    }
+}
+
+static Node *array(Parser *parser) {
+    expect(parser, TK_LSQUARE);
+    Node *array = new_array();
+    Type *item_type = NULL;
+    while (!match(parser, TK_RSQUARE)) {
+        Node *item = expression(parser);
+        if (item_type == NULL) item_type = infer_type(item);
+        append_array_item(array, item);
+        expect_sep_array(parser);
+    }
+    Meta *meta = new_meta(array);
+    if (item_type == NULL) {
+        printf("Error: Cannot infer array item type\n");
+        echo_node(array);
+        exit(1);
+    }
+    meta->type = new_array_type(item_type, array->as.array.size);
+    array->meta = meta;
+    expect(parser, TK_RSQUARE);
+    return array;
 }
 
 static Node *if_else(Parser *parser) {
@@ -532,6 +585,8 @@ static Node *unary(Parser *parser) {
   switch (parser->cur->kind) {
     case TK_LBRACE:
         return block(parser);
+    case TK_LSQUARE:
+        return array(parser);
     case TK_LET:
         return let(parser);
     case TK_MUT:
@@ -712,6 +767,26 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
     }
 }
 
+// 数组下标访问
+static Node *index(Parser *parser, Node *left) {
+    advance(parser); // 跳过'['
+    Node *idx = expression(parser);
+    Node *node = new_node(ND_INDEX);
+    node->as.index.array = left;
+    node->as.index.idx = idx;
+    expect(parser, TK_RSQUARE); // 解析']'
+    if (left->meta && left->meta->type && left->meta->type->kind == TY_ARRAY) {
+        node->meta = new_meta(node);
+        node->meta->type = left->meta->type->as.array.item;
+    } else if (left->kind == ND_NAME) {
+        Type *array_type = type_lookup(parser, left);
+        if (array_type) {
+            node->meta = new_meta(node);
+            node->meta->type = array_type->as.array.item;
+        }
+    }
+    return node;
+}
 
 // 解析一个表达式
 static Node *expr_prec(Parser *parser, Precedence base_prec) {
@@ -724,6 +799,8 @@ static Node *expr_prec(Parser *parser, Precedence base_prec) {
     switch (parser->cur->kind) {
     case TK_LPAREN:
         return call(parser, left);
+    case TK_LSQUARE:
+        return index(parser, left);
     default:
         return binop(parser, left, base_prec);
     }

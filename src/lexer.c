@@ -187,6 +187,10 @@ Token *next_token(Lexer *lexer) {
         return new_token(lexer, TK_LBRACE);
     case '}':
         return new_token(lexer, TK_RBRACE);
+    case '[':
+        return new_token(lexer, TK_LSQUARE);
+    case ']':
+        return new_token(lexer, TK_RSQUARE);
     case '+':
         return new_token(lexer, TK_ADD);
     case '-':

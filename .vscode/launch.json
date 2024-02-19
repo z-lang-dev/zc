@@ -14,20 +14,9 @@
                 "interp",
                 // "mut a int = 10; a + 5"
                 //"fn mul(a int, b int){a*b}; mul(5, 8)"
-                "let f double = 10.2d; print(f + 1.0 > 5.2)"
-                // "print(41)"
-            ],
-            "stopAtEntry": false
-        },
-        {
-            "type": "xmake",
-            "request": "launch",
-            "name": "build",
-            "target": "z",
-            "cwd": "${workspaceFolder}/test/hello",
-            "args": [
-                "build",
-                "hello_case.z"
+                // "let f double = 10.2d; print(f + 1.0 > 5.2)"
+                // "print(41)",
+                "let a = [1, 2, 3]; print(a[2])"
             ],
             "stopAtEntry": false
         },
@@ -36,10 +25,10 @@
             "request": "launch",
             "name": "z2c",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/hello",
+            "cwd": "${workspaceFolder}/test/array",
             "args": [
                 "c",
-                "hello_case.z"
+                "array_case.z"
             ],
             "stopAtEntry": false
         },
@@ -64,6 +53,18 @@
             "args": [
                 "js",
                 "mod_case.z"
+            ],
+            "stopAtEntry": false
+        },
+        {
+            "type": "xmake",
+            "request": "launch",
+            "name": "build",
+            "target": "z",
+            "cwd": "${workspaceFolder}/test/hello",
+            "args": [
+                "build",
+                "hello_case.z"
             ],
             "stopAtEntry": false
         },

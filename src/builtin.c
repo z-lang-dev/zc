@@ -1,5 +1,5 @@
 #include "builtin.h"
-#include "types.h"
+#include "type.h"
 
 Meta *new_builtin(char *name) {
     Node *fn = new_node(ND_FN);

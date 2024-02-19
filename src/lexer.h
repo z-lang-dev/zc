@@ -30,6 +30,8 @@ typedef enum {
     TK_RPAREN, // )
     TK_LBRACE, // {
     TK_RBRACE, // }
+    TK_LSQUARE, // [
+    TK_RSQUARE, // ]
     TK_STR, // 字符串
     TK_ADD, // +
     TK_SUB, // -

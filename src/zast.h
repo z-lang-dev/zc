@@ -19,6 +19,8 @@ typedef struct For For;
 typedef struct Params Params;
 typedef struct Fn Fn;
 typedef struct Path Path;
+typedef struct Array Array;
+typedef struct Index Index;
 
 typedef enum {
     ND_PROG, // 一段程序（可以包含一个或多个模块，也可以只是一个程序片段）
@@ -42,6 +44,8 @@ typedef enum {
     ND_STR, // 字符串
     ND_NAME, // 名称，包括函数名、存量名、类名等
     ND_LNAME,  // 左值名称
+    ND_ARRAY, // 数组
+    ND_INDEX, // 数组索引
     ND_BINOP, // 二元运算
 } NodeKind;
 
@@ -90,10 +94,23 @@ struct Exprs {
     Node **list;
 };
 
+struct Array {
+    int size;
+    int cap;
+    Node **items;
+};
+
+struct Index {
+    Node *array;
+    Node *idx;
+};
+
 Node *new_node(NodeKind kind);
 Node *new_prog();
 Node *new_block();
+Node *new_array();
 void append_expr(Node *parent, Node *expr);
+void append_array_item(Node *parent, Node *node);
 
 struct IntNum {
     int32_t val;
@@ -185,6 +202,8 @@ struct Node {
         For loop;
         Fn fn;
         Path path;
+        Array array;
+        Index index;
     } as;
 };
 

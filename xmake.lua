@@ -6,7 +6,8 @@ local case_list = {
     "read_file", "write_file", "alert", "two_exprs", "use", "let", "compare",
     "if_else", "mut", "for",
     "fn_add",
-    "simple_double"
+    "simple_double",
+    "array",
 }
 
 local skip_table = {
@@ -16,6 +17,7 @@ local skip_table = {
     ["use"] = {["compiler"]=true, ["c"]=true, ["js"]=true},
     ["fn_add"] = {["compiler"]=true},
     ["simple_double"] = {["compiler"]=true},
+    ["array"] = {["compiler"]=true}
 }
 
 target("stdz")
@@ -83,6 +85,7 @@ target("test_interp")
     add_tests("compare", {runargs="let a=10;a>5", trim_output=true, pass_outputs="true"})
     add_tests("mut", {runargs="mut a=10;a=5;a", trim_output=true, pass_outputs="5"})
     add_tests("for", {runargs="mut i = 0; mut sum = 0; for i < 10 { sum = sum + i; i = i + 1; }; sum", trim_output=true, pass_outputs="45"})
+    add_tests("array", {runargs="let a = [1, 2, 3]; a[1]", trim_output=true, pass_outputs="2"})
 
 -- 编译器compiler的测试用例
 target("test_compiler")

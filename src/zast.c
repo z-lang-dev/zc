@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "zast.h"
-#include "types.h"
+#include "type.h"
 #include "meta.h"
 
 void fecho_node(FILE *fp, Node *node) {
@@ -24,6 +24,24 @@ void fecho_node(FILE *fp, Node *node) {
         }
         fprintf(fp, "}");
         break;
+    case ND_ARRAY: {
+        fprintf(fp, "[");
+        for (int i = 0; i < node->as.array.size; i++) {
+            if (i > 0) {
+                fprintf(fp, ", ");
+            }
+            fecho_node(fp, node->as.array.items[i]);
+        }
+        fprintf(fp, "]");
+        break;
+    }
+    case ND_INDEX: {
+        fecho_node(fp, node->as.index.array);
+        fprintf(fp, "[");
+        fecho_node(fp, node->as.index.idx);
+        fprintf(fp, "]");
+        break;
+    }
     case ND_USE:
         fprintf(fp, "use %s", node->as.use.mod);
         if (node->as.use.name != NULL) {
@@ -109,13 +127,13 @@ void fecho_node(FILE *fp, Node *node) {
         fprintf(fp, "%s", node->as.str);
         break;
     case ND_INT:
-        fprintf(fp, "%d", node->as.num);
+        fprintf(fp, "%s", node->as.num.lit);
         break;
     case ND_FLOAT:
-        fprintf(fp, "%f", node->as.float_num);
+        fprintf(fp, "%s", node->as.float_num.lit);
         break;
     case ND_DOUBLE:
-        fprintf(fp, "%lf", node->as.double_num);
+        fprintf(fp, "%s", node->as.double_num.lit);
         break;
     case ND_BOOL:
         fprintf(fp, "%s", node->as.bul ? "true" : "false");
@@ -161,6 +179,25 @@ void fprint_node(FILE *fp, Node *node) {
         }
         fprintf(fp, "]}");
         break;
+    case ND_ARRAY: {
+        fprintf(fp, "{kind:ND_ARRAY, items: [");
+        for (int i = 0; i < node->as.array.size; i++) {
+            if (i > 0) {
+                fprintf(fp, ", ");
+            }
+            fprint_node(fp, node->as.array.items[i]);
+        }
+        fprintf(fp, "]}");
+        break;
+    }
+    case ND_INDEX: {
+        fprintf(fp, "{kind:ND_INDEX, array: ");
+        fprint_node(fp, node->as.index.array);
+        fprintf(fp, ", idx: ");
+        fprint_node(fp, node->as.index.idx);
+        fprintf(fp, " }");
+        break;
+    }
     case ND_USE:
         fprintf(fp, "{kind:ND_USE, mod: %s", node->as.use.mod);
         if (node->as.use.name != NULL) {
@@ -240,16 +277,16 @@ void fprint_node(FILE *fp, Node *node) {
         fprintf(fp, " }");
         break;
     case ND_INT:
-        fprintf(fp, "{kind: ND_INT, as.num: %d}", node->as.num.lit);
+        fprintf(fp, "{kind: ND_INT, as.num: %s}", node->as.num.lit);
         break;
     case ND_BOOL:
         fprintf(fp, "%s", node->as.bul ? "true" : "false");
         break;
     case ND_FLOAT:
-        fprintf(fp, "{kind: ND_FLOAT, as.float_num: %f}", node->as.float_num.lit);
+        fprintf(fp, "{kind: ND_FLOAT, as.float_num: %s}", node->as.float_num.lit);
         break;
     case ND_DOUBLE:
-        fprintf(fp, "{kind: ND_DOUBLE, as.double_num: %lf}", node->as.double_num.lit);
+        fprintf(fp, "{kind: ND_DOUBLE, as.double_num: %s}", node->as.double_num.lit);
         break;
     case ND_NOT:
         fprintf(fp, "{kind: ND_NOT, body: ");
@@ -319,6 +356,15 @@ Node *new_block() {
     return prog;
 }
 
+Node *new_array() {
+    Node *array = calloc(1, sizeof(Node));
+    array->kind = ND_ARRAY;
+    array->as.array.size = 0;
+    array->as.array.cap = 1;
+    array->as.array.items = calloc(1, sizeof(Node *));
+    return array;
+}
+
 Node *new_prog() {
     Node *prog = calloc(1, sizeof(Node));
     prog->kind = ND_PROG;
@@ -326,6 +372,16 @@ Node *new_prog() {
     prog->as.exprs.cap = 1;
     prog->as.exprs.list = calloc(1, sizeof(Node *));
     return prog;
+}
+
+void append_array_item(Node *parent, Node *node) {
+    Array *array = &parent->as.array;
+    if (array->size >= array->cap) { // grow if needed
+        if (array->cap <= 0) array->cap = 1;
+        else array->cap *= 2;
+        array->items = realloc(array->items, array->cap * sizeof(Node *));
+    }
+    array->items[array->size++] = node;
 }
 
 void append_expr(Node *parent, Node *node) {

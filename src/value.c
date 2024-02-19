@@ -29,6 +29,16 @@ Value *new_double(double num) {
     return val;
 }
 
+Value *new_array_val(int count) {
+    Value *val = calloc(1, sizeof(Value));
+    val->kind = VAL_ARRAY;
+    val->as.array = calloc(count, sizeof(Value *));
+    val->as.array->cap = count > 4 ? count : 4;
+    val->as.array->size = count;
+    val->as.array->items = calloc(val->as.array->cap, sizeof(Value *));
+    return val;
+}
+
 const Value TRUE_VAL = {VAL_BOOL, {true}};
 const Value FALSE_VAL = {VAL_BOOL, {false}};
 const Value NIL_VAL = {VAL_NIL, {0}};
@@ -127,26 +137,37 @@ void print_val(Value *val) {
     }
     switch (val->kind) {
     case VAL_INT:
-        printf("%d\n", val->as.num);
+        printf("%d", val->as.num);
         break;
     case VAL_FLOAT:
-        printf("%f\n", val->as.float_num);
+        printf("%f", val->as.float_num);
         break;
     case VAL_DOUBLE:
-        printf("%lf\n", val->as.double_num);
+        printf("%lf", val->as.double_num);
         break;
     case VAL_BOOL:
-        printf("%s\n", val->as.bul ? "true" : "false");
+        printf("%s", val->as.bul ? "true" : "false");
         break;
     case VAL_NIL:
-        printf("nil\n");
+        printf("nil");
         break;
     case VAL_FN:
-        printf("fn %s\n", val->as.fn->name);
+        printf("fn %s", val->as.fn->name);
         break;
     case VAL_STR:
-        printf("%s\n", val->as.str);
+        printf("%s", val->as.str);
         break;
+    case VAL_ARRAY: {
+        printf("[");
+        for (int i = 0; i < val->as.array->size; i++) {
+            print_val(val->as.array->items[i]);
+            if (i < val->as.array->size - 1) {
+                printf(", ");
+            }
+        }
+        printf("]");
+        break;
+    }
     default:
         printf("Unknown value kind: %d\n", val->kind);
     }

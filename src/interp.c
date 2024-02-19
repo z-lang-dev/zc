@@ -22,6 +22,7 @@ Value *eval(Node *expr);
 // print
 static void print(Node *arg) {
     print_val(eval(arg));
+    printf("\n");
 }
 
 // pwd
@@ -253,6 +254,29 @@ Value *eval(Node *expr) {
             last = eval(expr->as.exprs.list[i]);
         }
         return last;
+    }
+    case ND_ARRAY: {
+        Value *arr = new_array_val(expr->as.array.size);
+        for (int i = 0; i < expr->as.array.size; i++) {
+            arr->as.array->items[i] = eval(expr->as.array.items[i]);
+        }
+        return arr;
+    }
+    case ND_INDEX: {
+        Value *arr = eval(expr->as.index.array);
+        Value *idx = eval(expr->as.index.idx);
+        if (idx->kind != VAL_INT) {
+            printf("Index must be int, but got %d\n", idx->kind);
+            return new_nil();
+        }
+        int i = idx->as.num;
+        if (i < 0 || i >= arr->as.array->size) {
+            printf("Index out of range: ");
+            echo_node(expr);
+            return new_nil();
+        }
+        Value *item = arr->as.array->items[i];
+        return item;
     }
     case ND_IF: {
         Value *cond = eval(expr->as.if_else.cond);

@@ -26,6 +26,12 @@ Meta *new_meta(Node *expr) {
         case ND_BINOP:
             meta->kind = MT_BINOP;
             break;
+        case ND_ARRAY:
+            meta->kind = MT_ARRAY;
+            break;
+        case ND_INDEX:
+            meta->kind = MT_INDEX;
+            break;
         default:
             meta->kind = MT_ILL;
             break;

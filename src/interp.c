@@ -23,30 +23,6 @@ Value *eval(Node *expr);
 static void print(Node *arg) {
     Value *v = eval(arg);
     print_val(v);
-    /*
-    switch (arg->kind) {
-    case ND_INT:
-        printf("%d\n", arg->as.num.val);
-        break;
-    case ND_FLOAT:
-        printf("%f\n", arg->as.float_num.val);
-        break;
-    case ND_DOUBLE:
-        printf("%lf\n", arg->as.double_num.val);
-        break;
-    case ND_BOOL:
-        printf("%s\n", arg->as.bul ? "true" : "false");
-        break;
-    case ND_STR:
-        printf("%s\n", arg->as.str);
-        break;
-    case ND_NAME:
-        Value *val = get_val(arg->as.str);
-        print_val(val);
-        break;
-    default:
-        printf("Unknown node kind: %d", arg->kind);
-    }*/
 }
 
 // pwd

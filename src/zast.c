@@ -30,15 +30,18 @@ void fecho_node(FILE *fp, Node *node) {
             fprintf(fp, ".%s", node->as.use.name);
         }
         break;
-    case ND_LET:
-        Type *type = node->meta->type;
+    case ND_LET: {
+        Type *type = node->as.asn.name->meta->type;
         fprintf(fp, "let %s %s = ", node->as.asn.name->as.str, type->name);
         fecho_node(fp, node->as.asn.value);
         break;
-    case ND_MUT:
-        fprintf(fp, "mut %s = ", node->as.asn.name->as.str);
+    }
+    case ND_MUT: {
+        Type *type = node->as.asn.name->meta->type;
+        fprintf(fp, "mut %s %s = ", node->as.asn.name->as.str, type->name);
         fecho_node(fp, node->as.asn.value);
         break;
+    }
     case ND_ASN:
         fecho_node(fp, node->as.asn.name);
         fprintf(fp, " = ");
@@ -164,17 +167,20 @@ void fprint_node(FILE *fp, Node *node) {
             fprintf(fp, ", name: %s", node->as.use.name);
         }
         break;
-    case ND_LET:
-        Type *type = node->meta->type;
+    case ND_LET: {
+        Type *type = node->as.asn.name->meta->type;
         fprintf(fp, "{kind:ND_LET, name: %s, type: %s, value: ", node->as.asn.name->as.str, type->name);
         fprint_node(fp, node->as.asn.value);
         fprintf(fp, " }");
         break;
-    case ND_MUT:
-        fprintf(fp, "{kind:ND_MUT, name: %s, value: ", node->as.asn.name->as.str);
+    }
+    case ND_MUT: {
+        Type *type = node->as.asn.name->meta->type;
+        fprintf(fp, "{kind:ND_MUT, name: %s, type: %s, value: ", node->as.asn.name->as.str, type->name);
         fprint_node(fp, node->as.asn.value);
         fprintf(fp, " }");
         break;
+    }
     case ND_ASN:
         fprintf(fp, "{kind:ND_ASN, name: ");
         fprint_node(fp, node->as.asn.name);

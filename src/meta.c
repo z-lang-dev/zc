@@ -23,6 +23,9 @@ Meta *new_meta(Node *expr) {
             break;
         case ND_USE:
             meta->kind = MT_USE;
+        case ND_BINOP:
+            meta->kind = MT_BINOP;
+            break;
         default:
             meta->kind = MT_ILL;
             break;

@@ -15,10 +15,15 @@ static Value *get_val(char *name) {
     return hash_get(global_scope()->values, name);
 }
 
+Value *eval(Node *expr);
+
 // 内置函数
 
 // print
 static void print(Node *arg) {
+    Value *v = eval(arg);
+    print_val(v);
+    /*
     switch (arg->kind) {
     case ND_INT:
         printf("%d\n", arg->as.num.val);
@@ -41,7 +46,7 @@ static void print(Node *arg) {
         break;
     default:
         printf("Unknown node kind: %d", arg->kind);
-    }
+    }*/
 }
 
 // pwd
@@ -71,7 +76,10 @@ static void cat(char *path) {
 }
 
 static bool check_num(Value *left, Value *right) {
-    return left->kind == VAL_INT && right->kind == VAL_INT;
+    return left->kind == VAL_INT && right->kind == VAL_INT ||
+        left->kind == VAL_FLOAT && right->kind == VAL_FLOAT ||
+        left->kind == VAL_DOUBLE && right->kind == VAL_DOUBLE;
+    ;
 }
 
 static bool check_bool(Value *left, Value *right) {
@@ -83,23 +91,60 @@ static Value *eval_compare(Value *left, Value *right, Op op) {
         printf("Type mismatch: %d %s %d\n", left->kind, op_to_str(op), right->kind);
         return new_nil();
     }
-    switch (op) {
-    case OP_GT:
-        return new_bool(left->as.num > right->as.num);
-    case OP_LT:
-        return new_bool(left->as.num < right->as.num);
-    case OP_GE:
-        return new_bool(left->as.num >= right->as.num);
-    case OP_LE:
-        return new_bool(left->as.num <= right->as.num);
-    case OP_EQ:
-        return new_bool(left->as.num == right->as.num);
-    case OP_NE:
-        return new_bool(left->as.num != right->as.num);
-    default:
+    if (left->kind == VAL_INT) {
+        switch (op) {
+        case OP_GT:
+            return new_bool(left->as.num > right->as.num);
+        case OP_LT:
+            return new_bool(left->as.num < right->as.num);
+        case OP_GE:
+            return new_bool(left->as.num >= right->as.num);
+        case OP_LE:
+            return new_bool(left->as.num <= right->as.num);
+        default:
+            printf("Unknown operator for compare: %d %s %d\n", left->as.num, op_to_str(op), right->as.num);
+            return new_nil();
+        }
+    } else if (left->kind == VAL_FLOAT) {
+        switch (op) {
+        case OP_GT:
+            return new_bool(left->as.float_num > right->as.float_num);
+        case OP_LT:
+            return new_bool(left->as.float_num < right->as.float_num);
+        case OP_GE:
+            return new_bool(left->as.float_num >= right->as.float_num);
+        case OP_LE:
+            return new_bool(left->as.float_num <= right->as.float_num);
+        default:
+            printf("Unknown operator for compare: %f %s %f\n", left->as.float_num, op_to_str(op), right->as.float_num);
+            return new_nil();
+        }
+    } else if (left->kind == VAL_DOUBLE) {
+        switch (op) {
+        case OP_GT:
+            return new_bool(left->as.double_num > right->as.double_num);
+        case OP_LT:
+            return new_bool(left->as.double_num < right->as.double_num);
+        case OP_GE:
+            return new_bool(left->as.double_num >= right->as.double_num);
+        case OP_LE:
+            return new_bool(left->as.double_num <= right->as.double_num);
+        default:
+            printf("Unknown operator for compare: %lf %s %lf\n", left->as.double_num, op_to_str(op), right->as.double_num);
+            return new_nil();
+        }
+    } else {
         printf("Unknown operator for compare: %d %s %d\n", left->as.num, op_to_str(op), right->as.num);
         return new_nil();
     }
+}
+
+static bool float_eq(float a, float b) {
+    return a - b < 0.000001 && a - b > -0.000001;
+}
+
+static bool double_eq(double a, double b) {
+    return a - b < 0.0000001 && a - b > -0.0000001;
 }
 
 static Value *eval_eq(Value *left, Value *right, Op op) {
@@ -113,7 +158,7 @@ static Value *eval_eq(Value *left, Value *right, Op op) {
         case OP_EQ:
             return new_bool(left->as.num == right->as.num);
         case OP_NE:
-            return eval_compare(left, right, op);
+            return new_bool(left->as.num != right->as.num);
         }
         break;
     }
@@ -123,6 +168,22 @@ static Value *eval_eq(Value *left, Value *right, Op op) {
             return new_bool(left->as.bul == right->as.bul);
         case OP_NE:
             return new_bool(left->as.bul != right->as.bul);
+        }
+        break;
+    case VAL_FLOAT:
+        switch(op) {
+        case OP_EQ:
+            return new_bool(float_eq(left->as.float_num, right->as.float_num));
+        case OP_NE:
+            return new_bool(!float_eq(left->as.float_num, right->as.float_num));
+        }
+        break;
+    case VAL_DOUBLE:
+        switch(op) {
+        case OP_EQ:
+            return new_bool(double_eq(left->as.double_num, right->as.double_num));
+        case OP_NE:
+            return new_bool(!double_eq(left->as.double_num, right->as.double_num));
         }
         break;
     default:
@@ -183,6 +244,8 @@ bool call_stdlib(Node *expr) {
 // 对表达式求值
 Value *eval(Node *expr) {
     switch (expr->kind) {
+    case ND_STR:
+        return new_str(expr->as.str);
     case ND_INT:
         return new_int(expr->as.num.val);
     case ND_FLOAT:

@@ -8,6 +8,13 @@ Value *new_int(int num) {
     return val;
 }
 
+Value *new_str(char *str) {
+    Value *val = calloc(1, sizeof(Value));
+    val->kind = VAL_STR;
+    val->as.str = str;
+    return val;
+}
+
 Value *new_float(float num) {
     Value *val = calloc(1, sizeof(Value));
     val->kind = VAL_FLOAT;
@@ -136,6 +143,9 @@ void print_val(Value *val) {
         break;
     case VAL_FN:
         printf("fn %s\n", val->as.fn->name);
+        break;
+    case VAL_STR:
+        printf("%s\n", val->as.str);
         break;
     default:
         printf("Unknown value kind: %d\n", val->kind);

@@ -323,7 +323,7 @@ static void gen_expr(FILE *fp, Node *expr) {
                 fprintf(fp, "printf(\"%s\\n\")", val->as.str);
                 break;
             case ND_BINOP:
-                Type *type = val->as.bop.left->meta->type;
+                Type *type = val->meta->type;
                 if (type == NULL) type = &TYPE_INT;
                 switch (type->kind) {
                 case TY_INT:
@@ -340,7 +340,7 @@ static void gen_expr(FILE *fp, Node *expr) {
                     break;
                 }
                 gen_expr(fp, val);
-                if (type == TY_BOOL) fprintf(fp, " ? \"true\" : \"false\"");
+                if (type->kind == TY_BOOL) fprintf(fp, " ? \"true\" : \"false\"");
                 fprintf(fp, ")");
                 break;
             }

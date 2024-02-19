@@ -644,8 +644,11 @@ static bool is_binop(TokenKind kind) {
         kind == TK_GT || kind == TK_LT || kind == TK_GE || kind == TK_LE || 
         kind == TK_EQ || kind == TK_NE || 
         kind == TK_AND || kind == TK_OR ||
-        kind == TK_ASN ||
-        kind == TK_DOT;
+        kind == TK_ASN;
+}
+
+bool is_relation_op(Op op) {
+    return op == OP_GT || op == OP_LT || op == OP_GE || op == OP_LE || op == OP_EQ || op == OP_NE;
 }
 
 static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
@@ -664,12 +667,24 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
             left->kind = ND_LNAME;
         }
         bop->as.bop.left = left;
+        // 二元表达式的结果类型应当可以由左子节点的类型和操作符推导出来
+        Type *left_type = NULL;
+        if (left->meta) left_type = left->meta->type;
+        if (left_type) {
+            bop->meta = new_meta(bop);
+            if (is_relation_op(op)) {
+                bop->meta->type = &TYPE_BOOL;
+            } else {
+                bop->meta->type = left_type;
+            }
+        }
         advance(parser);
         Node *right = unary(parser);
         if (!is_binop(parser->cur->kind)) {
             bop->as.bop.right = right;
             return bop;
         }
+        
         Precedence next_prec = get_prec(parser->cur->kind); // 下一个操作符的优先级。注意，调用`unary`之后，cur已经指向了下一个词符
         // peek
         if (next_prec > cur_prec) { // 下一个操作符优先级更高，右结合

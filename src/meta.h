@@ -15,6 +15,7 @@ typedef enum {
     MT_BLOCK,
     MT_USE,
     MT_TYPE,
+    MT_BINOP,
     MT_ILL,
 } MetaKind;
 

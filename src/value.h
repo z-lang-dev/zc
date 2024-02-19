@@ -11,6 +11,7 @@ typedef enum {
     VAL_DOUBLE, /**< 64位浮点数 */
     VAL_BOOL, /**< 布尔值 */
     VAL_FN, /**< 函数定义 */
+    VAL_STR, /**< 字符串 */
     VAL_NIL /**< 空值 */
 } ValueKind;
 
@@ -23,12 +24,14 @@ struct Value {
     union {
         int num; /**< 整数值 */
         float float_num; /**< 32位浮点数 */
-        float double_num; /**< 64位浮点数 */
+        double double_num; /**< 64位浮点数 */
         bool bul; /**< 布尔值 */
         Fn *fn; /**< 函数定义 */
+        char *str; /**< 字符串 */
     } as;
 };
 
+Value *new_str(char *str);
 Value *new_int(int num);
 Value *new_float(float num);
 Value *new_double(double num);

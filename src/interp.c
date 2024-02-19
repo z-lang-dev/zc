@@ -21,8 +21,7 @@ Value *eval(Node *expr);
 
 // print
 static void print(Node *arg) {
-    Value *v = eval(arg);
-    print_val(v);
+    print_val(eval(arg));
 }
 
 // pwd

@@ -1,6 +1,6 @@
 #include <stdio.h>
 
 int main(void) {
-    printf("Hello\n");
+    printf("%s\n", "Hello");
     return 2 + 5 * 3;
 }

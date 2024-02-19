@@ -139,6 +139,50 @@ static bool is_void_call(Node *expr) {
     );
 }
 
+// 生成C语言的printf
+static void cprintf(FILE *fp, Node *val) {
+    Type *type = NULL;
+    if (val->meta) {
+        type = val->meta->type;
+    }
+    switch (val->kind) {
+    case ND_INT:
+        fprintf(fp, "printf(\"%%d\\n\", ");
+        break;
+    case ND_BOOL:
+        fprintf(fp, "printf(\"%%s\\n\", ");
+        break;
+    case ND_FLOAT:
+        fprintf(fp, "printf(\"%%f\\n\", ");
+        break;
+    case ND_DOUBLE:
+        fprintf(fp, "printf(\"%%lf\\n\", ");
+        break;
+    case ND_STR:
+        fprintf(fp, "printf(\"%%s\\n\", ");
+        break;
+    case ND_BINOP:
+        if (type == NULL) break;
+        switch (type->kind) {
+        case TY_INT:
+            fprintf(fp, "printf(\"%%d\\n\", ");
+            break;
+        case TY_BOOL:
+            fprintf(fp, "printf(\"%%s\\n\", ");
+            break;
+        case TY_FLOAT:
+            fprintf(fp, "printf(\"%%f\\n\", ");
+            break;
+        case TY_DOUBLE:
+            fprintf(fp, "printf(\"%%lf\\n\", ");
+            break;
+        }
+    }
+    gen_expr(fp, val);
+    if (type && type->kind == TY_BOOL) fprintf(fp, " ? \"true\" : \"false\"");
+    fprintf(fp, ")");
+}
+
 // 生成一个语句
 static void gen_expr(FILE *fp, Node *expr) {
     switch (expr->kind) {
@@ -290,6 +334,9 @@ static void gen_expr(FILE *fp, Node *expr) {
             break;
         }
         return;
+    case ND_STR:
+        fprintf(fp, "\"%s\"", expr->as.str);
+        return;
     case ND_NEG:
         fprintf(fp, "-(");
         gen_expr(fp, expr->as.una.body);
@@ -305,45 +352,7 @@ static void gen_expr(FILE *fp, Node *expr) {
         return;
     case ND_CALL:
         if (META.lan == LAN_C && strcmp(get_name(expr->as.call.name), "print") == 0) {
-            Node *val = expr->as.call.args[0];
-            switch (val->kind) {
-            case ND_INT:
-                fprintf(fp, "printf(\"%%d\\n\", %s)", val->as.num.lit);
-                break;
-            case ND_FLOAT:
-                fprintf(fp, "printf(\"%%f\\n\", %s)", val->as.float_num.lit);
-                break;
-            case ND_DOUBLE:
-                fprintf(fp, "printf(\"%%lf\\n\", %s)", val->as.double_num.lit);
-                break;
-            case ND_BOOL:
-                fprintf(fp, "printf(\"%%s\\n\", %s)", val->as.bul ? "true" : "false");
-                break;
-            case ND_STR:
-                fprintf(fp, "printf(\"%s\\n\")", val->as.str);
-                break;
-            case ND_BINOP:
-                Type *type = val->meta->type;
-                if (type == NULL) type = &TYPE_INT;
-                switch (type->kind) {
-                case TY_INT:
-                    fprintf(fp, "printf(\"%%d\\n\", ");
-                    break;
-                case TY_BOOL:
-                    fprintf(fp, "printf(\"%%s\\n\", ");
-                    break;
-                case TY_FLOAT:
-                    fprintf(fp, "printf(\"%%f\\n\", ");
-                    break;
-                case TY_DOUBLE:
-                    fprintf(fp, "printf(\"%%lf\\n\", ");
-                    break;
-                }
-                gen_expr(fp, val);
-                if (type->kind == TY_BOOL) fprintf(fp, " ? \"true\" : \"false\"");
-                fprintf(fp, ")");
-                break;
-            }
+            cprintf(fp, expr->as.call.args[0]);
             return;
         } else {
             fprintf(fp, "%s(", get_name(expr->as.call.name));

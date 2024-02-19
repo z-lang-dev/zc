@@ -352,6 +352,7 @@ static void gen_expr(FILE *fp, Node *expr) {
         return;
     case ND_CALL:
         if (META.lan == LAN_C && strcmp(get_name(expr->as.call.name), "print") == 0) {
+            // 注意：这里的print仍然只打印第一个参数。多参数的打印，要等Z支持可变长度参数之后再说。
             cprintf(fp, expr->as.call.args[0]);
             return;
         } else {

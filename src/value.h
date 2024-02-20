@@ -4,6 +4,7 @@
 
 typedef struct Value Value;
 typedef struct ArrayVal ArrayVal;
+typedef struct DictVal DictVal;
 
 /**
  * @brief 存值的种类
@@ -16,6 +17,7 @@ typedef enum {
     VAL_FN, /**< 函数定义 */
     VAL_STR, /**< 字符串 */
     VAL_ARRAY, /**< 数组 */
+    VAL_DICT, /**< 字典 */
     VAL_NIL /**< 空值 */
 } ValueKind;
 
@@ -23,6 +25,10 @@ struct ArrayVal {
     int cap;
     int size; /**< 元素个数 */
     Value **items; /**< 元素 */
+};
+
+struct DictVal {
+    HashTable *entries;
 };
 
 /**
@@ -38,6 +44,7 @@ struct Value {
         Fn *fn; /**< 函数定义 */
         char *str; /**< 字符串 */
         ArrayVal *array; /**< 数组 */
+        DictVal *dict;
     } as;
 };
 
@@ -49,6 +56,7 @@ Value *new_bool(bool bul);
 Value *new_nil();
 Value *new_fn(Fn *fn);
 Value *new_array_val(int count);
+Value *new_dict_val(HashTable *entries);
 
 Value *neg_val(Value *val);
 Value *add_val(Value *a, Value *b);

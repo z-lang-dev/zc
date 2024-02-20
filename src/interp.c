@@ -278,6 +278,18 @@ Value *eval(Node *expr) {
         Value *item = arr->as.array->items[i];
         return item;
     }
+    case ND_OBJ: {
+        HashTable *d = new_hash_table();
+        HashIter* i = hash_iter(expr->as.obj.members);
+        while (hash_next(expr->as.obj.members, i)) {
+            char *key = i->key;
+            Node *val_node = (Node*)i->value;
+            Value *val = eval(val_node);
+            hash_set(d, key, val);
+        }
+        Value *val = new_dict_val(d);
+        return val;
+    }
     case ND_IF: {
         Value *cond = eval(expr->as.if_else.cond);
         if (cond->kind != VAL_BOOL) {

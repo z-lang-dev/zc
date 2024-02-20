@@ -834,8 +834,13 @@ static Node *kv(Parser *parser, Node *left) {
 static Node *dict(Parser *parser) {
     Node *d = new_node(ND_DICT);
     expect(parser, TK_LBRACE);
+    if (parser->cur->kind == TK_RBRACE) { // 空字典
+        return d;
+    }
+    d->as.dict.entries = new_hash_table();
     while (!match(parser, TK_RBRACE)) {
-        Node *entry = expression(parser);
+        Node *key = new_name(parser);
+        Node *entry = kv(parser, key);
         if (entry->kind != ND_KV) {
             printf("dict entry should be key:value form, got instead:");
             echo_node(entry);
@@ -849,9 +854,21 @@ static Node *dict(Parser *parser) {
 }
 
 static Node *object(Parser *parser, Node *left) {
+    if (left->kind != ND_NAME) {
+        printf("Error: Object name should be a name, got instead:");
+        echo_node(left);
+        exit(1);
+    }
+    char *n = left->as.str;
+    Meta *tmeta = scope_lookup(parser->scope, n);
+    if (tmeta == NULL) {
+        printf("Error: Unknown object type: %s\n", n);
+        exit(1);
+    }
     Node *obj = new_node(ND_OBJ);
     Node *dic = dict(parser);
     obj->as.obj.members = dic->as.dict.entries;
+    obj->meta = tmeta;
     return obj;
 }
 

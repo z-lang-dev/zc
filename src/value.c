@@ -39,6 +39,14 @@ Value *new_array_val(int count) {
     return val;
 }
 
+Value *new_dict_val(HashTable *entries) {
+    Value *val = calloc(1, sizeof(Value));
+    val->kind = VAL_DICT;
+    val->as.dict = calloc(1, sizeof(DictVal));
+    val->as.dict->entries = entries;
+    return val;
+}
+
 const Value TRUE_VAL = {VAL_BOOL, {true}};
 const Value FALSE_VAL = {VAL_BOOL, {false}};
 const Value NIL_VAL = {VAL_NIL, {0}};
@@ -168,6 +176,19 @@ void print_val(Value *val) {
         printf("]");
         break;
     }
+    case VAL_DICT:
+        printf("{");
+        HashIter *i = hash_iter(val->as.dict->entries);
+        bool is_tail = false;
+        while (hash_next(val->as.dict->entries, i)) {
+            if (is_tail) printf(", ");
+            is_tail = true;
+            printf(i->key);
+            printf(": ");
+            print_val((Value*)(i->value));
+        }
+        printf("}");
+        break;
     default:
         printf("Unknown value kind: %d\n", val->kind);
     }

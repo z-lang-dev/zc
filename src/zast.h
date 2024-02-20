@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "hash.h"
 
 typedef struct Node Node;
 typedef struct Name Name;
@@ -21,6 +22,9 @@ typedef struct Fn Fn;
 typedef struct Path Path;
 typedef struct Array Array;
 typedef struct Index Index;
+typedef struct TypeDecl TypeDecl;
+typedef struct List List;
+typedef struct Obj Obj;
 
 typedef enum {
     ND_PROG, // 一段程序（可以包含一个或多个模块，也可以只是一个程序片段）
@@ -46,9 +50,10 @@ typedef enum {
     ND_LNAME,  // 左值名称
     ND_ARRAY, // 数组
     ND_INDEX, // 数组索引
+    ND_TYPE, // 自定义类型
+    ND_OBJ, // 对象
     ND_BINOP, // 二元运算
 } NodeKind;
-
 struct CallExpr {
     Node *name; // 函数名
     int argc; // 参数个数
@@ -105,12 +110,15 @@ struct Index {
     Node *idx;
 };
 
+
+
 Node *new_node(NodeKind kind);
 Node *new_prog();
 Node *new_block();
 Node *new_array();
 void append_expr(Node *parent, Node *expr);
 void append_array_item(Node *parent, Node *node);
+void list_append(List *list, Node *node);
 
 struct IntNum {
     int32_t val;
@@ -179,6 +187,21 @@ struct Path {
     Name names[MAX_PATH_LEN];
 };
 
+struct List {
+    int size;
+    int cap;
+    Node **items;
+};
+
+struct TypeDecl {
+    Node *name;
+    List *fields;
+};
+
+struct Obj {
+    HashTable *dict;
+};
+
 extern struct Meta;
 typedef struct Meta Meta;
 
@@ -204,6 +227,8 @@ struct Node {
         Path path;
         Array array;
         Index index;
+        TypeDecl type;
+        Obj obj;
     } as;
 };
 

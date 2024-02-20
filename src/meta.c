@@ -32,6 +32,8 @@ Meta *new_meta(Node *expr) {
         case ND_INDEX:
             meta->kind = MT_INDEX;
             break;
+        case ND_TYPE:
+            meta->kind = MT_TYPE;
         default:
             meta->kind = MT_ILL;
             break;

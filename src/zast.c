@@ -97,6 +97,20 @@ void fecho_node(FILE *fp, Node *node) {
         fecho_node(fp, node->as.fn.body);
         fprintf(fp, "}");
         break;
+    case ND_TYPE:
+        fprintf(fp, "typ %s {", node->as.type.name->as.str);
+        for (int i = 0; i < node->as.type.fields->size; i++) {
+            if (i > 0) {
+                fprintf(fp, "; ");
+            }
+            Node *f = node->as.type.fields->items[i];
+            fecho_node(fp, f);
+            if (f->meta->type != NULL) {
+                fprintf(fp, " %s", f->meta->type->name);
+            }
+        }
+        fprintf(fp, "}");
+        break;
     case ND_NEG:
         fprintf(fp, "-");
         fecho_node(fp, node->as.una.body);
@@ -259,6 +273,22 @@ void fprint_node(FILE *fp, Node *node) {
         fprintf(fp, " }");
         break;
     }
+    case ND_TYPE: {
+        fprintf(fp, "{kind:ND_TYPE, name: %s, fields: [", node->as.type.name->as.str);
+        for (int i = 0; i < node->as.type.fields->size; i++) {
+            if (i > 0) {
+                fprintf(fp, ", ");
+            }
+            Node *f = node->as.type.fields->items[i];
+            fprint_node(fp, f);
+            Type *ftype = f->meta->type;
+            if (ftype != NULL) {
+                fprintf(fp, " %s", ftype->name);
+            }
+        }
+        fprintf(fp, "]}");
+        break;
+    }
     case ND_NEG:
         fprintf(fp, "{kind:ND_NEG, body: ");
         fprint_node(fp, node->as.una.body);
@@ -372,6 +402,15 @@ Node *new_prog() {
     prog->as.exprs.cap = 1;
     prog->as.exprs.list = calloc(1, sizeof(Node *));
     return prog;
+}
+
+void list_append(List *list, Node *node) {
+    if (list->size >= list->cap) { // grow if needed
+        if (list->cap <= 0) list->cap = 1;
+        else list->cap *= 2;
+        list->items = realloc(list->items, list->cap * sizeof(Node *));
+    }
+    list->items[list->size++] = node;
 }
 
 void append_array_item(Node *parent, Node *node) {

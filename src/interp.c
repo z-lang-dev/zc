@@ -337,6 +337,10 @@ Value *eval(Node *expr) {
         }
         return eval(val->as.fn->body);
     }
+    case ND_TYPE: {
+        Value *name = new_str(expr->as.type.name->as.str);
+        return name;
+    }
     case ND_BINOP: {
         BinOp *bop = &expr->as.bop;
         Value *res = NULL;

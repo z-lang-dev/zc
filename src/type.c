@@ -20,6 +20,7 @@ Type *new_array_type(Type *item, int size) {
     // TODO: 相同的数组类型应当缓存
     Type *type = calloc(1, sizeof(Type));
     type->kind = TY_ARRAY;
+    type->name = "array";
     type->as.array.item = item;
     type->as.array.size = size;
     return type;

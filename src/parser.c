@@ -20,55 +20,6 @@ static void advance(Parser *parser) {
     parser->next = next_token(parser->lexer);
 }
 
-static char* token_to_str(TokenKind kind) {
-    switch (kind) {
-    case TK_ADD: return "TK_ADD";
-    case TK_SUB: return "TK_SUB";
-    case TK_MUL: return "TK_MUL";
-    case TK_DIV: return "TK_DIV";
-    case TK_INT_NUM: return "TK_INT_NUM";
-    case TK_FLOAT_NUM: return "TK_FLOAT_NUM";
-    case TK_DOUBLE_NUM: return "TK_DOUBLE_NUM";
-    case TK_LPAREN: return "TK_LPAREN";
-    case TK_RPAREN: return "TK_RPAREN";
-    case TK_EOF: return "TK_EOF";
-    case TK_NAME: return "TK_NAME";
-    case TK_STR: return "TK_STR";
-    case TK_COMMA: return "TK_COMMA";
-    case TK_NLINE: return "TK_NLINE";
-    case TK_SEMI: return "TK_SEMI";
-    case TK_DOT: return "TK_DOT";
-    case TK_USE: return "TK_USE";
-    case TK_ASN: return "TK_ASN";
-    case TK_LET: return "TK_LET";
-    case TK_MUT: return "TK_MUT";
-    case TK_IF: return "TK_IF";
-    case TK_ELSE: return "TK_ELSE";
-    case TK_LBRACE: return "TK_LBRACE";
-    case TK_RBRACE: return "TK_RBRACE";
-    case TK_LSQUARE: return "TK_LSQUARE";
-    case TK_RSQUARE: return "TK_RSQUARE";
-    case TK_GT: return "TK_GT";
-    case TK_LT: return "TK_LT";
-    case TK_GE: return "TK_GE";
-    case TK_LE: return "TK_LE";
-    case TK_EQ: return "TK_EQ";
-    case TK_NE: return "TK_NE";
-    case TK_AND: return "TK_AND";
-    case TK_OR: return "TK_OR";
-    case TK_TRUE: return "TK_TRUE";
-    case TK_FALSE: return "TK_FALSE";
-    case TK_NOT: return "TK_NOT";
-    case TK_INT: return "TK_INT";
-    case TK_FLOAT : return "TK_FLOAT";
-    case TK_DOUBLE: return "TK_DOUBLE";
-    case TK_FOR: return "TK_FOR";
-    case TK_FN: return "TK_FN";
-    case TK_BOOL: return "TK_BOOL";
-    default: return "TK_UNKNOWN";
-    }
-}
-
 static bool match(Parser *parser, TokenKind kind) {
     return parser->cur->kind == kind;
 }
@@ -160,6 +111,15 @@ static void register_use(HashTable *uses, Node *path) {
     char *key = calloc(1, strlen(mod) + strlen(name) + 2, sizeof(char));
     sprintf(key, "%s.%s", mod, name);
     hash_set(uses, key, path);
+}
+
+// 定义新的名称，不需要查找元信息，不需要考虑多级名称路径的情况
+static Node *new_name(Parser *parser) {
+    Node *node = new_node(ND_NAME);
+    char *n = get_text(parser);
+    advance(parser);
+    node->as.str = n;
+    return node;
 }
 
 static Node *name(Parser *parser) {
@@ -581,6 +541,67 @@ static Node *fn(Parser *parser) {
     return expr;
 }
 
+static void expect_sep_type_fields(Parser *parser) {
+    if (parser->cur->kind == TK_SEMI) {
+        advance(parser);
+    } else if (parser->cur->kind == TK_RBRACE) {
+        return;
+    } else {
+        printf("Expected ';' or '}' between type fields, but got %s\n", token_to_str(parser->cur->kind));
+        exit(1);
+    }
+}
+
+static List *fields(Parser *parser) {
+    List *fs = calloc(1, sizeof(List));
+    fs->size = 0;
+    fs->cap = 4;
+    fs->items = calloc(1, sizeof(Node *));
+    while (!match(parser, TK_RBRACE)) {
+        // 字段名称
+        Node *field = new_name(parser); 
+        Meta *field_meta = new_meta(field);
+        field->meta = field_meta;
+
+        // 字段类型
+        Node *field_type = new_name(parser);
+        Type *ftype = type_lookup(parser, field_type);
+        if (!ftype) {
+            printf("Error: field %s of type %s not found!", field->as.str, field_type->as.str);
+            exit(1);
+        } 
+        field_meta->type = ftype;
+        list_append(fs, field);
+        expect_sep_type_fields(parser);
+    }
+    return fs;
+}
+
+static Node *type(Parser *parser) {
+    advance(parser); // 跳过`type`关键字
+    Node *type_decl = new_node(ND_TYPE);
+
+    // 类型名称
+    Node *type_name = new_name(parser);
+    type_decl->as.type.name = type_name;
+
+    // 类型的各个字段
+    expect(parser, TK_LBRACE);
+    List *fs = fields(parser);
+    type_decl->as.type.fields = fs;
+
+    // 创建编译器中的UserType
+    Type *tp = new_type(type_name->as.str);
+    Meta *tmeta = new_meta(type_decl);
+    type_decl->meta = tmeta;
+    tmeta->type = tp;
+    expect(parser, TK_RBRACE);
+
+    // 把类型的元信息存入到视野中
+    scope_set(parser->scope, type_name->as.str, tmeta);
+    return type_decl;
+}
+
 static Node *unary(Parser *parser) {
   switch (parser->cur->kind) {
     case TK_LBRACE:
@@ -619,6 +640,8 @@ static Node *unary(Parser *parser) {
         return bul(parser, false);
     case TK_NAME:
         return name(parser);
+    case TK_TYPE:
+        return type(parser);
     default:
         printf("Unknown token: %s\n", token_to_str(parser->cur->kind));
         exit(1);
@@ -788,6 +811,12 @@ static Node *index(Parser *parser, Node *left) {
     return node;
 }
 
+static Node *object(Parser *parser, Node *left) {
+    Node *obj = new_node(ND_OBJ);
+    obj->as.obj.dict = new_hash_table();
+    return obj;
+}
+
 // 解析一个表达式
 static Node *expr_prec(Parser *parser, Precedence base_prec) {
     // 表达式由一个一元操作开头，后接多层二元操作。
@@ -801,6 +830,8 @@ static Node *expr_prec(Parser *parser, Precedence base_prec) {
         return call(parser, left);
     case TK_LSQUARE:
         return index(parser, left);
+    case TK_LBRACE:
+        return object(parser, left);
     default:
         return binop(parser, left, base_prec);
     }

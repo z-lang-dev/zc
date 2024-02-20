@@ -115,6 +115,7 @@ static Keyword keywords[] = {
     {"let", TK_LET},
     {"mut", TK_MUT},
     {"true", TK_TRUE},
+    {"type", TK_TYPE},
     {"use", TK_USE},
 };
 
@@ -224,3 +225,54 @@ Token *next_token(Lexer *lexer) {
         return new_token(lexer, TK_EOF);
     }
 }
+
+char* token_to_str(TokenKind kind) {
+    switch (kind) {
+    case TK_ADD: return "TK_ADD";
+    case TK_SUB: return "TK_SUB";
+    case TK_MUL: return "TK_MUL";
+    case TK_DIV: return "TK_DIV";
+    case TK_INT_NUM: return "TK_INT_NUM";
+    case TK_FLOAT_NUM: return "TK_FLOAT_NUM";
+    case TK_DOUBLE_NUM: return "TK_DOUBLE_NUM";
+    case TK_LPAREN: return "TK_LPAREN";
+    case TK_RPAREN: return "TK_RPAREN";
+    case TK_EOF: return "TK_EOF";
+    case TK_NAME: return "TK_NAME";
+    case TK_STR: return "TK_STR";
+    case TK_COMMA: return "TK_COMMA";
+    case TK_NLINE: return "TK_NLINE";
+    case TK_SEMI: return "TK_SEMI";
+    case TK_DOT: return "TK_DOT";
+    case TK_USE: return "TK_USE";
+    case TK_ASN: return "TK_ASN";
+    case TK_LET: return "TK_LET";
+    case TK_MUT: return "TK_MUT";
+    case TK_IF: return "TK_IF";
+    case TK_ELSE: return "TK_ELSE";
+    case TK_LBRACE: return "TK_LBRACE";
+    case TK_RBRACE: return "TK_RBRACE";
+    case TK_LSQUARE: return "TK_LSQUARE";
+    case TK_RSQUARE: return "TK_RSQUARE";
+    case TK_GT: return "TK_GT";
+    case TK_LT: return "TK_LT";
+    case TK_GE: return "TK_GE";
+    case TK_LE: return "TK_LE";
+    case TK_EQ: return "TK_EQ";
+    case TK_NE: return "TK_NE";
+    case TK_AND: return "TK_AND";
+    case TK_OR: return "TK_OR";
+    case TK_TRUE: return "TK_TRUE";
+    case TK_FALSE: return "TK_FALSE";
+    case TK_NOT: return "TK_NOT";
+    case TK_INT: return "TK_INT";
+    case TK_FLOAT : return "TK_FLOAT";
+    case TK_DOUBLE: return "TK_DOUBLE";
+    case TK_FOR: return "TK_FOR";
+    case TK_FN: return "TK_FN";
+    case TK_BOOL: return "TK_BOOL";
+    case TK_TYPE: return "TK_TYPE";
+    default: return "TK_UNKNOWN";
+    }
+}
+

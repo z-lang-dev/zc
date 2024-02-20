@@ -20,6 +20,7 @@ typedef enum {
     TK_CONTINUE, // continue
     TK_ELSE, // else
     TK_FN, // fn
+    TK_TYPE, // type关键字
     TK_NAME, // 名称
     TK_ASN, // =
     TK_USE, // 导入
@@ -72,3 +73,5 @@ Lexer *new_lexer(const char *code);
 
 // 解析下一个词符
 Token *next_token(Lexer *lexer);
+
+char* token_to_str(TokenKind kind);

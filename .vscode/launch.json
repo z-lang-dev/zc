@@ -16,7 +16,7 @@
                 //"fn mul(a int, b int){a*b}; mul(5, 8)"
                 // "let f double = 10.2d; print(f + 1.0 > 5.2)"
                 // "print(41)",
-                "let a = [1, 2, 3]; print(a[2])"
+                "let a = [\"1\", \"2\", \"3\"]; print(a[2])"
             ],
             "stopAtEntry": false
         },
@@ -37,10 +37,10 @@
             "request": "launch",
             "name": "z2py",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/mod",
+            "cwd": "${workspaceFolder}/test/bar",
             "args": [
                 "py",
-                "mod_case.z"
+                "bar_case.z"
             ],
             "stopAtEntry": false
         },

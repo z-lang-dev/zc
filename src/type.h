@@ -15,6 +15,7 @@ typedef enum {
     TY_BYTE,
     TY_FLOAT,
     TY_DOUBLE,
+    TY_STR, // 字符串类型（静态）
     TY_USER, // 自定义类型
     TY_FN, // 函数类型
     TY_ARRAY, // 数组类型
@@ -38,8 +39,8 @@ struct TypeFn {
 };
 
 struct TypeArray {
-    Type *item;
     int size;
+    Type *item;
 };
 
 // 类型
@@ -59,6 +60,7 @@ extern const Type TYPE_BYTE;
 extern const Type TYPE_INT;
 extern const Type TYPE_FLOAT;
 extern const Type TYPE_DOUBLE;
+extern const Type TYPE_STR;
 
 // 新建一个类型，必然是TY_USER类型
 Type *new_type(char *name);

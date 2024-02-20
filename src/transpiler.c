@@ -709,6 +709,7 @@ static void codegen_py(Front *front) {
 
 static void use_charts() {
     global_set("pie", new_stdfn("pie"));
+    global_set("bar", new_stdfn("bar"));
 }
 
 void trans_py(char *file) {

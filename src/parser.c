@@ -382,7 +382,7 @@ static Node *symbol_def(Parser *parser, NodeKind kind) {
     expr->as.asn.name = store_name;
     advance(parser);
 
-    Type *type;
+    Type *type = NULL;
     // 解析存量类型
     if (is_type_name(parser)) {
         Node *type_name = name(parser);

@@ -411,6 +411,17 @@ static void expect_sep_array(Parser *parser) {
     }
 }
 
+static void expect_sep_dict(Parser *parser) {
+    if (parser->cur->kind == TK_COMMA) {
+        advance(parser);
+    } else if (parser->cur->kind == TK_RBRACE) {
+        return;
+    } else {
+        printf("Expected ',' or ']' between array items, but got %s\n", token_to_str(parser->cur->kind));
+        exit(1);
+    }
+}
+
 // 暂时只支持基本类型的推导
 static Type *infer_type(Node *node) {
     Type *primary = check_type(node);
@@ -811,9 +822,36 @@ static Node *index(Parser *parser, Node *left) {
     return node;
 }
 
+static Node *kv(Parser *parser, Node *left) {
+    Node *entry = new_node(ND_KV);
+    expect(parser, TK_COLON);
+    Node *val = expression(parser);
+    entry->as.kv.key = left;
+    entry->as.kv.val = val;
+    return entry;
+}
+
+static Node *dict(Parser *parser) {
+    Node *d = new_node(ND_DICT);
+    expect(parser, TK_LBRACE);
+    while (!match(parser, TK_RBRACE)) {
+        Node *entry = expression(parser);
+        if (entry->kind != ND_KV) {
+            printf("dict entry should be key:value form, got instead:");
+            echo_node(entry);
+            exit(1);
+        }
+        hash_set(d->as.dict.entries, entry->as.kv.key->as.str, entry->as.kv.val);
+        expect_sep_dict(parser);
+    }
+    expect(parser, TK_RBRACE);
+    return d;
+}
+
 static Node *object(Parser *parser, Node *left) {
     Node *obj = new_node(ND_OBJ);
-    obj->as.obj.dict = new_hash_table();
+    Node *dic = dict(parser);
+    obj->as.obj.members = dic->as.dict.entries;
     return obj;
 }
 
@@ -832,6 +870,8 @@ static Node *expr_prec(Parser *parser, Precedence base_prec) {
         return index(parser, left);
     case TK_LBRACE:
         return object(parser, left);
+    case TK_COLON:
+        return kv(parser, left);
     default:
         return binop(parser, left, base_prec);
     }

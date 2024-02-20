@@ -51,6 +51,7 @@ typedef enum {
     TK_NLINE, // \n
     TK_SEMI, // ;
     TK_DOT, // .
+    TK_COLON, // :
     TK_EOF // 源码结束
 } TokenKind;
 

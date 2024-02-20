@@ -208,6 +208,8 @@ Token *next_token(Lexer *lexer) {
         return new_token(lexer, TK_SEMI);
     case '.':
         return new_token(lexer, TK_DOT);
+    case ':':
+        return new_token(lexer, TK_COLON);
     case '=':
         return single_or_double_token(lexer, '=', TK_ASN, TK_EQ);
     case '!':

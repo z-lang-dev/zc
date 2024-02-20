@@ -25,6 +25,8 @@ typedef struct Index Index;
 typedef struct TypeDecl TypeDecl;
 typedef struct List List;
 typedef struct Obj Obj;
+typedef struct Dict Dict;
+typedef struct KV KV;
 
 typedef enum {
     ND_PROG, // 一段程序（可以包含一个或多个模块，也可以只是一个程序片段）
@@ -50,8 +52,10 @@ typedef enum {
     ND_LNAME,  // 左值名称
     ND_ARRAY, // 数组
     ND_INDEX, // 数组索引
+    ND_DICT, // 字典
     ND_TYPE, // 自定义类型
     ND_OBJ, // 对象
+    ND_KV, // Key:Value对
     ND_BINOP, // 二元运算
 } NodeKind;
 struct CallExpr {
@@ -109,8 +113,6 @@ struct Index {
     Node *array;
     Node *idx;
 };
-
-
 
 Node *new_node(NodeKind kind);
 Node *new_prog();
@@ -199,7 +201,16 @@ struct TypeDecl {
 };
 
 struct Obj {
-    HashTable *dict;
+    HashTable *members;
+};
+
+struct Dict {
+    HashTable *entries;
+};
+
+struct KV {
+    Node *key;
+    Node *val;
 };
 
 extern struct Meta;
@@ -229,6 +240,8 @@ struct Node {
         Index index;
         TypeDecl type;
         Obj obj;
+        Dict dict;
+        KV kv;
     } as;
 };
 

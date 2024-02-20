@@ -217,6 +217,19 @@ bool call_stdlib(Node *expr) {
     return false;
 }
 
+static Value *eval_hashtable(HashTable *ht) {
+    HashTable *d = new_hash_table();
+    HashIter* i = hash_iter(ht);
+    while (hash_next(ht, i)) {
+        char *key = i->key;
+        Node *val_node = (Node*)i->value;
+        Value *val = eval(val_node);
+        hash_set(d, key, val);
+    }
+    Value *val = new_dict_val(d);
+    return val;
+}
+
 // 对表达式求值
 Value *eval(Node *expr) {
     switch (expr->kind) {
@@ -279,16 +292,10 @@ Value *eval(Node *expr) {
         return item;
     }
     case ND_OBJ: {
-        HashTable *d = new_hash_table();
-        HashIter* i = hash_iter(expr->as.obj.members);
-        while (hash_next(expr->as.obj.members, i)) {
-            char *key = i->key;
-            Node *val_node = (Node*)i->value;
-            Value *val = eval(val_node);
-            hash_set(d, key, val);
-        }
-        Value *val = new_dict_val(d);
-        return val;
+        return eval_hashtable(expr->as.obj.members);
+    }
+    case ND_DICT: {
+        return eval_hashtable(expr->as.dict.entries);
     }
     case ND_IF: {
         Value *cond = eval(expr->as.if_else.cond);
@@ -405,7 +412,7 @@ Value *eval(Node *expr) {
     }
     default:
         printf("Wrong NodeKind to eval: %d\n", expr->kind);
-        return NULL;
+        return new_nil();
     }
 }
 

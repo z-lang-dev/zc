@@ -17,7 +17,8 @@
                 // "let f double = 10.2d; print(f + 1.0 > 5.2)"
                 // "print(41)",
                 //"let a = [\"1\", \"2\", \"3\"]; print(a[2])"
-                "type A {a int; b double}; let x = A{a:18, b:3.14]}"
+                // "type A {a int; b double}; let x = A{a:18, b:3.14}; x"
+                "{a: 1, b: 2, c:3}"
             ],
             "stopAtEntry": false
         },

@@ -387,8 +387,8 @@ static void *expect_eob(Parser *parser) {
     }
 }
 
-static Node *block(Parser *parser) {
-    expect(parser, TK_LBRACE);
+static Node *block_impl(Parser *parser, bool peeked) {
+    if (!peeked) expect(parser, TK_LBRACE);
     enter_scope(parser);
     Node *block = new_block();
     while (!match(parser, TK_RBRACE)) {
@@ -398,6 +398,70 @@ static Node *block(Parser *parser) {
     expect(parser, TK_RBRACE);
     exit_scope(parser);
     return block;
+}
+
+
+static Node *block(Parser *parser) {
+    return block_impl(parser, false);
+}
+
+static Node *kv(Parser *parser, Node *left) {
+    Node *entry = new_node(ND_KV);
+    expect(parser, TK_COLON);
+    Node *val = expression(parser);
+    entry->as.kv.key = left;
+    entry->as.kv.val = val;
+    return entry;
+}
+
+static void expect_sep_dict(Parser *parser) {
+    if (parser->cur->kind == TK_COMMA) {
+        advance(parser);
+    } else if (parser->cur->kind == TK_RBRACE) {
+        return;
+    } else {
+        printf("Expected ',' or ']' between array items, but got %s\n", token_to_str(parser->cur->kind));
+        exit(1);
+    }
+}
+
+static Node *dict_impl(Parser *parser, bool peeked) {
+    Node *d = new_node(ND_DICT);
+    if (!peeked) expect(parser, TK_LBRACE);
+    if (parser->cur->kind == TK_RBRACE) { // 空字典
+        return d;
+    }
+    d->as.dict.entries = new_hash_table();
+    while (!match(parser, TK_RBRACE)) {
+        Node *key = new_name(parser);
+        Node *entry = kv(parser, key);
+        if (entry->kind != ND_KV) {
+            printf("dict entry should be key:value form, got instead:");
+            echo_node(entry);
+            exit(1);
+        }
+        hash_set(d->as.dict.entries, entry->as.kv.key->as.str, entry->as.kv.val);
+        expect_sep_dict(parser);
+    }
+    expect(parser, TK_RBRACE);
+    return d;
+}
+
+// 注：为了区别字典和代码块，只能提前读取两个词符，通过`:`来区分
+// 这样的解析就很不优雅，无法和其他地方单独解析`block`和`dict`的函数统一起来。
+// 得想办法改进
+static Node *block_or_dict(Parser *parser) {
+    expect(parser, TK_LBRACE);
+    //表达式以 `{name: ...}`开头，是一个字典 
+    if (parser->cur->kind == TK_NAME && parser->next->kind == TK_COLON) { 
+        return dict_impl(parser, true);
+    } else {
+        return block_impl(parser, true);
+    }
+}
+
+static Node *dict(Parser *parser) {
+    return dict_impl(parser, false);
 }
 
 static void expect_sep_array(Parser *parser) {
@@ -411,16 +475,7 @@ static void expect_sep_array(Parser *parser) {
     }
 }
 
-static void expect_sep_dict(Parser *parser) {
-    if (parser->cur->kind == TK_COMMA) {
-        advance(parser);
-    } else if (parser->cur->kind == TK_RBRACE) {
-        return;
-    } else {
-        printf("Expected ',' or ']' between array items, but got %s\n", token_to_str(parser->cur->kind));
-        exit(1);
-    }
-}
+
 
 // 暂时只支持基本类型的推导
 static Type *infer_type(Node *node) {
@@ -616,7 +671,7 @@ static Node *type(Parser *parser) {
 static Node *unary(Parser *parser) {
   switch (parser->cur->kind) {
     case TK_LBRACE:
-        return block(parser);
+        return block_or_dict(parser);
     case TK_LSQUARE:
         return array(parser);
     case TK_LET:
@@ -822,36 +877,6 @@ static Node *index(Parser *parser, Node *left) {
     return node;
 }
 
-static Node *kv(Parser *parser, Node *left) {
-    Node *entry = new_node(ND_KV);
-    expect(parser, TK_COLON);
-    Node *val = expression(parser);
-    entry->as.kv.key = left;
-    entry->as.kv.val = val;
-    return entry;
-}
-
-static Node *dict(Parser *parser) {
-    Node *d = new_node(ND_DICT);
-    expect(parser, TK_LBRACE);
-    if (parser->cur->kind == TK_RBRACE) { // 空字典
-        return d;
-    }
-    d->as.dict.entries = new_hash_table();
-    while (!match(parser, TK_RBRACE)) {
-        Node *key = new_name(parser);
-        Node *entry = kv(parser, key);
-        if (entry->kind != ND_KV) {
-            printf("dict entry should be key:value form, got instead:");
-            echo_node(entry);
-            exit(1);
-        }
-        hash_set(d->as.dict.entries, entry->as.kv.key->as.str, entry->as.kv.val);
-        expect_sep_dict(parser);
-    }
-    expect(parser, TK_RBRACE);
-    return d;
-}
 
 static Node *object(Parser *parser, Node *left) {
     if (left->kind != ND_NAME) {

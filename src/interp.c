@@ -276,20 +276,33 @@ Value *eval(Node *expr) {
         return arr;
     }
     case ND_INDEX: {
-        Value *arr = eval(expr->as.index.array);
+        Value *parent = eval(expr->as.index.parent);
         Value *idx = eval(expr->as.index.idx);
-        if (idx->kind != VAL_INT) {
-            printf("Index must be int, but got %d\n", idx->kind);
+        Type *left_type = expr->as.index.parent->meta->type;
+        if (left_type->kind == TY_ARRAY) {
+            if (idx->kind != VAL_INT) {
+                printf("Array index must be int, but got %d\n", idx->kind);
+                return new_nil();
+            }
+            int i = idx->as.num;
+            if (i < 0 || i >= parent->as.array->size) {
+                printf("Index out of range: ");
+                echo_node(expr);
+                return new_nil();
+            }
+            Value *item = parent->as.array->items[i];
+            return item;
+        } else if (left_type->kind == TY_DICT) {
+            if (idx->kind != VAL_STR) {
+                printf("Dict index must be string, but got %d\n", idx->kind);
+                return new_nil();
+            }
+            char *key = idx->as.str;
+            Value *val = hash_get(parent->as.dict->entries, key);
+            return val;
+        } else {
             return new_nil();
         }
-        int i = idx->as.num;
-        if (i < 0 || i >= arr->as.array->size) {
-            printf("Index out of range: ");
-            echo_node(expr);
-            return new_nil();
-        }
-        Value *item = arr->as.array->items[i];
-        return item;
     }
     case ND_OBJ: {
         return eval_hashtable(expr->as.obj.members);

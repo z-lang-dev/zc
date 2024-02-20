@@ -26,6 +26,15 @@ Type *new_array_type(Type *item, int size) {
     return type;
 }
 
+Type *new_dict_type(Type *key, Type *val) {
+    Type *type = calloc(1, sizeof(Type));
+    type->kind = TY_DICT;
+    type->name = "dict";
+    type->as.dict.key = key;
+    type->as.dict.val = val;
+    return type;
+}
+
 Type *check_type(Node *node) {
     switch (node->kind) {
     case ND_INT:

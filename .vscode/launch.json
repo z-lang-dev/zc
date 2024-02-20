@@ -18,7 +18,7 @@
                 // "print(41)",
                 //"let a = [\"1\", \"2\", \"3\"]; print(a[2])"
                 // "type A {a int; b double}; let x = A{a:18, b:3.14}; x"
-                "{a: 1, b: 2, c:3}"
+                "let d = {a: 17, b: 2, c:3};d[\"a\"]"
             ],
             "stopAtEntry": false
         },

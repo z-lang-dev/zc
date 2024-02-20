@@ -36,7 +36,7 @@ void fecho_node(FILE *fp, Node *node) {
         break;
     }
     case ND_INDEX: {
-        fecho_node(fp, node->as.index.array);
+        fecho_node(fp, node->as.index.parent);
         fprintf(fp, "[");
         fecho_node(fp, node->as.index.idx);
         fprintf(fp, "]");
@@ -206,7 +206,7 @@ void fprint_node(FILE *fp, Node *node) {
     }
     case ND_INDEX: {
         fprintf(fp, "{kind:ND_INDEX, array: ");
-        fprint_node(fp, node->as.index.array);
+        fprint_node(fp, node->as.index.parent);
         fprintf(fp, ", idx: ");
         fprint_node(fp, node->as.index.idx);
         fprintf(fp, " }");

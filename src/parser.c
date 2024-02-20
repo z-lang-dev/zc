@@ -425,6 +425,27 @@ static void expect_sep_dict(Parser *parser) {
     }
 }
 
+// 暂时只支持基本类型的推导
+static Type *infer_type(Parser *parser, Node *node) {
+    Type *primary = check_type(node);
+    if (primary) {
+        if (node->meta == NULL) node->meta = new_meta(node);
+        node->meta->type == primary;
+        return primary;
+    }
+    if (node->kind == ND_NAME) {
+        Type *t = type_lookup(parser, node);
+        if (t) {
+            if (node->meta == NULL) node->meta = new_meta(node);
+            node->meta->type = t;
+            return t;
+        }
+    }
+    printf("Error: Unknown type for node: \n");
+    print_node(node);
+    exit(1);
+}
+
 static Node *dict_impl(Parser *parser, bool peeked) {
     Node *d = new_node(ND_DICT);
     if (!peeked) expect(parser, TK_LBRACE);
@@ -432,6 +453,9 @@ static Node *dict_impl(Parser *parser, bool peeked) {
         return d;
     }
     d->as.dict.entries = new_hash_table();
+
+    Type *key_type = &TYPE_STR;
+    Type *val_type = NULL;
     while (!match(parser, TK_RBRACE)) {
         Node *key = new_name(parser);
         Node *entry = kv(parser, key);
@@ -440,10 +464,18 @@ static Node *dict_impl(Parser *parser, bool peeked) {
             echo_node(entry);
             exit(1);
         }
+        if (val_type == NULL) {
+            Node *val = entry->as.kv.val;
+            val_type = infer_type(parser, val);
+        }
         hash_set(d->as.dict.entries, entry->as.kv.key->as.str, entry->as.kv.val);
         expect_sep_dict(parser);
     }
     expect(parser, TK_RBRACE);
+    // 处理类型信息
+    Type *type = new_dict_type(key_type, val_type);
+    if (d->meta == NULL) d->meta = new_meta(d);
+    d->meta->type = type;
     return d;
 }
 
@@ -476,28 +508,13 @@ static void expect_sep_array(Parser *parser) {
 }
 
 
-
-// 暂时只支持基本类型的推导
-static Type *infer_type(Node *node) {
-    Type *primary = check_type(node);
-    if (primary) {
-        if (node->meta == NULL) node->meta = new_meta(node);
-        node->meta->type == primary;
-        return primary;
-    } else {
-        printf("Error: Unknown type for node: \n");
-        print_node(node);
-        exit(1);
-    }
-}
-
 static Node *array(Parser *parser) {
     expect(parser, TK_LSQUARE);
     Node *array = new_array();
     Type *item_type = NULL;
     while (!match(parser, TK_RSQUARE)) {
         Node *item = expression(parser);
-        if (item_type == NULL) item_type = infer_type(item);
+        if (item_type == NULL) item_type = infer_type(parser, item);
         append_array_item(array, item);
         expect_sep_array(parser);
     }
@@ -856,23 +873,42 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
     }
 }
 
+static Type *get_type(Parser *parser, Node *node) {
+    // 如果节点的meta直接可以获得类型，则返回该类型
+    if (node->meta && node->meta->type) {
+        return node->meta->type;
+    } else if (node->kind == ND_NAME) { // 否则，尝试查找类型
+        Type *type = type_lookup(parser, node);
+        if (type) {
+            if (node->meta == NULL) node->meta = new_meta(node);
+            node->meta->type = type;
+            return type;
+        }
+    }
+    return NULL;
+}
+
 // 数组下标访问
 static Node *index(Parser *parser, Node *left) {
     advance(parser); // 跳过'['
     Node *idx = expression(parser);
     Node *node = new_node(ND_INDEX);
-    node->as.index.array = left;
+    node->as.index.parent = left;
     node->as.index.idx = idx;
     expect(parser, TK_RSQUARE); // 解析']'
-    if (left->meta && left->meta->type && left->meta->type->kind == TY_ARRAY) {
+    // 获取左侧的类型
+    Type *left_type = get_type(parser, left);
+    if (!left_type) return node;
+    if (left_type->kind == TY_ARRAY) { // 如果是数组，则返回其元素类型
         node->meta = new_meta(node);
         node->meta->type = left->meta->type->as.array.item;
-    } else if (left->kind == ND_NAME) {
-        Type *array_type = type_lookup(parser, left);
-        if (array_type) {
-            node->meta = new_meta(node);
-            node->meta->type = array_type->as.array.item;
-        }
+    } else if (left_type->kind == TY_DICT) { // 如果是字典，则返回其值类型
+        node->meta = new_meta(node);
+        node->meta->type = left->meta->type->as.dict.val;
+    } else {
+        printf("Error: Cannot index on a type that is neither a dict or an array: ");
+        echo_node(left);
+        exit(1);
     }
     return node;
 }

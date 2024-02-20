@@ -460,7 +460,7 @@ static bool do_locals(FILE *fp) {
     bool has_locals = false;
     while (hash_next(table, i)) {
         Meta *meta = (Meta*)i->value;
-        if (meta->kind == MT_FN) {
+        if (meta->kind == ND_FN) {
             // TODO: 处理自定义函数
             continue;
         }

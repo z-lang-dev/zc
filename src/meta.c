@@ -5,37 +5,16 @@
 Meta *new_meta(Node *expr) {
     Meta *meta = calloc(1, sizeof(Meta));
     meta->node = expr;
+    meta->kind = expr->kind;
     switch (expr->kind) {
         case ND_NAME:
-            meta->kind = MT_NAME;
             meta->name = get_name(expr);
             break;
         case ND_PATH:
-            meta->kind = MT_PATH;
             meta->name = get_name(expr);
             break;
         case ND_FN:
-            meta->kind = MT_FN;
             meta->name = expr->as.fn.name;
-            break;
-        case ND_BLOCK:
-            meta->kind = MT_BLOCK;
-            break;
-        case ND_USE:
-            meta->kind = MT_USE;
-        case ND_BINOP:
-            meta->kind = MT_BINOP;
-            break;
-        case ND_ARRAY:
-            meta->kind = MT_ARRAY;
-            break;
-        case ND_INDEX:
-            meta->kind = MT_INDEX;
-            break;
-        case ND_TYPE:
-            meta->kind = MT_TYPE;
-        default:
-            meta->kind = MT_ILL;
             break;
     }
     return meta;
@@ -44,7 +23,7 @@ Meta *new_meta(Node *expr) {
 Meta *new_type_meta(Type *type) {
     Meta *m = calloc(1, sizeof(Meta));
     m->type = type;
-    m->kind = MT_TYPE;
+    m->kind = ND_TYPE;
     return m;
 }
 
@@ -71,7 +50,7 @@ Meta *scope_lookup(Scope *scope, const char *name) {
 
 bool scope_set(Scope *scope, const char *name, Meta *meta) {
     // 进行统计
-    if (meta->kind == MT_NAME || meta->kind == MT_PATH) { 
+    if (meta->kind == ND_NAME || meta->kind == ND_PATH) { 
         int size = SIZE_INT; // 现在只有int类型，它的尺寸是4字节
         meta->offset = scope->cur_offset;
         scope->cur_offset += size;

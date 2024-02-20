@@ -110,7 +110,7 @@ struct Array {
 };
 
 struct Index {
-    Node *array;
+    Node *parent;
     Node *idx;
 };
 

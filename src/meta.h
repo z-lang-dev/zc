@@ -8,22 +8,10 @@ static const int SIZE_INT = 4;
 typedef struct Meta Meta;
 typedef struct Scope Scope;
 
-typedef enum {
-    MT_NAME,
-    MT_PATH,
-    MT_FN,
-    MT_BLOCK,
-    MT_USE,
-    MT_TYPE,
-    MT_BINOP,
-    MT_ARRAY,
-    MT_INDEX,
-    MT_ILL,
-} MetaKind;
 
 // TODO: 把Meta改造成tagged-union
 struct Meta {
-    MetaKind kind;
+    NodeKind kind;
     Node *node;
     Type *type;
     char *name;

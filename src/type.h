@@ -6,6 +6,7 @@ typedef struct TypeNum TypeNum;
 typedef struct TypeUser TypeUser;
 typedef struct TypeFn TypeFn;
 typedef struct TypeArray TypeArray;
+typedef struct TypeDict TypeDict;
 
 // 类型系统
 typedef enum {
@@ -19,6 +20,7 @@ typedef enum {
     TY_USER, // 自定义类型
     TY_FN, // 函数类型
     TY_ARRAY, // 数组类型
+    TY_DICT, // 字典类型
 } TypeKind;
 
 // 数字类型，包括int/bool/byte/float/double
@@ -43,6 +45,11 @@ struct TypeArray {
     Type *item;
 };
 
+struct TypeDict {
+    Type *key;
+    Type *val;
+};
+
 // 类型
 struct Type {
     TypeKind kind;
@@ -52,6 +59,7 @@ struct Type {
         TypeUser user;
         TypeFn fn;
         TypeArray array;
+        TypeDict dict;
     } as;
 };
 
@@ -67,5 +75,7 @@ Type *new_type(char *name);
 
 // 注意，每个不同尺寸和元素类型的数组都是不同的类型
 Type *new_array_type(Type *item, int size);
+
+Type *new_dict_type(Type *key, Type *val);
 
 Type *check_type(Node *node);

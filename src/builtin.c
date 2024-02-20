@@ -21,7 +21,7 @@ Meta *new_stdfn(char *name) {
     fn->as.str = name;
     Meta *m = new_meta(fn);
     m->name = name;
-    m->kind = MT_FN;
+    m->kind = ND_FN;
     return m;
 }
 

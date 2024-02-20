@@ -268,7 +268,7 @@ static void gen_expr(FILE *fp, Node *expr) {
         return;
     }
     case ND_INDEX: {
-        gen_expr(fp, expr->as.index.array);
+        gen_expr(fp, expr->as.index.parent);
         fprintf(fp, "[");
         gen_expr(fp, expr->as.index.idx);
         fprintf(fp, "]");
@@ -590,7 +590,7 @@ static void codegen_c_lib(Mod *mod, char *name) {
     while (hash_next(scope->metas, i)) {
         Meta *meta = (Meta*)i->value;
         switch (meta->kind) {
-        case MT_FN: // 暂时只有函数定义需要输出到头文件
+        case ND_FN: // 暂时只有函数定义需要输出到头文件
             if (meta->is_def == false) continue;
             gen_fn_header(hp, meta->node);
             break;
@@ -755,7 +755,7 @@ static void codegen_js_mod(Mod *mod) {
                     expr->as.call.name->as.str = "console.log";
                 } else if (expr->meta) {
                     Meta *m = (Meta*)expr->meta;
-                    if (m->kind == MT_FN && m->is_def == false) {
+                    if (m->kind == ND_FN && m->is_def == false) {
                         fprintf(fp, "import {%s} from \"./stdz.js\"\n", name);
                         has_import = true;
                     }

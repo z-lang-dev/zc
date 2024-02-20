@@ -377,9 +377,15 @@ void trace_node(Node *node) {
 #endif
 }
 
+Node *new_node(NodeKind kind) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    node->meta = new_meta(node);
+    return node;
+}
+
 Node *new_block() {
-    Node *prog = calloc(1, sizeof(Node));
-    prog->kind = ND_BLOCK;
+    Node *prog = new_node(ND_BLOCK);
     prog->as.exprs.count = 0;
     prog->as.exprs.cap = 1;
     prog->as.exprs.list = calloc(1, sizeof(Node *));
@@ -387,8 +393,7 @@ Node *new_block() {
 }
 
 Node *new_array() {
-    Node *array = calloc(1, sizeof(Node));
-    array->kind = ND_ARRAY;
+    Node *array = new_node(ND_ARRAY);
     array->as.array.size = 0;
     array->as.array.cap = 1;
     array->as.array.items = calloc(1, sizeof(Node *));
@@ -396,8 +401,7 @@ Node *new_array() {
 }
 
 Node *new_prog() {
-    Node *prog = calloc(1, sizeof(Node));
-    prog->kind = ND_PROG;
+    Node *prog = new_node(ND_PROG);
     prog->as.exprs.count = 0;
     prog->as.exprs.cap = 1;
     prog->as.exprs.list = calloc(1, sizeof(Node *));
@@ -432,7 +436,6 @@ void append_expr(Node *parent, Node *node) {
     }
     exprs->list[exprs->count++] = node;
 }
-
 
 char *op_to_str(Op op) {
     switch (op) {
@@ -469,12 +472,6 @@ char *op_to_str(Op op) {
     default:
         return "<UNKNOWN_OP>";
     }
-}
-
-Node *new_node(NodeKind kind) {
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = kind;
-    return node;
 }
 
 char *get_name(Node *name) {

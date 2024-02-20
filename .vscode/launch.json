@@ -63,10 +63,10 @@
             "request": "launch",
             "name": "build",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/hello",
+            "cwd": "${workspaceFolder}/test/let",
             "args": [
                 "build",
-                "hello_case.z"
+                "let_case.z"
             ],
             "stopAtEntry": false
         },

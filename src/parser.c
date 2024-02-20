@@ -200,8 +200,7 @@ static Node* string(Parser *parser) {
 }
 
 static Node *integer(Parser *parser) {
-    Node *expr = calloc(1, sizeof(Node));
-    expr->kind = ND_INT;
+    Node *expr = new_node(ND_INT);
     char *num_text = get_text(parser);
     expr->as.num.lit = num_text;
     log_trace("Parsing int text: %s\n", num_text);
@@ -213,8 +212,7 @@ static Node *integer(Parser *parser) {
 }
 
 static Node *float_num(Parser *parser) {
-    Node *expr = calloc(1, sizeof(Node));
-    expr->kind = ND_FLOAT;
+    Node *expr = new_node(ND_FLOAT);
     char *num_text = get_text(parser);
     expr->as.float_num.lit = num_text;
     log_trace("Parsing float text: %s\n", num_text);
@@ -226,8 +224,7 @@ static Node *float_num(Parser *parser) {
 }
 
 static Node *double_num(Parser *parser) {
-    Node *expr = calloc(1, sizeof(Node));
-    expr->kind = ND_DOUBLE;
+    Node *expr = new_node(ND_DOUBLE);
     char *num_text = get_text(parser);
     expr->as.double_num.lit = num_text;
     log_trace("Parsing double text: %s\n", num_text);
@@ -239,8 +236,7 @@ static Node *double_num(Parser *parser) {
 }
 
 static Node *bul(Parser *parser, bool val) {
-    Node *expr = calloc(1, sizeof(Node));
-    expr->kind = ND_BOOL;
+    Node *expr = new_node(ND_BOOL);
     expr->as.bul = val;
     // 打印出AST
     trace_node(expr);
@@ -318,7 +314,7 @@ static Meta *do_meta(Parser *parser, Node *expr) {
 }
 
 static Type *type_lookup(Parser *parser, Node *type_name) {
-    Meta *m = global_lookup(type_name->as.str);
+    Meta *m = scope_lookup(parser->scope, type_name->as.str);
     if (m == NULL) return NULL;
     return m->type;
 }
@@ -425,18 +421,21 @@ static void expect_sep_dict(Parser *parser) {
     }
 }
 
-// 暂时只支持基本类型的推导
+// 检查当前节点的类型，并尝试标注类型信息
 static Type *infer_type(Parser *parser, Node *node) {
-    Type *primary = check_type(node);
+    // 如果已经有类型标注了，就直接返回
+    // TODO: 这里要不要再检查一次？
+    if (node->meta->type) return node->meta->type;
+    // 先看看是不是基本类型节点
+    Type *primary = check_primary_type(node);
     if (primary) {
-        if (node->meta == NULL) node->meta = new_meta(node);
         node->meta->type == primary;
         return primary;
     }
+    // 如果是名称节点，就尝试查找类型
     if (node->kind == ND_NAME) {
         Type *t = type_lookup(parser, node);
         if (t) {
-            if (node->meta == NULL) node->meta = new_meta(node);
             node->meta->type = t;
             return t;
         }
@@ -820,8 +819,7 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
         if (cur_prec < base_prec) {
             return left;
         }
-        Node *bop = calloc(1, sizeof(Node));
-        bop->kind = ND_BINOP;
+        Node *bop = new_node(ND_BINOP);
         Op op = get_op(cur->kind);
         bop->as.bop.op = op;
         if (op == OP_ASN && left->kind == ND_NAME) {
@@ -875,12 +873,11 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
 
 static Type *get_type(Parser *parser, Node *node) {
     // 如果节点的meta直接可以获得类型，则返回该类型
-    if (node->meta && node->meta->type) {
+    if (node->meta->type) {
         return node->meta->type;
     } else if (node->kind == ND_NAME) { // 否则，尝试查找类型
         Type *type = type_lookup(parser, node);
         if (type) {
-            if (node->meta == NULL) node->meta = new_meta(node);
             node->meta->type = type;
             return type;
         }

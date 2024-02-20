@@ -78,4 +78,4 @@ Type *new_array_type(Type *item, int size);
 
 Type *new_dict_type(Type *key, Type *val);
 
-Type *check_type(Node *node);
+Type *check_primary_type(Node *node);

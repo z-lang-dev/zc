@@ -35,7 +35,7 @@ Type *new_dict_type(Type *key, Type *val) {
     return type;
 }
 
-Type *check_type(Node *node) {
+Type *check_primary_type(Node *node) {
     switch (node->kind) {
     case ND_INT:
         return &TYPE_INT;

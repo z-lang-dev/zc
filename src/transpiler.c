@@ -22,17 +22,19 @@ struct TransMeta {
     int indent;
     int use_count;
     char *uses[MAX_USES];
+    HashTable *imports;
     LAN lan;
 };
 
 static TransMeta META;
 
 // 检查是否需要引入标准库
-static void do_meta(Node *prog) {
+static void do_meta_c(Node *prog) {
     // init META
     META.indent = 0;
     META.use_count = 0;
     META.lan = LAN_C;
+    META.imports = new_hash_table();
     char *name_in_use = "";
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
@@ -41,12 +43,15 @@ static void do_meta(Node *prog) {
                 char *name = get_name(expr->as.call.name);
                 if (strcmp(name, "print") == 0) {
                     META.uses[META.use_count++] = "<stdio.h>";
+                    hash_set(META.imports, "<stdio.h>", 1);
                 } else if (strcmp(name, name_in_use) != 0) {
                     META.uses[META.use_count++] = "\"stdz.h\"";
+                    hash_set(META.imports, "\"stdz.h\"", 1);
                 }
             }
         } else if (expr->kind == ND_USE) {
             META.uses[META.use_count++] = sfmt("\"%s.h\"", expr->as.use.mod);
+            hash_set(META.imports, sfmt("\"%s.h\"", expr->as.use.mod), 1);
             if (expr->as.use.name) {
                 name_in_use = expr->as.use.name;
             }
@@ -139,65 +144,111 @@ static bool is_void_call(Node *expr) {
     );
 }
 
-// 生成C语言的printf
-static void cprintf(FILE *fp, Node *val) {
-    Type *type = NULL;
-    if (val->meta) {
-        type = val->meta->type;
-    }
-    if (type && type->kind == TY_ARRAY) {
-        fprintf(fp, "printf(\"[");
-        for (int i = 0; i < type->as.array.size; ++i) {
-            gen_expr(fp, val->as.array.items[i]);
-            if (i < type->as.array.size - 1) {
-                fprintf(fp, ", ");
-            }
-        }
-        fprintf(fp, "]\\n\")");
-        return;
-    }
-    switch (val->kind) {
-    case ND_INT:
-        fprintf(fp, "printf(\"%%d\\n\", ");
-        break;
-    case ND_BOOL:
-        fprintf(fp, "printf(\"%%s\\n\", ");
-        break;
-    case ND_FLOAT:
-        fprintf(fp, "printf(\"%%f\\n\", ");
-        break;
-    case ND_DOUBLE:
-        fprintf(fp, "printf(\"%%lf\\n\", ");
-        break;
-    case ND_STR:
-        fprintf(fp, "printf(\"%%s\\n\", ");
-        break;
-    case ND_INDEX:
-    case ND_BINOP: {
-        if (type == NULL) break;
-        switch (type->kind) {
-        case TY_INT:
-            fprintf(fp, "printf(\"%%d\\n\", ");
-            break;
-        case TY_BOOL:
-            fprintf(fp, "printf(\"%%s\\n\", ");
-            break;
-        case TY_FLOAT:
-            fprintf(fp, "printf(\"%%f\\n\", ");
-            break;
-        case TY_DOUBLE:
-            fprintf(fp, "printf(\"%%lf\\n\", ");
-            break;
-        }
-        break;
-    }
+static char *get_primary_fmt(Type *type) {
+    switch (type->kind) {
+    case TY_INT:
+        return "d";
+    case TY_BOOL:
+        return "s";
+    case TY_FLOAT:
+        return "f";
+    case TY_DOUBLE:
+        return "lf";
+    case TY_STR:
+        return "s";
     default:
-        fprintf(fp, "printf(\"%%d\\n\", ");
-        break;
+        return "s";
     }
-    gen_expr(fp, val);
-    if (type && type->kind == TY_BOOL) fprintf(fp, " ? \"true\" : \"false\"");
-    fprintf(fp, ")");
+}
+
+// TODO: 复合类型简单地调用`printf`也就只能做到这种程度了，最多是两层数组。
+// 未来要想打印更复杂的数据结构，例如数组嵌套字典再嵌套数组，或者说多层的JSON，
+// 可以要在C中引入类似`json-c`这样的库，或者自己在Z的C标准库里实现一套了。
+// TODO: 还有一种办法，用元编程在Z之内就把格式化的to_str函数搞好，然后直接`printf("%s", to_str(obj))`。
+static void cprintf_array(FILE *fp, Node *expr) {
+    if (expr->kind == ND_ARRAY) { // 数组字面量
+        fprintf(fp, "printf(\"");
+        gen_expr(fp, expr);
+        fprintf(fp, "\\n\")");
+    } else { // 存量
+        Type *type = expr->meta->type;
+        int size = type->as.array.size;
+        Type *itype = type->as.array.item;
+        fprintf(fp, "// print(%s)\n", expr->as.str);
+        print_indent(fp);
+        fprintf(fp, "printf(\"{\");\n");
+        print_indent(fp);
+        fprintf(fp, "for (int i = 0; i < %d; ++i) {\n", size);
+        add_indent();
+        print_indent(fp);
+        if (itype->kind == TY_ARRAY) {
+            fprintf(fp, "if (i > 0) printf(\", \");\n");
+            print_indent(fp);
+            fprintf(fp, "printf(\"{\");\n");
+            print_indent(fp);
+            fprintf(fp, "for (int j = 0; j < %d; ++j) {\n", itype->as.array.size);
+            add_indent();
+            print_indent(fp);
+            fprintf(fp, "if (j > 0) printf(\", \");\n");
+            print_indent(fp);
+            fprintf(fp, "printf(\"%%%s", get_primary_fmt(itype->as.array.item));
+            fprintf(fp, "\", %s[i][j]);\n", expr->as.str);
+            sub_indent();
+            print_indent(fp);
+            fprintf(fp, "}\n");
+            print_indent(fp);
+            fprintf(fp, "printf(\"}\");\n");
+        } else {
+            fprintf(fp, get_primary_fmt(itype));
+            fprintf(fp, "\\n\", %s[i]);", expr->as.str);
+        }
+        sub_indent();
+        print_indent(fp);
+        fprintf(fp, "}\n");
+        print_indent(fp);
+        fprintf(fp, "printf(\"}\")");
+    }
+}
+
+static void cprintf(FILE *fp, Node *expr) {
+    Type *type = expr->meta->type;
+    if (type->kind == TY_ARRAY) {
+        cprintf_array(fp, expr);
+    } else {
+        char *fmt = get_primary_fmt(type); // 这个也包括了ND_INDEX和ND_BINOP
+        fprintf(fp, "printf(\"%%%s\\n\", ", fmt);
+        gen_expr(fp, expr);
+        if (type->kind == TY_BOOL) fprintf(fp, " ? \"true\" : \"false\"");
+        fprintf(fp, ")");
+    }
+}
+
+static void gen_store(FILE *fp, Node *expr) {
+    char *ckw = expr->kind == ND_MUT ? "" : "const ";
+    char *jskw = expr->kind == ND_MUT ? "let" : "const";
+    char *name = expr->as.asn.name->as.str;
+    if (META.lan == LAN_C) {
+        Type *type = expr->as.asn.name->meta->type;
+        if (type == NULL) type = &TYPE_INT;
+        if (type->kind == TY_ARRAY) {
+            Type *itype = type->as.array.item;
+            if (itype->kind == TY_ARRAY) {
+                int size1 = type->as.array.size;
+                int size2 = itype->as.array.size;
+                char *iname = itype->as.array.item->name;
+                fprintf(fp, "%s%s %s[%d][%d] = ", ckw, iname, name, size1, size2);
+            } else {
+                fprintf(fp, "%s%s %s[%d] = ", ckw, itype->name, name, type->as.array.size);
+            }
+        } else {
+            fprintf(fp, "%s %s = ", type->name, name);
+        }
+    } else if (META.lan == LAN_PY) {
+        fprintf(fp, "%s = ", name);
+    } else if (META.lan == LAN_JS) {
+        fprintf(fp, "%s %s = ", jskw, name);
+    }
+    gen_expr(fp, expr->as.asn.value);
 }
 
 // 生成一个语句
@@ -275,35 +326,11 @@ static void gen_expr(FILE *fp, Node *expr) {
         return;
     }
     case ND_MUT: {
-        char *name = expr->as.asn.name->as.str;
-        if (META.lan == LAN_C) {
-            Type *type = expr->as.asn.name->meta->type;
-            if (type == NULL) type = &TYPE_INT;
-            fprintf(fp, "%s %s = ", type->name, name);
-        } else if (META.lan == LAN_PY) {
-            fprintf(fp, "%s = ", name);
-        } else if (META.lan == LAN_JS) {
-            fprintf(fp, "var %s = ", name);
-        }
-        gen_expr(fp, expr->as.asn.value);
+        gen_store(fp, expr);
         return;
     }
     case ND_LET: {
-        char *name = expr->as.asn.name->as.str;
-        if (META.lan == LAN_C) {
-            Type *type = expr->as.asn.name->meta->type;
-            if (type == NULL) type = &TYPE_INT;
-            if (type->kind == TY_ARRAY) {
-                fprintf(fp, "%s %s[%d] = ", type->as.array.item->name, name, type->as.array.size);
-            } else {
-                fprintf(fp, "%s %s = ", type->name, name);
-            }
-        } else if (META.lan == LAN_PY) {
-            fprintf(fp, "%s = ", name);
-        } else if (META.lan == LAN_JS) {
-            fprintf(fp, "let %s = ", name);
-        }
-        gen_expr(fp, expr->as.asn.value);
+        gen_store(fp, expr);
         return;
     }
     case ND_IF:
@@ -531,16 +558,25 @@ static Node *extract_main(Node *prog) {
 
 // 将AST编译成C代码
 static void codegen_c_app(Node *prog) {
-    do_meta(prog);
+    do_meta_c(prog);
     META.lan = LAN_C;
 
     prog = extract_main(prog);
     // 打开输出文件
     FILE *fp = fopen("app.c", "w"); // TODO: 以后还统一叫app.c吗？
+    HashIter *i = hash_iter(META.imports);
+    int imports = 0;
+    while (hash_next(META.imports, i)) {
+        fprintf(fp, "#include %s\n", i->key);
+        imports++;
+    }
+    if (imports > 0) fprintf(fp, "\n");
+    /*
     for (int i = 0; i < META.use_count; ++i) {
         fprintf(fp, "#include %s\n", META.uses[i]);
     }
     if (META.use_count > 0) fprintf(fp, "\n");
+    */
 
     // 生成多条语句
     for (int i = 0; i < prog->as.exprs.count; ++i) {
@@ -577,7 +613,7 @@ static void gen_fn_header(FILE *fp, Node *expr) {
 // 将AST编译成C代码
 static void codegen_c_lib(Mod *mod, char *name) {
     Node *prog = mod->prog;
-    do_meta(prog);
+    do_meta_c(prog);
     META.lan = LAN_C;
 
     char *c_file = sfmt("%s.c", name);

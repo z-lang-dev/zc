@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdio.h>
 
 int main(void) {
     double f = 3.141593;

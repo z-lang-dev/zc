@@ -109,6 +109,7 @@ struct Array {
     Node **items;
 };
 
+// 下标表达式
 struct Index {
     Node *parent;
     Node *idx;

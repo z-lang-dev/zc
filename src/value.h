@@ -3,8 +3,8 @@
 #include "zast.h"
 
 typedef struct Value Value;
-typedef struct ArrayVal ArrayVal;
-typedef struct DictVal DictVal;
+typedef struct ValArray ValArray;
+typedef struct ValDict ValDict;
 
 /**
  * @brief 存值的种类
@@ -21,13 +21,13 @@ typedef enum {
     VAL_NIL /**< 空值 */
 } ValueKind;
 
-struct ArrayVal {
+struct ValArray {
     int cap;
     int size; /**< 元素个数 */
     Value **items; /**< 元素 */
 };
 
-struct DictVal {
+struct ValDict {
     HashTable *entries;
 };
 
@@ -43,8 +43,8 @@ struct Value {
         bool bul; /**< 布尔值 */
         Fn *fn; /**< 函数定义 */
         char *str; /**< 字符串 */
-        ArrayVal *array; /**< 数组 */
-        DictVal *dict;
+        ValArray *array; /**< 数组 */
+        ValDict *dict;
     } as;
 };
 

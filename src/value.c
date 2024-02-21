@@ -32,7 +32,7 @@ Value *new_double(double num) {
 Value *new_array_val(int count) {
     Value *val = calloc(1, sizeof(Value));
     val->kind = VAL_ARRAY;
-    val->as.array = calloc(count, sizeof(Value *));
+    val->as.array = calloc(count, sizeof(ValArray));
     val->as.array->cap = count > 4 ? count : 4;
     val->as.array->size = count;
     val->as.array->items = calloc(val->as.array->cap, sizeof(Value *));
@@ -42,7 +42,7 @@ Value *new_array_val(int count) {
 Value *new_dict_val(HashTable *entries) {
     Value *val = calloc(1, sizeof(Value));
     val->kind = VAL_DICT;
-    val->as.dict = calloc(1, sizeof(DictVal));
+    val->as.dict = calloc(1, sizeof(ValDict));
     val->as.dict->entries = entries;
     return val;
 }

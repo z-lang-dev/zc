@@ -239,28 +239,14 @@ Value *eval_asn(Node *expr) {
             char *name = left->as.str;
             set_val(name, res);
         } else if (left->kind == ND_INDEX) {
-            Value *parent = eval(left->as.index.parent);
-            Value *idx = eval(left->as.index.idx);
-            Type *left_type = left->as.index.parent->meta->type;
-            if (left_type->kind == TY_ARRAY) {
-                if (idx->kind != VAL_INT) {
-                    printf("Array index must be int, but got %d\n", idx->kind);
-                    return new_nil();
-                }
-                int i = idx->as.num;
-                if (i < 0 || i >= parent->as.array->size) {
-                    printf("Index out of range: ");
-                    echo_node(expr);
-                    return new_nil();
-                }
-                parent->as.array->items[i] = res;
-            } else if (left_type->kind == TY_DICT) {
-                if (idx->kind != VAL_STR) {
-                    printf("Dict index must be string, but got %d\n", idx->kind);
-                    return new_nil();
-                }
-                hash_set(parent->as.dict->entries, idx->as.str, res);
+            // 由于这里得到的item本身就是个指针，我们可以把它当做左值来使用。
+            Value *item = eval(left);
+            if (item->kind != res->kind) {
+                printf("Type mismatch: %d %s %d\n", item->kind, op_to_str(OP_ASN), res->kind);
+                return new_nil();
             }
+            // 直接修改item的值内容。
+            item->as = res->as;
         }
         return res;
     }
@@ -313,27 +299,33 @@ Value *eval(Node *expr) {
         return arr;
     }
     case ND_INDEX: {
+        // 计算出数组或字典的值，注意这一步大概率是根据名称从符号表中取出来的
         Value *parent = eval(expr->as.index.parent);
+        // 计算出下标的值
         Value *idx = eval(expr->as.index.idx);
+        // 获取左值（即数组或字典）的类型
         Type *left_type = expr->as.index.parent->meta->type;
-        if (left_type->kind == TY_ARRAY) {
+        if (left_type->kind == TY_ARRAY) { // 数组类型，下标是整数
             if (idx->kind != VAL_INT) {
                 printf("Array index must be int, but got %d\n", idx->kind);
                 return new_nil();
             }
             int i = idx->as.num;
+            // 判断数组越界
             if (i < 0 || i >= parent->as.array->size) {
                 printf("Index out of range: ");
                 echo_node(expr);
                 return new_nil();
             }
+            // 根据下标取得数组的元素
             Value *item = parent->as.array->items[i];
             return item;
-        } else if (left_type->kind == TY_DICT) {
+        } else if (left_type->kind == TY_DICT) { // 字典类型，下标是字符串
             if (idx->kind != VAL_STR) {
                 printf("Dict index must be string, but got %d\n", idx->kind);
                 return new_nil();
             }
+            // 从字典的entries中取出值
             char *key = idx->as.str;
             Value *val = hash_get(parent->as.dict->entries, key);
             return val;

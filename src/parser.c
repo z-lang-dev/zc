@@ -195,6 +195,7 @@ static Node *call(Parser *parser, Node *left) {
 static Node* string(Parser *parser) {
   Node *node = new_node(ND_STR);
   node->as.str = strip(parser->cur->pos+1, parser->cur->len-2);
+  node->meta->type = &TYPE_STR;
   advance(parser);
   return node;
 }
@@ -205,6 +206,7 @@ static Node *integer(Parser *parser) {
     expr->as.num.lit = num_text;
     log_trace("Parsing int text: %s\n", num_text);
     expr->as.num.val = atoll(num_text);
+    expr->meta->type = &TYPE_INT;
     // 打印出AST
     trace_node(expr);
     advance(parser);
@@ -217,6 +219,7 @@ static Node *float_num(Parser *parser) {
     expr->as.float_num.lit = num_text;
     log_trace("Parsing float text: %s\n", num_text);
     expr->as.float_num.val = atof(num_text);
+    expr->meta->type = &TYPE_FLOAT;
     // 打印出AST
     trace_node(expr);
     advance(parser);
@@ -229,6 +232,7 @@ static Node *double_num(Parser *parser) {
     expr->as.double_num.lit = num_text;
     log_trace("Parsing double text: %s\n", num_text);
     expr->as.double_num.val = atof(num_text);
+    expr->meta->type = &TYPE_DOUBLE;
     // 打印出AST
     trace_node(expr);
     advance(parser);
@@ -238,6 +242,7 @@ static Node *double_num(Parser *parser) {
 static Node *bul(Parser *parser, bool val) {
     Node *expr = new_node(ND_BOOL);
     expr->as.bul = val;
+    expr->meta->type = &TYPE_BOOL;
     // 打印出AST
     trace_node(expr);
     advance(parser);
@@ -256,6 +261,7 @@ static Node *neg(Parser *parser) {
     Node *expr = new_node(ND_NEG);
     expr->as.una.op = OP_SUB;
     expr->as.una.body = expr_prec(parser, PREC_NEG);
+    expr->meta->type = expr->as.una.body->meta->type;
     // 打印出AST
     trace_node(expr);
     return expr;
@@ -266,6 +272,7 @@ static Node *not(Parser *parser) {
     Node *expr = new_node(ND_NOT);
     expr->as.una.op = OP_NOT;
     expr->as.una.body = expr_prec(parser, PREC_NOT);
+    expr->meta->type = &TYPE_BOOL;
     // 打印出AST
     trace_node(expr);
     return expr;
@@ -506,25 +513,30 @@ static void expect_sep_array(Parser *parser) {
     }
 }
 
-
+// 解析数组
 static Node *array(Parser *parser) {
+    // 跳过'['
     expect(parser, TK_LSQUARE);
+    // 新建一个数组节点，其节点类型是ND_ARRAY
     Node *array = new_array();
     Type *item_type = NULL;
+    // 解析各个元素
     while (!match(parser, TK_RSQUARE)) {
         Node *item = expression(parser);
         if (item_type == NULL) item_type = infer_type(parser, item);
         append_array_item(array, item);
+        // 处理`,`间隔符
         expect_sep_array(parser);
     }
-    Meta *meta = new_meta(array);
+    // 处理类型信息
+    Meta *meta = array->meta;
     if (item_type == NULL) {
         printf("Error: Cannot infer array item type\n");
         echo_node(array);
         exit(1);
     }
     meta->type = new_array_type(item_type, array->as.array.size);
-    array->meta = meta;
+    // 跳过`]`
     expect(parser, TK_RSQUARE);
     return array;
 }
@@ -756,10 +768,8 @@ static Node *index(Parser *parser, Node *left) {
     Type *left_type = get_type(parser, left);
     if (!left_type) return node;
     if (left_type->kind == TY_ARRAY) { // 如果是数组，则返回其元素类型
-        node->meta = new_meta(node);
         node->meta->type = left->meta->type->as.array.item;
     } else if (left_type->kind == TY_DICT) { // 如果是字典，则返回其值类型
-        node->meta = new_meta(node);
         node->meta->type = left->meta->type->as.dict.val;
     } else {
         printf("Error: Cannot index on a type that is neither a dict or an array: ");
@@ -799,17 +809,27 @@ static Node *unary(Parser *parser) {
         return expr;
     }
     // 尝试解析后缀操作
-    switch (parser->cur->kind) {
-    case TK_LPAREN:
-        return call(parser, expr);
-    case TK_LSQUARE:
-        return index(parser, expr);
-    case TK_LBRACE:
-        return object(parser, expr);
-    case TK_COLON:
-        return kv(parser, expr);
+    Node *res = expr;
+    bool has_more_postfix = true;
+    while (has_more_postfix) {
+        switch (parser->cur->kind) {
+        case TK_LPAREN:
+            res = call(parser, res);
+            break;
+        case TK_LSQUARE:
+            res = index(parser, res);
+            break;
+        case TK_LBRACE:
+            res = object(parser, res);
+            break;
+        case TK_COLON:
+            res = kv(parser, res);
+            break;
+        default:
+            has_more_postfix = false;
+        }
     }
-    return expr;
+    return res;
 }
 
 static Op get_op(TokenKind kind) {
@@ -953,7 +973,6 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
     }
 }
 
-
 // 解析一个表达式
 static Node *expr_prec(Parser *parser, Precedence base_prec) {
     // 表达式由一个一元操作开头，后接多层二元操作。
@@ -963,8 +982,6 @@ static Node *expr_prec(Parser *parser, Precedence base_prec) {
 
     // 接着尝试二元操作
     return binop(parser, left, base_prec);
-
-
 }
 
 static Node *expression(Parser *parser) {

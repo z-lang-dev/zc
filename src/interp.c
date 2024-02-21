@@ -235,7 +235,7 @@ Value *eval_asn(Node *expr) {
         Node *left = expr->as.bop.left;
         Node *right = expr->as.bop.right;
         Value *res = eval(right);
-        if (left->kind == ND_NAME) {
+        if (left->kind == ND_NAME || left->kind == ND_LNAME) {
             char *name = left->as.str;
             set_val(name, res);
         } else if (left->kind == ND_INDEX) {

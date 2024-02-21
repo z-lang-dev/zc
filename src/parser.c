@@ -789,9 +789,15 @@ static Node *object(Parser *parser, Node *left) {
     return obj;
 }
 
+static bool allow_postfix(NodeKind kind) {
+    return kind == ND_NAME || kind == ND_CALL || kind == ND_INDEX || kind == ND_OBJ;
+}
 
 static Node *unary(Parser *parser) {
     Node *expr = single(parser);
+    if (!allow_postfix(expr->kind)) {
+        return expr;
+    }
     // 尝试解析后缀操作
     switch (parser->cur->kind) {
     case TK_LPAREN:

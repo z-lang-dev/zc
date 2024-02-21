@@ -230,6 +230,43 @@ static Value *eval_hashtable(HashTable *ht) {
     return val;
 }
 
+Value *eval_asn(Node *expr) {
+    if (expr->kind == ND_BINOP) {
+        Node *left = expr->as.bop.left;
+        Node *right = expr->as.bop.right;
+        Value *res = eval(right);
+        if (left->kind == ND_NAME) {
+            char *name = left->as.str;
+            set_val(name, res);
+        } else if (left->kind == ND_INDEX) {
+            Value *parent = eval(left->as.index.parent);
+            Value *idx = eval(left->as.index.idx);
+            Type *left_type = left->as.index.parent->meta->type;
+            if (left_type->kind == TY_ARRAY) {
+                if (idx->kind != VAL_INT) {
+                    printf("Array index must be int, but got %d\n", idx->kind);
+                    return new_nil();
+                }
+                int i = idx->as.num;
+                if (i < 0 || i >= parent->as.array->size) {
+                    printf("Index out of range: ");
+                    echo_node(expr);
+                    return new_nil();
+                }
+                parent->as.array->items[i] = res;
+            } else if (left_type->kind == TY_DICT) {
+                if (idx->kind != VAL_STR) {
+                    printf("Dict index must be string, but got %d\n", idx->kind);
+                    return new_nil();
+                }
+                hash_set(parent->as.dict->entries, idx->as.str, res);
+            }
+        }
+        return res;
+    }
+    return new_nil();
+}
+
 // 对表达式求值
 Value *eval(Node *expr) {
     switch (expr->kind) {
@@ -348,14 +385,6 @@ Value *eval(Node *expr) {
     case ND_CALL: {
         if (call_builtin(expr)) return new_nil();
         if (call_stdlib(expr)) return new_nil();
-        /*
-        Meta *m = expr->meta;
-        if (m == NULL) {
-            printf("Unknown function: %s\n", expr->as.call.name->as.str);
-            return new_nil();
-        }
-        Node *fn = m->node;
-        */
         Value *val = get_val(expr->as.call.name->as.str);
         if (val == NULL) {
             printf("Unknown function: %s\n", expr->as.call.name->as.str);
@@ -413,10 +442,8 @@ Value *eval(Node *expr) {
         case OP_OR:
             res = eval_logic(eval(bop->left), eval(bop->right), OP_OR);
             break;
-        case OP_ASN:
-            char *name = bop->left->as.str;
-            res = eval(bop->right);
-            set_val(name, res);
+        case OP_ASN: 
+            res = eval_asn(expr);
             break;
         default:
             printf("Unknown operator: %d\n", op_to_str(bop->op));

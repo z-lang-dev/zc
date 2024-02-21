@@ -684,50 +684,126 @@ static Node *type(Parser *parser) {
     return type_decl;
 }
 
+static Node *single(Parser *parser) {
+    switch (parser->cur->kind) {
+        case TK_LBRACE:
+            return block_or_dict(parser);
+        case TK_LSQUARE:
+            return array(parser);
+        case TK_LET:
+            return let(parser);
+        case TK_MUT:
+            return mut(parser);
+        case TK_USE:
+            return use(parser);
+        case TK_IF:
+            return if_else(parser);
+        case TK_FOR:
+            return for_loop(parser);
+        case TK_FN:
+            return fn(parser);
+        case TK_LPAREN:
+            return group(parser);
+        case TK_SUB:
+            return neg(parser);
+        case TK_NOT:
+            return not(parser);
+        case TK_STR:
+            return string(parser);
+        case TK_INT_NUM:
+            return integer(parser);
+        case TK_FLOAT_NUM:
+            return float_num(parser);
+        case TK_DOUBLE_NUM:
+            return double_num(parser);
+        case TK_TRUE:
+            return bul(parser, true);
+        case TK_FALSE:
+            return bul(parser, false);
+        case TK_NAME:
+            return name(parser);
+        case TK_TYPE:
+            return type(parser);
+        default:
+            printf("Unknown token: %s\n", token_to_str(parser->cur->kind));
+            exit(1);
+    }
+}
+
+static Type *get_type(Parser *parser, Node *node) {
+    // 如果节点的meta直接可以获得类型，则返回该类型
+    if (node->meta->type) {
+        return node->meta->type;
+    } else if (node->kind == ND_NAME) { // 否则，尝试查找类型
+        Type *type = type_lookup(parser, node);
+        if (type) {
+            node->meta->type = type;
+            return type;
+        }
+    }
+    return NULL;
+}
+
+// 数组下标访问
+static Node *index(Parser *parser, Node *left) {
+    advance(parser); // 跳过'['
+    Node *idx = expression(parser);
+    Node *node = new_node(ND_INDEX);
+    node->as.index.parent = left;
+    node->as.index.idx = idx;
+    expect(parser, TK_RSQUARE); // 解析']'
+    // 获取左侧的类型
+    Type *left_type = get_type(parser, left);
+    if (!left_type) return node;
+    if (left_type->kind == TY_ARRAY) { // 如果是数组，则返回其元素类型
+        node->meta = new_meta(node);
+        node->meta->type = left->meta->type->as.array.item;
+    } else if (left_type->kind == TY_DICT) { // 如果是字典，则返回其值类型
+        node->meta = new_meta(node);
+        node->meta->type = left->meta->type->as.dict.val;
+    } else {
+        printf("Error: Cannot index on a type that is neither a dict or an array: ");
+        echo_node(left);
+        exit(0);
+    }
+    return node;
+}
+
+
+static Node *object(Parser *parser, Node *left) {
+    if (left->kind != ND_NAME) {
+        printf("Error: Object name should be a name, got instead:");
+        echo_node(left);
+        exit(0);
+    }
+    char *n = left->as.str;
+    Meta *tmeta = scope_lookup(parser->scope, n);
+    if (tmeta == NULL) {
+        printf("Error: Unknown object type: %s\n", n);
+        exit(0);
+    }
+    Node *obj = new_node(ND_OBJ);
+    Node *dic = dict(parser);
+    obj->as.obj.members = dic->as.dict.entries;
+    obj->meta = tmeta;
+    return obj;
+}
+
+
 static Node *unary(Parser *parser) {
-  switch (parser->cur->kind) {
-    case TK_LBRACE:
-        return block_or_dict(parser);
-    case TK_LSQUARE:
-        return array(parser);
-    case TK_LET:
-        return let(parser);
-    case TK_MUT:
-        return mut(parser);
-    case TK_USE:
-        return use(parser);
-    case TK_IF:
-        return if_else(parser);
-    case TK_FOR:
-        return for_loop(parser);
-    case TK_FN:
-        return fn(parser);
+    Node *expr = single(parser);
+    // 尝试解析后缀操作
+    switch (parser->cur->kind) {
     case TK_LPAREN:
-        return group(parser);
-    case TK_SUB:
-        return neg(parser);
-    case TK_NOT:
-        return not(parser);
-    case TK_STR:
-        return string(parser);
-    case TK_INT_NUM:
-        return integer(parser);
-    case TK_FLOAT_NUM:
-        return float_num(parser);
-    case TK_DOUBLE_NUM:
-        return double_num(parser);
-    case TK_TRUE:
-        return bul(parser, true);
-    case TK_FALSE:
-        return bul(parser, false);
-    case TK_NAME:
-        return name(parser);
-    case TK_TYPE:
-        return type(parser);
-    default:
-        printf("Unknown token: %s\n", token_to_str(parser->cur->kind));
-        exit(1);
-  }
+        return call(parser, expr);
+    case TK_LSQUARE:
+        return index(parser, expr);
+    case TK_LBRACE:
+        return object(parser, expr);
+    case TK_COLON:
+        return kv(parser, expr);
+    }
+    return expr;
 }
 
 static Op get_op(TokenKind kind) {
@@ -871,64 +947,6 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
     }
 }
 
-static Type *get_type(Parser *parser, Node *node) {
-    // 如果节点的meta直接可以获得类型，则返回该类型
-    if (node->meta->type) {
-        return node->meta->type;
-    } else if (node->kind == ND_NAME) { // 否则，尝试查找类型
-        Type *type = type_lookup(parser, node);
-        if (type) {
-            node->meta->type = type;
-            return type;
-        }
-    }
-    return NULL;
-}
-
-// 数组下标访问
-static Node *index(Parser *parser, Node *left) {
-    advance(parser); // 跳过'['
-    Node *idx = expression(parser);
-    Node *node = new_node(ND_INDEX);
-    node->as.index.parent = left;
-    node->as.index.idx = idx;
-    expect(parser, TK_RSQUARE); // 解析']'
-    // 获取左侧的类型
-    Type *left_type = get_type(parser, left);
-    if (!left_type) return node;
-    if (left_type->kind == TY_ARRAY) { // 如果是数组，则返回其元素类型
-        node->meta = new_meta(node);
-        node->meta->type = left->meta->type->as.array.item;
-    } else if (left_type->kind == TY_DICT) { // 如果是字典，则返回其值类型
-        node->meta = new_meta(node);
-        node->meta->type = left->meta->type->as.dict.val;
-    } else {
-        printf("Error: Cannot index on a type that is neither a dict or an array: ");
-        echo_node(left);
-        exit(1);
-    }
-    return node;
-}
-
-
-static Node *object(Parser *parser, Node *left) {
-    if (left->kind != ND_NAME) {
-        printf("Error: Object name should be a name, got instead:");
-        echo_node(left);
-        exit(1);
-    }
-    char *n = left->as.str;
-    Meta *tmeta = scope_lookup(parser->scope, n);
-    if (tmeta == NULL) {
-        printf("Error: Unknown object type: %s\n", n);
-        exit(1);
-    }
-    Node *obj = new_node(ND_OBJ);
-    Node *dic = dict(parser);
-    obj->as.obj.members = dic->as.dict.entries;
-    obj->meta = tmeta;
-    return obj;
-}
 
 // 解析一个表达式
 static Node *expr_prec(Parser *parser, Precedence base_prec) {
@@ -938,18 +956,9 @@ static Node *expr_prec(Parser *parser, Precedence base_prec) {
     Node *left = unary(parser);
 
     // 接着尝试二元操作
-    switch (parser->cur->kind) {
-    case TK_LPAREN:
-        return call(parser, left);
-    case TK_LSQUARE:
-        return index(parser, left);
-    case TK_LBRACE:
-        return object(parser, left);
-    case TK_COLON:
-        return kv(parser, left);
-    default:
-        return binop(parser, left, base_prec);
-    }
+    return binop(parser, left, base_prec);
+
+
 }
 
 static Node *expression(Parser *parser) {

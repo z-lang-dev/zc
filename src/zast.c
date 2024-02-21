@@ -166,6 +166,18 @@ void fecho_node(FILE *fp, Node *node) {
         fecho_node(fp, node->as.bop.right);
         fprintf(fp, "}");
         break;
+    case ND_DICT:
+        fprintf(fp, "{");
+        HashIter *i = hash_iter(node->as.dict.entries);
+        while (hash_next(node->as.dict.entries, i)) {
+            char *key = i->key;
+            Node *val = i->value;
+            fprintf(fp, "%s: ", key);
+            fecho_node(fp, val);
+            fprintf(fp, ", ");
+        }
+        fprintf(fp, "}");
+        break;
     default:
         fprintf(fp, "Unknown node kind: %d", node->kind);
     }
@@ -350,6 +362,19 @@ void fprint_node(FILE *fp, Node *node) {
         fprint_node(fp, node->as.bop.right);
         fprintf(fp, " }");
         break;
+    case ND_DICT: {
+        fprintf(fp, "{kind: ND_DICT, items: [");
+        HashIter *i = hash_iter(node->as.dict.entries);
+        while (hash_next(node->as.dict.entries, i)) {
+            char *key = i->key;
+            Node *val = i->value;
+            fprintf(fp, "%s: ", key);
+            fprint_node(fp, val);
+            fprintf(fp, ", ");
+        }
+        fprintf(fp, "]}");
+        break;
+    }
     default:
         fprintf(fp, "Unknown node kind: %d", node->kind);
     }

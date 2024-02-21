@@ -16,9 +16,9 @@
                 //"fn mul(a int, b int){a*b}; mul(5, 8)"
                 // "let f double = 10.2d; print(f + 1.0 > 5.2)"
                 // "print(41)",
-                //"let a = [\"1\", \"2\", \"3\"]; print(a[2])"
+                "mut a = [\"1\", \"2\", \"3\"]; a[0]=4; print(a[0])"
                 // "type A {a int; b double}; let x = A{a:18, b:3.14}; x"
-                "let d = {a: 17, b: 2, c:3};d[\"a\"]"
+                // "mut d = {a: 17, b: 2, c:3};print(d);d[\"a\"]=8;print(d)"
             ],
             "stopAtEntry": false
         },

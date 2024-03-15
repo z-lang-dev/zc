@@ -78,8 +78,12 @@ Source *add_source(Front *front, const char *code) {
     return src;
 }
 
+Mod *find_mod(Front *front, const char *name) {
+    return hash_get(front->mods, name);
+}
+
 Meta *mod_lookup(Front *front, Node *path) {
-    if (path->kind != ND_PATH) return NULL;
+    if (path->kind != ND_IDENT) return NULL;
     if (path->as.path.len < 2) return NULL;
     char *mod = path->as.path.names[0].name;
     char *name = path->as.path.names[1].name;

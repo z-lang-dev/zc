@@ -53,7 +53,7 @@ static void gen_expr(FILE *fp, Node *expr) {
     case ND_LET: {
         gen_expr(fp, expr->as.asn.value);
 #ifdef _WIN32
-        fprintf(fp, "    mov %s$[rbp], eax\n", expr->as.asn.name->as.str);
+        fprintf(fp, "    mov %s$[rbp], eax\n", get_name(expr->as.asn.name));
 #else
         Meta *m = expr->meta;
         fprintf(fp, "    mov dword ptr[rbp-%d], eax\n", m->offset);
@@ -85,10 +85,10 @@ static void gen_expr(FILE *fp, Node *expr) {
         fprintf(fp, "_L_end%d:\n", c);
         return;
     }
-    case ND_NAME: {
+    case ND_IDENT: {
 #ifdef _WIN32
         // 变量名，需要获取其值
-        fprintf(fp, "    mov rax, %s$[rbp]\n", expr->as.str);
+        fprintf(fp, "    mov rax, %s$[rbp]\n", expr->as.path.names[0].name);
 #else
         // 先获取变量地址
         Meta *m = expr->meta;
@@ -132,7 +132,7 @@ static void gen_expr(FILE *fp, Node *expr) {
     case ND_CALL: {
         // 处理函数名称
         CallExpr *call = &expr->as.call;
-        char *name = call->name->as.str;
+        char *name = get_name(call->name);
         bool is_print = strcmp(name, "print") == 0;
 #ifdef _WIN32
         if (is_print) { // printf 要单独处理，加上'\n'
@@ -327,7 +327,7 @@ static void do_meta(Node *prog) {
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_CALL) {
-            char *name = expr->as.call.name->as.str;
+            char *name = get_name(expr->as.call.name);
             bool is_print = strcmp(name, "print") == 0;
             if (is_print) {
                 META.externs[META.extern_count++] = "printf";
@@ -345,11 +345,11 @@ static void do_meta(Node *prog) {
                     if (arg->kind == ND_INT) {
                         META.data[META.data_count].value = "%d";
                     } else {
-                        META.data[META.data_count].value = arg->as.str;
+                        META.data[META.data_count].value = get_name(arg);
                     }
                 } else {
                     if (arg->kind == ND_STR) {
-                        META.data[META.data_count].value = arg->as.str;
+                        META.data[META.data_count].value = get_name(arg);
                     }
                 }
                 arg->meta = &META.data[META.data_count];
@@ -464,7 +464,7 @@ static bool do_locals(FILE *fp) {
             // TODO: 处理自定义函数
             continue;
         }
-        fprintf(fp, "%s$ = -%d\n", meta->name, meta->offset);
+        fprintf(fp, "%s$ = -%d\n", get_name(meta->node), meta->offset);
         has_locals = true;
     }
     return has_locals;

@@ -39,19 +39,19 @@ static void do_meta_c(Node *prog) {
     for (int i = 0; i < prog->as.exprs.count; ++i) {
         Node *expr = prog->as.exprs.list[i];
         if (expr->kind == ND_CALL) {
-            if (expr->as.call.name->kind == ND_NAME) {
+            if (expr->as.call.name->kind == ND_IDENT) {
                 char *name = get_name(expr->as.call.name);
                 if (strcmp(name, "print") == 0) {
                     META.uses[META.use_count++] = "<stdio.h>";
-                    hash_set(META.imports, "<stdio.h>", 1);
+                    hash_set_int(META.imports, "<stdio.h>", 1);
                 } else if (strcmp(name, name_in_use) != 0) {
                     META.uses[META.use_count++] = "\"stdz.h\"";
-                    hash_set(META.imports, "\"stdz.h\"", 1);
+                    hash_set_int(META.imports, "\"stdz.h\"", 1);
                 }
             }
         } else if (expr->kind == ND_USE) {
             META.uses[META.use_count++] = sfmt("\"%s.h\"", expr->as.use.mod);
-            hash_set(META.imports, sfmt("\"%s.h\"", expr->as.use.mod), 1);
+            hash_set_int(META.imports, sfmt("\"%s.h\"", expr->as.use.mod), 1);
             if (expr->as.use.name) {
                 name_in_use = expr->as.use.name;
             }
@@ -74,7 +74,7 @@ static void gen_fn(FILE *fp, Node *expr) {
         } else {
             for (int i = 0; i < params->count; ++i) {
                 Node *param = params->list[i];
-                fprintf(fp, "int %s", param->as.str);
+                fprintf(fp, "int %s", get_name(param));
                 if (i < params->count - 1) {
                     fprintf(fp, ", ");
                 }
@@ -90,7 +90,7 @@ static void gen_fn(FILE *fp, Node *expr) {
         if (params != NULL) {
             for (int i = 0; i < params->count; ++i) {
                 Node *param = params->list[i];
-                fprintf(fp, "%s", param->as.str);
+                fprintf(fp, "%s", get_name(param));
                 if (i < params->count - 1) {
                     fprintf(fp, ", ");
                 }
@@ -105,7 +105,7 @@ static void gen_fn(FILE *fp, Node *expr) {
         if (params != NULL) {
             for (int i = 0; i < params->count; ++i) {
                 Node *param = params->list[i];
-                fprintf(fp, "%s", param->as.str);
+                fprintf(fp, "%s", get_name(param));
                 if (i < params->count - 1) {
                     fprintf(fp, ", ");
                 }
@@ -136,10 +136,10 @@ static void print_indent(FILE *fp) {
 static bool is_void_call(Node *expr) {
     // 暂时按名字处理，未来可以通过“返回类型”来判断。
     return expr->kind == ND_CALL && (
-        expr->as.call.name->kind == ND_NAME && (
-        strcmp(expr->as.call.name->as.str, "print") == 0 || 
-        strcmp(expr->as.call.name->as.str, "read_file") == 0 ||
-        strcmp(expr->as.call.name->as.str, "write_file") == 0
+        expr->as.call.name->kind == ND_IDENT && (
+        strcmp(get_name(expr->as.call.name), "print") == 0 || 
+        strcmp(get_name(expr->as.call.name), "read_file") == 0 ||
+        strcmp(get_name(expr->as.call.name), "write_file") == 0
         )
     );
 }
@@ -174,7 +174,7 @@ static void cprintf_array(FILE *fp, Node *expr) {
         Type *type = expr->meta->type;
         int size = type->as.array.size;
         Type *itype = type->as.array.item;
-        fprintf(fp, "// print(%s)\n", expr->as.str);
+        fprintf(fp, "// print(%s)\n", get_name(expr));
         print_indent(fp);
         fprintf(fp, "printf(\"{\");\n");
         print_indent(fp);
@@ -192,7 +192,7 @@ static void cprintf_array(FILE *fp, Node *expr) {
             fprintf(fp, "if (j > 0) printf(\", \");\n");
             print_indent(fp);
             fprintf(fp, "printf(\"%%%s", get_primary_fmt(itype->as.array.item));
-            fprintf(fp, "\", %s[i][j]);\n", expr->as.str);
+            fprintf(fp, "\", %s[i][j]);\n", get_name(expr));
             sub_indent();
             print_indent(fp);
             fprintf(fp, "}\n");
@@ -200,7 +200,7 @@ static void cprintf_array(FILE *fp, Node *expr) {
             fprintf(fp, "printf(\"}\");\n");
         } else {
             fprintf(fp, get_primary_fmt(itype));
-            fprintf(fp, "\\n\", %s[i]);", expr->as.str);
+            fprintf(fp, "\\n\", %s[i]);", get_name(expr));
         }
         sub_indent();
         print_indent(fp);
@@ -226,7 +226,7 @@ static void cprintf(FILE *fp, Node *expr) {
 static void gen_store(FILE *fp, Node *expr) {
     char *ckw = expr->kind == ND_MUT ? "" : "const ";
     char *jskw = expr->kind == ND_MUT ? "let" : "const";
-    char *name = expr->as.asn.name->as.str;
+    char *name = get_name(expr->as.asn.name);
     if (META.lan == LAN_C) {
         Type *type = expr->as.asn.name->meta->type;
         if (type == NULL) type = &TYPE_INT;
@@ -376,10 +376,16 @@ static void gen_expr(FILE *fp, Node *expr) {
         gen_fn(fp, expr);
         return;
     }
-    case ND_LNAME:
-    case ND_NAME:
-        fprintf(fp, "%s", expr->as.str);
+    case ND_LNAME: 
+    case ND_IDENT: {
+        for (int i = 0; i < expr->as.path.len; ++i) {
+            fprintf(fp, "%s", expr->as.path.names[i].name);
+            if (i < expr->as.path.len - 1) {
+                fprintf(fp, ".");
+            }
+        }
         return;
+    }
     case ND_INT:
         fprintf(fp, "%s", expr->as.num.lit);
         return;
@@ -445,8 +451,8 @@ static void gen_expr(FILE *fp, Node *expr) {
                 case ND_STR:
                     fprintf(fp, "\"%s\"", arg->as.str);
                     break;
-                case ND_NAME:
-                    fprintf(fp, "%s", arg->as.str);
+                case ND_IDENT:
+                    fprintf(fp, "%s", get_name(arg));
                     break;
                 case ND_BINOP:
                     gen_expr(fp, arg);
@@ -601,7 +607,7 @@ static void gen_fn_header(FILE *fp, Node *expr) {
     } else {
         for (int i = 0; i < params->count; ++i) {
             Node *param = params->list[i];
-            fprintf(fp, "int %s", param->as.str);
+            fprintf(fp, "int %s", get_name(param));
             if (i < params->count - 1) {
                 fprintf(fp, ", ");
             }
@@ -702,8 +708,8 @@ static void codegen_py_mod(Mod *mod) {
             name_in_use = name;
         } else if (expr->kind == ND_CALL) {
             Node *name_node = expr->as.call.name;
-            if (name_node->kind == ND_NAME) {
-                char *name = expr->as.call.name->as.str;
+            if (name_node->kind == ND_IDENT) {
+                char *name = get_name(expr->as.call.name);
                 if (strcmp(name, "print") != 0 && strcmp(name, name_in_use) != 0) {
                     fprintf(fp, "from stdz import *\n", META.uses[i]);
                     has_import = true;
@@ -714,7 +720,7 @@ static void codegen_py_mod(Mod *mod) {
     HashIter *i = hash_iter(mod->uses);
     while (hash_next(mod->uses, i)) {
         Node *path = (Node*)i->value;
-        if (path->kind != ND_PATH) continue;
+        if (path->kind != ND_IDENT) continue;
         if (path->as.path.len < 2) continue;
         char *mod = path->as.path.names[0].name;
         char *name = path->as.path.names[1].name;
@@ -755,7 +761,7 @@ void trans_py(char *file) {
     use_charts();
     // 解析文件并生成模块
     Mod *mod = do_file(front, file);
-    scope_set(mod->scope, "pie", new_stdfn("pie"));
+    // scope_set(mod->scope, "pie", new_stdfn("pie"));
     mod->name = "app";
     trace_node(mod->prog);
     codegen_py(front);
@@ -784,11 +790,11 @@ static void codegen_js_mod(Mod *mod) {
             name_in_use = name;
         } else if (expr->kind == ND_CALL) {
             Node *name_node = expr->as.call.name;
-            if (name_node->kind == ND_NAME) {
+            if (name_node->kind == ND_IDENT) {
                 char *name = get_name(expr->as.call.name);
                 // 注意，print直接替换为console.log即可
                 if (strcmp(name, "print") == 0) {
-                    expr->as.call.name->as.str = "console.log";
+                    expr->as.call.name->as.path.names[0].name = "console.log";
                 } else if (expr->meta) {
                     Meta *m = (Meta*)expr->meta;
                     if (m->kind == ND_FN && m->is_def == false) {
@@ -805,7 +811,7 @@ static void codegen_js_mod(Mod *mod) {
     HashIter *i = hash_iter(mod->uses);
     while (hash_next(mod->uses, i)) {
         Node *path = (Node*)i->value;
-        if (path->kind != ND_PATH) continue;
+        if (path->kind != ND_IDENT) continue;
         if (path->as.path.len < 2) continue;
         char *mod = path->as.path.names[0].name;
         char *name = path->as.path.names[1].name;

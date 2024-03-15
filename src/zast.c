@@ -50,13 +50,13 @@ void fecho_node(FILE *fp, Node *node) {
         break;
     case ND_LET: {
         Type *type = node->as.asn.name->meta->type;
-        fprintf(fp, "let %s %s = ", node->as.asn.name->as.str, type->name);
+        fprintf(fp, "let %s %s = ", get_name(node->as.asn.name), type->name);
         fecho_node(fp, node->as.asn.value);
         break;
     }
     case ND_MUT: {
         Type *type = node->as.asn.name->meta->type;
-        fprintf(fp, "mut %s %s = ", node->as.asn.name->as.str, type->name);
+        fprintf(fp, "mut %s %s = ", get_name(node->as.asn.name), type->name);
         fecho_node(fp, node->as.asn.value);
         break;
     }
@@ -98,7 +98,7 @@ void fecho_node(FILE *fp, Node *node) {
         fprintf(fp, "}");
         break;
     case ND_TYPE:
-        fprintf(fp, "typ %s {", node->as.type.name->as.str);
+        fprintf(fp, "typ %s {", get_name(node->as.type.name));
         for (int i = 0; i < node->as.type.fields->size; i++) {
             if (i > 0) {
                 fprintf(fp, "; ");
@@ -126,19 +126,14 @@ void fecho_node(FILE *fp, Node *node) {
         }
         fprintf(fp, ")");
         break;
-    case ND_NAME:
-        fprintf(fp, "%s", node->as.str);
-        break;
-    case ND_PATH:
+    case ND_LNAME:
+    case ND_IDENT:
         for (int i = 0; i < node->as.path.len; i++) {
             if (i > 0) {
                 fprintf(fp, ".");
             }
             fprintf(fp, "%s", node->as.path.names[i].name);
         }
-        break;
-    case ND_LNAME:
-        fprintf(fp, "%s", node->as.str);
         break;
     case ND_INT:
         fprintf(fp, "%s", node->as.num.lit);
@@ -166,7 +161,7 @@ void fecho_node(FILE *fp, Node *node) {
         fecho_node(fp, node->as.bop.right);
         fprintf(fp, "}");
         break;
-    case ND_DICT:
+    case ND_DICT: {
         fprintf(fp, "{");
         HashIter *i = hash_iter(node->as.dict.entries);
         while (hash_next(node->as.dict.entries, i)) {
@@ -178,6 +173,20 @@ void fecho_node(FILE *fp, Node *node) {
         }
         fprintf(fp, "}");
         break;
+    }
+    case ND_OBJ: {
+        fprintf(fp, "{");
+        HashIter *i = hash_iter(node->as.obj.members);
+        while (hash_next(node->as.obj.members, i)) {
+            char *key = i->key;
+            Node *val = i->value;
+            fprintf(fp, "%s: ", key);
+            fecho_node(fp, val);
+            fprintf(fp, ", ");
+        }
+        fprintf(fp, "}");
+        break;
+    }
     default:
         fprintf(fp, "Unknown node kind: %d", node->kind);
     }
@@ -232,14 +241,14 @@ void fprint_node(FILE *fp, Node *node) {
         break;
     case ND_LET: {
         Type *type = node->as.asn.name->meta->type;
-        fprintf(fp, "{kind:ND_LET, name: %s, type: %s, value: ", node->as.asn.name->as.str, type->name);
+        fprintf(fp, "{kind:ND_LET, name: %s, type: %s, value: ", get_name(node->as.asn.name), type->name);
         fprint_node(fp, node->as.asn.value);
         fprintf(fp, " }");
         break;
     }
     case ND_MUT: {
         Type *type = node->as.asn.name->meta->type;
-        fprintf(fp, "{kind:ND_MUT, name: %s, type: %s, value: ", node->as.asn.name->as.str, type->name);
+        fprintf(fp, "{kind:ND_MUT, name: %s, type: %s, value: ", get_name(node->as.asn.name), type->name);
         fprint_node(fp, node->as.asn.value);
         fprintf(fp, " }");
         break;
@@ -286,7 +295,7 @@ void fprint_node(FILE *fp, Node *node) {
         break;
     }
     case ND_TYPE: {
-        fprintf(fp, "{kind:ND_TYPE, name: %s, fields: [", node->as.type.name->as.str);
+        fprintf(fp, "{kind:ND_TYPE, name: %s, fields: [", get_name(node->as.type.name));
         for (int i = 0; i < node->as.type.fields->size; i++) {
             if (i > 0) {
                 fprintf(fp, ", ");
@@ -339,13 +348,10 @@ void fprint_node(FILE *fp, Node *node) {
         fprintf(fp, "{kind: ND_STR, as.str: \"%s\"}", node->as.str);
         break;
     case ND_LNAME:
-        fprintf(fp, "{kind: ND_LNAME, as.str: %s}", node->as.str);
+        fprintf(fp, "{kind: ND_LNAME, as.str: %s}", get_name(node));
         break;
-    case ND_NAME:
-        fprintf(fp, "{kind: ND_NAME, as.str: %s}", node->as.str);
-        break;
-    case ND_PATH:
-        fprintf(fp, "{kind: ND_PATH, as.str: ");
+    case ND_IDENT:
+        fprintf(fp, "{kind: ND_IDENT, as.str: ");
         for (int i = 0; i < node->as.path.len; i++) {
             if (i > 0) {
                 fprintf(fp, ".");
@@ -366,6 +372,19 @@ void fprint_node(FILE *fp, Node *node) {
         fprintf(fp, "{kind: ND_DICT, items: [");
         HashIter *i = hash_iter(node->as.dict.entries);
         while (hash_next(node->as.dict.entries, i)) {
+            char *key = i->key;
+            Node *val = i->value;
+            fprintf(fp, "%s: ", key);
+            fprint_node(fp, val);
+            fprintf(fp, ", ");
+        }
+        fprintf(fp, "]}");
+        break;
+    }
+    case ND_OBJ: {
+        fprintf(fp, "{kind: ND_OBJ, members: [");
+        HashIter *i = hash_iter(node->as.obj.members);
+        while (hash_next(node->as.obj.members, i)) {
             char *key = i->key;
             Node *val = i->value;
             fprintf(fp, "%s: ", key);
@@ -501,10 +520,19 @@ char *op_to_str(Op op) {
 
 char *get_name(Node *name) {
     switch (name->kind) {
-    case ND_NAME:
+    case ND_STR:
         return name->as.str;
-    case ND_PATH:
-        return name->as.path.names[name->as.path.len - 1].name;
+    case ND_LNAME:
+    case ND_IDENT:
+        if (name->as.path.len == 0) {
+            return "<EMPTY_IDENT_NAME>";
+        } else if (name->as.path.len == 1) {
+            return name->as.path.names[0].name;
+        } else { // TODO: return a.b.c
+            return name->as.path.names[name->as.path.len - 1].name;
+        }
+    case ND_FN:
+        return name->as.fn.name;
     default:
         return "<UNKNOWN_NAME_TYPE>";
     }

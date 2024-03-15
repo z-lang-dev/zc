@@ -25,6 +25,11 @@ static size_t hash_code(char *key) {
     return h;
 }
 
+static size_t hash_modulo(char *key, size_t cap) {
+    size_t h = hash_code(key);
+    return h % cap;
+}
+
 /**
  * @brief 计算key在哈希表中的索引
  *
@@ -32,9 +37,8 @@ static size_t hash_code(char *key) {
  * @param key 键值
  * @return int型的索引
  */
-static size_t hash_idx(HashTable *hash, char *key) {
-    size_t h = hash_code(key);
-    return h % hash->cap;
+static size_t hash_idx(HashTable* hash, char *key) {
+    return hash_modulo(key, hash->cap);
 }
 
 bool hash_has(HashTable *hash, char *key) {
@@ -45,8 +49,12 @@ bool hash_has(HashTable *hash, char *key) {
 void hash_set_int(HashTable *hash, char *key, int value) {
     // 如果size/cap超过LOAD_FACTOR，就扩容一倍
     if ((double) hash->size / (double) hash->cap > LOAD_FACTOR) {
+        int old_cap = hash->cap;
         hash->cap *= 2;
         hash->entries = realloc(hash->entries, hash->cap * sizeof(IntEntry));
+        for (int n = old_cap; n < hash->cap; n++) {
+            hash->entries[n] = NULL;
+        }
     }
 
     size_t idx = hash_idx(hash, key);
@@ -74,16 +82,10 @@ void hash_set_int(HashTable *hash, char *key, int value) {
     ((IntEntry*)ent)->value = value;
 }
 
-void hash_set(HashTable *hash, char *key, void *value) {
-    // 如果size/cap超过LOAD_FACTOR，就扩容一倍
-    if ((double) hash->size / (double) hash->cap > LOAD_FACTOR) {
-        hash->cap *= 2;
-        hash->entries = realloc(hash->entries, hash->cap * sizeof(ObjEntry));
-    }
-
-    size_t idx = hash_idx(hash, key);
-    if (hash->entries[idx] != NULL) {
-        Entry *ent = hash->entries[idx];
+void entries_set(Entry **entries, char *key, size_t cap, void *value) {
+    size_t idx = hash_modulo(key, cap);
+    if (entries[idx] != NULL) {
+        Entry *ent = entries[idx];
         char *exist_key = ent->key;
         if (strcmp(exist_key, key) == 0) { 
             // 如果key相同，说明找到目标了，直接更新值
@@ -91,18 +93,38 @@ void hash_set(HashTable *hash, char *key, void *value) {
             return;
         } else {
             // 冲突了，寻找下一个空位
-            idx = (idx + 1) % hash->cap;
-            while (hash->entries[idx] != NULL) {
-                idx = (idx + 1) % hash->cap;
+            idx = (idx + 1) % cap;
+            while (entries[idx] != NULL) {
+                idx = (idx + 1) % cap;
             }
             // 注意，这里没有处理找了一圈儿没找到的情况，因为扩容的问题另外处理
             // 所以假设循环结束时，总会找到一个空位
         }
     }
     // 找到了空位，新建一项并写入
-    hash->entries[idx] = calloc(1, sizeof(ObjEntry));
-    hash->entries[idx]->key = key;
-    ((ObjEntry*)hash->entries[idx])->value = value;
+    entries[idx] = calloc(1, sizeof(ObjEntry));
+    entries[idx]->key = key;
+    ((ObjEntry*)entries[idx])->value = value;
+}
+
+void hash_set(HashTable *hash, char *key, void *value) {
+    // 如果size/cap超过LOAD_FACTOR，就扩容一倍
+    if ((double) hash->size / (double) hash->cap > LOAD_FACTOR) {
+        int new_cap = hash->cap * 2;
+        Entry **new_entries = calloc(new_cap, sizeof(Entry*));
+        for (int n = 0; n < hash->cap; n++) {
+            if (hash->entries[n] != NULL) {
+                Entry *ent = hash->entries[n];
+                entries_set(new_entries, ent->key, new_cap, ((ObjEntry*)ent)->value);
+            }
+        }
+        hash->entries = new_entries;
+        hash->cap = new_cap;
+        // TODO: free old entries
+    }
+
+    entries_set(hash->entries, key, hash->cap, value);
+    hash->size++;
 }
 
 int hash_get_int(HashTable *hash, char *key) {

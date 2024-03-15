@@ -32,6 +32,8 @@ struct TypeNum {
 struct TypeUser {
     int size; // 结构体所占的存储空间，字节数
     int field_count; // 成员字段个数
+
+    HashTable *members; // 成员表：{名称->Meta*}
 };
 
 struct TypeFn {
@@ -71,7 +73,7 @@ extern const Type TYPE_DOUBLE;
 extern const Type TYPE_STR;
 
 // 新建一个类型，必然是TY_USER类型
-Type *new_type(char *name);
+Type *new_user_type(char *name);
 
 // 注意，每个不同尺寸和元素类型的数组都是不同的类型
 Type *new_array_type(Type *item, int size);

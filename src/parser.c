@@ -104,7 +104,7 @@ static char *get_text(Parser *parser) {
 }
 
 static void register_use(HashTable *uses, Node *path) {
-    if (path->kind != ND_PATH) return;
+    if (path->kind != ND_IDENT) return;
     if (path->as.path.len < 2) return;
     char *mod = path->as.path.names[0].name;
     char *name = path->as.path.names[1].name;
@@ -115,21 +115,50 @@ static void register_use(HashTable *uses, Node *path) {
 
 // 定义新的名称，不需要查找元信息，不需要考虑多级名称路径的情况
 static Node *new_name(Parser *parser) {
-    Node *node = new_node(ND_NAME);
+    Node *node = new_node(ND_IDENT);
     char *n = get_text(parser);
     advance(parser);
-    node->as.str = n;
+    node->as.path.names[0].name = n;
+    node->as.path.len = 1;
     return node;
 }
 
-static Node *name(Parser *parser) {
-    Node *node = new_node(ND_NAME);
+// 注意，暂时只支持两层路径。
+static Meta *ident_lookup(Parser *parser, Node *node) {
+    int len = node->as.path.len;
+    if (len < 1) return NULL;
+    if (len == 1) return scope_lookup(parser->scope, node->as.path.names[0].name);
+
+    // 如果是多层路径，那么先尝试该名称是否为模块名
+    char *first = node->as.path.names[0].name;
+    char *sec = node->as.path.names[1].name;
+    Mod *mod = find_mod(parser->front, first);
+    if (mod != NULL) { // 如果是模块名，就尝试在模块的视野中查找
+        return scope_lookup(mod->scope, node->as.path.names[1].name);
+    } else { // 如果不是模块名，那么就应当是对象属性的访问
+        Meta *obj = scope_lookup(parser->scope, first);
+        if (obj == NULL) {
+            printf("Error: Unknown object name: %s\n", first);
+            exit(1);
+        }
+        Type *obj_type = obj->type;
+        Meta *mem_meta = hash_get(obj_type->as.user.members, sec);
+        if (mem_meta == NULL) {
+            printf("Error: Unknown member name: %s.%s\n", first, sec);
+            exit(1);
+        }
+        return mem_meta;
+    }
+}
+
+// 解析一个标识名称；可以是单个名字，如`a`，也可以是多级路径，如`a.b.c`
+static Node *ident(Parser *parser) {
+    Node *node = new_node(ND_IDENT);
+    int count = 0;
     char *n = get_text(parser);
+    node->as.path.names[count++].name =  n;
     advance(parser);
     if (match(parser, TK_DOT)) {
-        node->kind = ND_PATH;
-        node->as.path.names[0].name =  n;
-        int count = 1;
         while (match(parser, TK_DOT)) {
             advance(parser); // skip '.'
             node->as.path.names[count++].name = get_text(parser);
@@ -140,22 +169,32 @@ static Node *name(Parser *parser) {
                 exit(1);
             }
         }
-        node->as.path.len = count;
-        Meta *m = mod_lookup(parser->front, node);
-        node->meta = m;
-        print_node(node);
-        register_use(parser->uses, node);
-        return node;
     }
+    node->as.path.len = count;
 
-    node->as.str = n;
-    // scope lookup
-    Meta *m = scope_lookup(parser->scope, node->as.str);
+    // 从第一个名称开始，一个个查询其元信息
+    Meta *m = ident_lookup(parser, node);
     if (m == NULL) {
-        printf("Unknown name: %s\n", node->as.str);
+        printf("Unknown name: ");
+        echo_node(node);
+        printf("\n");
         exit(1);
     }
     node->meta = m;
+
+    // Meta *m = mod_lookup(parser->front, node);
+    // node->meta = m;
+    // print_node(node);
+    // register_use(parser->uses, node);
+ 
+    // node->as.str = n;
+    // // scope lookup
+    // Meta *m = scope_lookup(parser->scope, node->as.str);
+    // if (m == NULL) {
+    //     printf("Unknown name: %s\n", node->as.str);
+    //     exit(1);
+    // }
+    // node->meta = m;
     return node;
 }
 
@@ -171,17 +210,13 @@ static Node *call(Parser *parser, Node *left) {
         node->as.call.args[i] = buf->data[i];
     }
     Node *name = node->as.call.name;
-    if (name->kind == ND_NAME) {
-        Meta *m = scope_lookup(parser->scope, node->as.call.name->as.str);
+    if (name->kind == ND_IDENT) {
+        Meta *m = ident_lookup(parser, name);
         if (m == NULL) {
-            printf("Error: Unknown call function name: %s\n", node->as.call.name->as.str);
+            printf("Error: Unknown call function name: %s\n", get_name(name));
             exit(-1);
         }
         node->meta = m;
-        trace_node(node);
-        return node;
-    } else if (name->kind == ND_PATH) {
-        printf("Mod: %s\n", name->as.path.names[0].name);
         return node;
     } else {
         printf("Error: Unknown call name kind: %d for name ", name->kind);
@@ -314,14 +349,15 @@ static Node *use(Parser *parser) {
 
 static Meta *do_meta(Parser *parser, Node *expr) {
     Meta *m = new_meta(expr);
-    scope_set(parser->scope, m->name, m);
+    char *n = get_name(expr);
+    scope_set(parser->scope, n, m);
     expr->meta = m;
     m->node = expr;
     return m;
 }
 
 static Type *type_lookup(Parser *parser, Node *type_name) {
-    Meta *m = scope_lookup(parser->scope, type_name->as.str);
+    Meta *m = ident_lookup(parser, type_name);
     if (m == NULL) return NULL;
     return m->type;
 }
@@ -340,15 +376,16 @@ static Node *symbol_def(Parser *parser, NodeKind kind) {
     Node *expr = new_node(kind);
 
     // 解析存量名称
-    Node *store_name = new_node(ND_NAME);
-    store_name->as.str = get_text(parser);
+    Node *store_name = new_node(ND_IDENT);
+    store_name->as.path.names[0].name = get_text(parser);
+    store_name->as.path.len = 1;
     expr->as.asn.name = store_name;
     advance(parser);
 
     Type *type = NULL;
     // 解析存量类型
     if (is_type_name(parser)) {
-        Node *type_name = name(parser);
+        Node *type_name = ident(parser);
         type = type_lookup(parser, type_name);
     }
 
@@ -440,7 +477,7 @@ static Type *infer_type(Parser *parser, Node *node) {
         return primary;
     }
     // 如果是名称节点，就尝试查找类型
-    if (node->kind == ND_NAME) {
+    if (node->kind == ND_IDENT) {
         Type *t = type_lookup(parser, node);
         if (t) {
             node->meta->type = t;
@@ -464,6 +501,7 @@ static Node *dict_impl(Parser *parser, bool peeked) {
     Type *val_type = NULL;
     while (!match(parser, TK_RBRACE)) {
         Node *key = new_name(parser);
+        char *key_name = get_name(key);
         Node *entry = kv(parser, key);
         if (entry->kind != ND_KV) {
             printf("dict entry should be key:value form, got instead:");
@@ -474,7 +512,7 @@ static Node *dict_impl(Parser *parser, bool peeked) {
             Node *val = entry->as.kv.val;
             val_type = infer_type(parser, val);
         }
-        hash_set(d->as.dict.entries, entry->as.kv.key->as.str, entry->as.kv.val);
+        hash_set(d->as.dict.entries, key_name, entry->as.kv.val);
         expect_sep_dict(parser);
     }
     expect(parser, TK_RBRACE);
@@ -575,13 +613,14 @@ static Params *params(Parser *parser) {
     p->cap = 4;
     p->list = calloc(1, sizeof(Node *));
     while (parser->cur->kind != TK_RPAREN) {
-        Node *pname = new_node(ND_NAME);
-        pname->as.str = get_text(parser);
+        Node *pname = new_node(ND_IDENT);
+        pname->as.path.names[0].name = get_text(parser);
+        pname->as.path.len = 1;
         pname->meta = new_meta(pname);
         advance(parser);
         Type *ptype = NULL;
         if (!match(parser, TK_DOT)) {
-            Node *type_name = name(parser);
+            Node *type_name = ident(parser);
             ptype = type_lookup(parser, type_name);
         }
         pname->meta->type = ptype != NULL ? ptype : &TYPE_INT;
@@ -605,7 +644,7 @@ static Node *fn(Parser *parser) {
     expect(parser, TK_RPAREN);
     for (int i = 0; i < p->count; i++) {
         Node *param = p->list[i];
-        scope_set(parser->scope, param->as.str, new_meta(param));
+        scope_set(parser->scope, get_name(param), new_meta(param));
     }
     // 处理函数类型
     Type *fn_type = calloc(1, sizeof(Type));
@@ -617,7 +656,7 @@ static Node *fn(Parser *parser) {
     }
     // 返回类型
     if (!match(parser, TK_LBRACE)) {
-        Node *type_name = name(parser);
+        Node *type_name = ident(parser);
         Type *ret_type = type_lookup(parser, type_name);
         fn_type->as.fn.ret = ret_type;
     } else {
@@ -661,7 +700,7 @@ static List *fields(Parser *parser) {
         Node *field_type = new_name(parser);
         Type *ftype = type_lookup(parser, field_type);
         if (!ftype) {
-            printf("Error: field %s of type %s not found!", field->as.str, field_type->as.str);
+            printf("Error: field %s of type %s not found!", get_name(field), get_name(field_type));
             exit(1);
         } 
         field_meta->type = ftype;
@@ -678,6 +717,7 @@ static Node *type(Parser *parser) {
     // 类型名称
     Node *type_name = new_name(parser);
     type_decl->as.type.name = type_name;
+    char *tname = get_name(type_name);
 
     // 类型的各个字段
     expect(parser, TK_LBRACE);
@@ -685,14 +725,21 @@ static Node *type(Parser *parser) {
     type_decl->as.type.fields = fs;
 
     // 创建编译器中的UserType
-    Type *tp = new_type(type_name->as.str);
+    Type *tp = new_user_type(tname);
+    tp->as.user.members = new_hash_table();
+    for (int i = 0; i < fs->size; i++) {
+        Node *field = fs->items[i];
+        char *fname = get_name(field);
+        // Type *ftype = field->meta->type;
+        hash_set(tp->as.user.members, fname, field->meta);
+    }
     Meta *tmeta = new_meta(type_decl);
     type_decl->meta = tmeta;
     tmeta->type = tp;
     expect(parser, TK_RBRACE);
 
     // 把类型的元信息存入到视野中
-    scope_set(parser->scope, type_name->as.str, tmeta);
+    scope_set(parser->scope, tname, tmeta);
     return type_decl;
 }
 
@@ -733,7 +780,7 @@ static Node *single(Parser *parser) {
         case TK_FALSE:
             return bul(parser, false);
         case TK_NAME:
-            return name(parser);
+            return ident(parser);
         case TK_TYPE:
             return type(parser);
         default:
@@ -746,7 +793,7 @@ static Type *get_type(Parser *parser, Node *node) {
     // 如果节点的meta直接可以获得类型，则返回该类型
     if (node->meta->type) {
         return node->meta->type;
-    } else if (node->kind == ND_NAME) { // 否则，尝试查找类型
+    } else if (node->kind == ND_IDENT) { // 否则，尝试查找类型
         Type *type = type_lookup(parser, node);
         if (type) {
             node->meta->type = type;
@@ -781,12 +828,12 @@ static Node *index(Parser *parser, Node *left) {
 
 
 static Node *object(Parser *parser, Node *left) {
-    if (left->kind != ND_NAME) {
-        printf("Error: Object name should be a name, got instead:");
+    if (left->kind != ND_IDENT) {
+        printf("Error: Object name should be an ident, got instead:");
         echo_node(left);
         exit(0);
     }
-    char *n = left->as.str;
+    char *n = get_name(left);
     Meta *tmeta = scope_lookup(parser->scope, n);
     if (tmeta == NULL) {
         printf("Error: Unknown object type: %s\n", n);
@@ -800,7 +847,7 @@ static Node *object(Parser *parser, Node *left) {
 }
 
 static bool allow_postfix(NodeKind kind) {
-    return kind == ND_NAME || kind == ND_CALL || kind == ND_INDEX || kind == ND_OBJ;
+    return kind == ND_IDENT || kind == ND_CALL || kind == ND_INDEX || kind == ND_OBJ;
 }
 
 static Node *unary(Parser *parser) {
@@ -924,7 +971,7 @@ static Node *binop(Parser *parser, Node *left, Precedence base_prec) {
         Node *bop = new_node(ND_BINOP);
         Op op = get_op(cur->kind);
         bop->as.bop.op = op;
-        if (op == OP_ASN && left->kind == ND_NAME) {
+        if (op == OP_ASN && left->kind == ND_IDENT) {
             left->kind = ND_LNAME;
         }
         bop->as.bop.left = left;

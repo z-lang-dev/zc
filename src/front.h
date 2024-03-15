@@ -51,6 +51,7 @@ Front *new_front();
 Mod *do_file(Front *front, const char *path);
 Mod *do_code(Front *front, const char *code);
 
+Mod *find_mod(Front *front, const char *name);
 Meta *mod_lookup(Front *front, Node *path);
 
 // 添加文本形式的源码

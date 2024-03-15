@@ -3,8 +3,10 @@
 
 Meta *new_builtin(char *name) {
     Node *fn = new_node(ND_FN);
-    fn->as.str = name;
-    return new_meta(fn);
+    fn->as.fn.name = name;
+    Meta *m = new_meta(fn);
+    fn->meta = m;
+    return m;
 }
 
 void make_builtins(Scope *scope) {
@@ -18,10 +20,9 @@ void make_builtins(Scope *scope) {
 
 Meta *new_stdfn(char *name) {
     Node *fn = new_node(ND_FN);
-    fn->as.str = name;
+    fn->as.fn.name = name;
     Meta *m = new_meta(fn);
-    m->name = name;
-    m->kind = ND_FN;
+    fn->meta = m;
     return m;
 }
 

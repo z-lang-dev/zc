@@ -160,7 +160,7 @@ void print_val(Value *val) {
         printf("nil");
         break;
     case VAL_FN:
-        printf("fn %s", val->as.fn->name);
+        printf("fn %s", get_name(val->as.fn->name));
         break;
     case VAL_STR:
         printf("%s", val->as.str);

@@ -33,7 +33,6 @@ typedef enum {
     ND_MOD, // 模块
     ND_BLOCK, // 代码块
     ND_USE, // 导入模块
-    ND_PATH, // 名路径，如http.server.async
     ND_CALL, // 函数调用
     ND_FN, // 函数定义
     ND_LET, // 定量声明
@@ -48,7 +47,7 @@ typedef enum {
     ND_NOT, // 非
     ND_NEG, // 负数
     ND_STR, // 字符串
-    ND_NAME, // 名称，包括函数名、存量名、类名等
+    ND_IDENT, // 标识名称，包括单个名称和名称路径，如`a`、`x.a`等
     ND_LNAME,  // 左值名称
     ND_ARRAY, // 数组
     ND_INDEX, // 数组索引
@@ -144,7 +143,7 @@ struct Use {
 };
 
 struct Asn {
-    Node *name; // ND_NAME
+    Node *name; // ND_IDENT
     Node *value; // EXPR
 };
 

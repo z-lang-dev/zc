@@ -13,12 +13,15 @@
             "args": [
                 "interp",
                 // "mut a int = 10; a + 5"
-                //"fn mul(a int, b int){a*b}; mul(5, 8)"
+                // "fn mul(a int, b int){a*b}; mul(5, 8)"
                 // "let f double = 10.2d; print(f + 1.0 > 5.2)"
-                // "print(41)",
-                // "mut a = [\"1\", \"2\", \"3\"]; a[0]=4; print(a[0])"
-                // "type A {a int; b double}; let x = A{a:18, b:3.14}; x"
-                "mut d = {a: 17, b: 2, c:3};print(d);d[\"a\"]=8;d[\"c\"]=33;print(d)"
+                // "let a=10;a>5"
+                // "mut i = 0; mut sum = 0; for i < 10 { sum = sum + i; i = i + 1; }; sum"
+                // "mut i = 0; for i < 5 { i = i + 1 }; i"
+                "print(41)",
+                // "mut a = [\"1\", \"2\", \"3\"]; a[0]=\"4\"; print(a[0])"
+                // "type A {a int; b double}; let x = A{a:18, b:3.14}; x.a"
+                // "mut d = {a: 17, b: 2, c:3};print(d);d[\"a\"]=8;d[\"c\"]=33;print(d)"
                 // "mut i = 0; mut sum = 0; for i < 10 { sum = sum + i; i = i + 1; }; sum"
                 // "mut a = [[1, 2], [2, 3], [3, 4]];a[0][1]=13;a[1][0]=25;a"
             ],
@@ -29,10 +32,10 @@
             "request": "launch",
             "name": "z2c",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/array",
+            "cwd": "${workspaceFolder}/test/for",
             "args": [
                 "c",
-                "array_case.z"
+                "for_case.z"
             ],
             "stopAtEntry": false
         },
@@ -41,10 +44,10 @@
             "request": "launch",
             "name": "z2py",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/bar",
+            "cwd": "${workspaceFolder}/test/simple_double",
             "args": [
                 "py",
-                "bar_case.z"
+                "simple_double_case.z"
             ],
             "stopAtEntry": false
         },
@@ -53,10 +56,10 @@
             "request": "launch",
             "name": "z2js",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/mod",
+            "cwd": "${workspaceFolder}/test/alert",
             "args": [
                 "js",
-                "mod_case.z"
+                "alert_case.z"
             ],
             "stopAtEntry": false
         },
@@ -65,10 +68,10 @@
             "request": "launch",
             "name": "build",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/hello",
+            "cwd": "${workspaceFolder}/test/compare",
             "args": [
                 "build",
-                "hello_case.z"
+                "compare_case.z"
             ],
             "stopAtEntry": false
         },

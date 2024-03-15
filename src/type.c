@@ -9,7 +9,7 @@ const Type TYPE_FLOAT = {TY_FLOAT, "float", 4};
 const Type TYPE_DOUBLE = {TY_DOUBLE, "double", 8};
 const Type TYPE_STR = {TY_STR, "str", 0};
 
-Type *new_type(char *name) {
+Type *new_user_type(char *name) {
     Type *type = malloc(sizeof(Type));
     type->kind = TY_USER;
     type->name = name;

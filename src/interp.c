@@ -185,7 +185,7 @@ static Value *eval_logic(Value *left, Value *right, Op op) {
 }
 
 bool call_builtin(Node *expr) {
-    char *name = expr->as.call.name->as.str;
+    char *name = get_name(expr->as.call.name);
     if (strcmp(name, "print") == 0) {
         print(expr->as.call.args[0]);
         return true;
@@ -193,25 +193,25 @@ bool call_builtin(Node *expr) {
         pwd();
         return true;
     } else if (strcmp(name, "ls") == 0) {
-        ls(expr->as.call.args[0]->as.str);
+        ls(get_name(expr->as.call.args[0]));
         return true;
     } else if (strcmp(name, "cd") == 0) {
-        cd(expr->as.call.args[0]->as.str);
+        cd(get_name(expr->as.call.args[0]));
         return true;
     } else if (strcmp(name, "cat") == 0) {
-        cat(expr->as.call.args[0]->as.str);
+        cat(get_name(expr->as.call.args[0]));
         return true;
     }
     return false;
 }
 
 bool call_stdlib(Node *expr) {
-    char *name = expr->as.call.name->as.str;
+    char *name = get_name(expr->as.call.name);
     if (strcmp(name, "read_file") == 0) {
-        read_file(expr->as.call.args[0]->as.str);
+        read_file(get_name(expr->as.call.args[0]));
         return true;
     } else if (strcmp(name, "write_file") == 0) {
-        write_file(expr->as.call.args[0]->as.str, expr->as.call.args[1]->as.str);
+        write_file(get_name(expr->as.call.args[0]), get_name(expr->as.call.args[1]));
         return true;
     }
     return false;
@@ -235,8 +235,8 @@ Value *eval_asn(Node *expr) {
         Node *left = expr->as.bop.left;
         Node *right = expr->as.bop.right;
         Value *res = eval(right);
-        if (left->kind == ND_NAME || left->kind == ND_LNAME) {
-            char *name = left->as.str;
+        if (left->kind == ND_IDENT || left->kind == ND_LNAME) {
+            char *name = get_name(left);
             set_val(name, res);
         } else if (left->kind == ND_INDEX) {
             // 由于这里得到的item本身就是个指针，我们可以把它当做左值来使用。
@@ -266,21 +266,16 @@ Value *eval(Node *expr) {
         return new_double(expr->as.double_num.val);
     case ND_BOOL:
         return new_bool(expr->as.bul);
-    case ND_NAME:
-        return get_val(expr->as.str);
+    case ND_IDENT:
+        return get_val(get_name(expr));
     case ND_NEG:
         return neg_val(eval(expr->as.una.body));
     case ND_NOT:
         return not(eval(expr->as.una.body));
-    case ND_LET: {
-        Value *val = eval(expr->as.asn.value);
-        char *name = expr->as.asn.name->as.str;
-        set_val(name, val);
-        return val;
-    }
+    case ND_LET: 
     case ND_MUT: {
         Value *val = eval(expr->as.asn.value);
-        char *name = expr->as.asn.name->as.str;
+        char *name = get_name(expr->as.asn.name);
         set_val(name, val);
         return val;
     }
@@ -377,21 +372,21 @@ Value *eval(Node *expr) {
     case ND_CALL: {
         if (call_builtin(expr)) return new_nil();
         if (call_stdlib(expr)) return new_nil();
-        Value *val = get_val(expr->as.call.name->as.str);
+        Value *val = get_val(get_name(expr->as.call.name));
         if (val == NULL) {
-            printf("Unknown function: %s\n", expr->as.call.name->as.str);
+            printf("Unknown function: %s\n", get_name(expr->as.call.name));
             return new_nil();
         }
         Exprs *params = val->as.fn->params;
         for (int i = 0; i < params->count; ++i) {
             Node *p = params->list[i];
-            char *n= p->as.str;
+            char *n= get_name(p);
             set_val(n, eval(expr->as.call.args[i]));
         }
         return eval(val->as.fn->body);
     }
     case ND_TYPE: {
-        Value *name = new_str(expr->as.type.name->as.str);
+        Value *name = new_str(get_name(expr->as.type.name));
         return name;
     }
     case ND_BINOP: {
@@ -476,7 +471,9 @@ void interp_once(Front *front, char *code) {
     Node *prog = mod->prog;
     log_trace("Executing ...\n------------------\n");
     Value *ret = execute(prog);
-    if (ret->kind != VAL_NIL) {
+    if (ret == NULL) {
+        printf("Error: returned NULL value\n");
+    } else if(ret->kind != VAL_NIL) {
         print_val(ret);
         printf("\n");
     }

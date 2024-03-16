@@ -18,9 +18,9 @@
                 // "let a=10;a>5"
                 // "mut i = 0; mut sum = 0; for i < 10 { sum = sum + i; i = i + 1; }; sum"
                 // "mut i = 0; for i < 5 { i = i + 1 }; i"
-                "print(41)",
+                // "print(41)",
                 // "mut a = [\"1\", \"2\", \"3\"]; a[0]=\"4\"; print(a[0])"
-                // "type A {a int; b double}; let x = A{a:18, b:3.14}; x.a"
+                "type A {a int; b double}; let x = A{a:18, b:3.14}; x.a"
                 // "mut d = {a: 17, b: 2, c:3};print(d);d[\"a\"]=8;d[\"c\"]=33;print(d)"
                 // "mut i = 0; mut sum = 0; for i < 10 { sum = sum + i; i = i + 1; }; sum"
                 // "mut a = [[1, 2], [2, 3], [3, 4]];a[0][1]=13;a[1][0]=25;a"
@@ -56,10 +56,10 @@
             "request": "launch",
             "name": "z2js",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/alert",
+            "cwd": "${workspaceFolder}/test/type",
             "args": [
                 "js",
-                "alert_case.z"
+                "type_case.z"
             ],
             "stopAtEntry": false
         },

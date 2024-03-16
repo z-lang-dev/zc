@@ -8,6 +8,7 @@ local case_list = {
     "fn_add",
     "simple_double",
     "array",
+    "type",
 }
 
 local skip_table = {
@@ -17,7 +18,8 @@ local skip_table = {
     ["use"] = {["compiler"]=true, ["c"]=true, ["js"]=true},
     ["fn_add"] = {["compiler"]=true},
     ["simple_double"] = {["compiler"]=true},
-    ["array"] = {["compiler"]=true}
+    ["array"] = {["compiler"]=true},
+    ["type"] = {["compiler"]=true}
 }
 
 target("stdz")

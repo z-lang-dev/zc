@@ -4,4 +4,4 @@ type Point {
 }
 
 let p = Point{x: 3, y: 4}
-p.y
+print(p.x + p.y)

@@ -251,6 +251,146 @@ static void gen_store(FILE *fp, Node *expr) {
     gen_expr(fp, expr->as.asn.value);
 }
 
+// 生成类型的定义
+// C: typedef sturct { ... }
+// Python: class ...
+// JS: class ...
+static void gen_type_decl(FILE *fp, Node *expr) {
+    switch (META.lan) {
+    case LAN_C: {
+        // TODO: C语言的结构体定义应当放在`main`函数之外，另外也需要在头文件中声明。
+        fprintf(fp, "typedef struct {\n");
+        add_indent();
+        for (int i = 0; i < expr->as.type.fields->size; ++i) {
+            Node *field = expr->as.type.fields->items[i];
+            print_indent(fp);
+            fprintf(fp, "%s %s;\n", field->meta->type->name, get_name(field));
+        }
+        sub_indent();
+        print_indent(fp);
+        fprintf(fp, "} %s", get_name(expr->as.type.name));
+        break;
+    }
+    case LAN_PY: {
+        fprintf(fp, "class %s:\n", get_name(expr->as.type.name));
+        add_indent();
+        // 构造函数
+        print_indent(fp);
+        fprintf(fp, "def __init__(self, ");
+        // 参数列表
+        for (int i = 0; i < expr->as.type.fields->size; ++i) {
+            Node *field = expr->as.type.fields->items[i];
+            fprintf(fp, "%s", get_name(field));
+            if (i < expr->as.type.fields->size - 1) {
+                fprintf(fp, ", ");
+            }
+        }
+        fprintf(fp, "):\n");
+        // 函数体
+        add_indent();
+        for (int i = 0; i < expr->as.type.fields->size; ++i) {
+            Node *field = expr->as.type.fields->items[i];
+            print_indent(fp);
+            fprintf(fp, "self.%s = %s\n", get_name(field), get_name(field));
+        }
+        sub_indent();
+        sub_indent();
+        break;
+    }
+    case LAN_JS: {
+        fprintf(fp, "class %s {\n", get_name(expr->as.type.name));
+        add_indent();
+        // 构造函数
+        print_indent(fp);
+        fprintf(fp, "constructor(");
+        // 参数列表：这里的顺序是哈希表的顺序，可能和Z源码提供的参数顺序不一致。未来需要解决
+        for (int i = 0; i < expr->as.type.fields->size; ++i) {
+            Node *field = expr->as.type.fields->items[i];
+            char *name = get_name(field);
+            fprintf(fp, "%s", get_name(field));
+            if (i < expr->as.type.fields->size - 1) {
+                fprintf(fp, ", ");
+            }
+        }
+        fprintf(fp, ") {\n");
+        // 构造函数体
+        add_indent();
+        for (int i = 0; i < expr->as.type.fields->size; ++i) {
+            Node *field = expr->as.type.fields->items[i];
+            char *name = get_name(field);
+            print_indent(fp);
+            fprintf(fp, "this.%s = %s;\n", name, name);
+        }
+        sub_indent();
+        print_indent(fp);
+        fprintf(fp, "}\n");
+        sub_indent();
+        fprintf(fp, "}\n");
+        break;
+        // TODO: 如何加入方法？
+    }
+    }
+}
+
+// 生成一个对象
+static void gen_obj(FILE *fp, Node *expr) {
+    switch (META.lan) {
+    case LAN_C: {
+        fprintf(fp, "{");
+        HashTable *t = expr->as.obj.members;
+        HashIter *i = hash_iter(t);
+        int j = 0;
+        while (hash_next(t, i)) {
+            char *key = i->key;
+            Node *val = (Node*)i->value;
+            fprintf(fp, ".%s = ", key);
+            gen_expr(fp, val);
+            if (j++ < t->size - 1) {
+                fprintf(fp, ", ");
+            }
+        }
+        fprintf(fp, "}");
+        break;
+    }
+    case LAN_PY: {
+        fprintf(fp, "%s(", expr->meta->type->name);
+        HashTable *t = expr->as.obj.members;
+        HashIter *i = hash_iter(t);
+        int j = 0;
+        while (hash_next(t, i)) {
+            char *key = i->key;
+            Node *val = (Node*)i->value;
+            fprintf(fp, "%s = ", key);
+            gen_expr(fp, val);
+            if (j++ < t->size - 1) {
+                fprintf(fp, ", ");
+            }
+        }
+        fprintf(fp, ")");
+        break;
+    }
+    case LAN_JS: {
+        // TODO：这里的构造函数调用有隐患，
+        // 由于丢掉了成员名称，按照哈希表的默认顺序提供，可能导致参数位置匹配错误
+        // 解决办法：统一用名字参数形式调用？不知道好不好使
+        Type *type = expr->meta->type;
+        fprintf(fp, "new %s(", type->name);
+        HashTable *t = expr->as.obj.members;
+        HashIter *i = hash_iter(t);
+        int j = 0;
+        while (hash_next(t, i)) {
+            Node *val = (Node*)i->value;
+            gen_expr(fp, val);
+            if (j++ < t->size - 1) {
+                fprintf(fp, ", ");
+            }
+        }
+        fprintf(fp, ")\n");
+        break;
+    }
+    }
+}
+
 // 生成一个语句
 static void gen_expr(FILE *fp, Node *expr) {
     switch (expr->kind) {
@@ -304,6 +444,12 @@ static void gen_expr(FILE *fp, Node *expr) {
         }
         return;
     }
+    case ND_TYPE:
+        gen_type_decl(fp, expr);
+        return;
+    case ND_OBJ:
+        gen_obj(fp, expr);
+        return;
     case ND_ARRAY: {
         if (META.lan == LAN_C) fprintf(fp, "{");
         else fprintf(fp, "[");

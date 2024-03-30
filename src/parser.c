@@ -675,7 +675,7 @@ static Node *fn(Parser *parser) {
 }
 
 static void expect_sep_type_fields(Parser *parser) {
-    if (parser->cur->kind == TK_SEMI) {
+    if (parser->cur->kind == TK_SEMI || parser->cur->kind == TK_NLINE) {
         advance(parser);
     } else if (parser->cur->kind == TK_RBRACE) {
         return;
@@ -685,12 +685,19 @@ static void expect_sep_type_fields(Parser *parser) {
     }
 }
 
+static void skip_new_line(Parser *parser) {
+    while (parser->cur->kind == TK_NLINE) {
+        advance(parser);
+    }
+}
+
 static List *fields(Parser *parser) {
     List *fs = calloc(1, sizeof(List));
     fs->size = 0;
     fs->cap = 4;
     fs->items = calloc(1, sizeof(Node *));
     while (!match(parser, TK_RBRACE)) {
+        skip_new_line(parser); // 跳过空行
         // 字段名称
         Node *field = new_name(parser); 
         Meta *field_meta = new_meta(field);

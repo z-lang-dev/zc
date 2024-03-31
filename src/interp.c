@@ -15,6 +15,14 @@ static Value *get_val(char *name) {
     return hash_get(global_scope()->values, name);
 }
 
+static Value *get_mod_val(Mod *mod, char *name) {
+    return hash_get(mod->scope->values, name);
+}
+
+static void set_mod_val(Mod *mod, char *name, Value *val) {
+    return hash_set(mod->scope->values, name, val);
+}
+
 Value *eval(Node *expr);
 
 // 内置函数
@@ -253,6 +261,34 @@ Value *eval_asn(Node *expr) {
     return new_nil();
 }
 
+// 获取一个名符对应的值
+// 有三种不同类型的名符：
+// 1. 简单的标识符，如a, b, c等
+// 2. 模块成员，如http.server，math.PI等
+// 3. 对象成员访问，如obj.name，obj.age等
+static Value *get_ident_val(Node *expr) {
+
+    // 简单名符
+    if (expr->as.path.len <= 1) return get_val(get_name(expr));
+
+    // 模块成员访问
+    // TODO: 暂时只支持单层模块
+    Name *head = &expr->as.path.names[0];
+    switch (head->kind) {
+    case NM_MOD:
+        // TODO：到对应的模块中查找
+        return get_val(get_name(expr));
+    case NM_NAME: {
+        Value *obj = get_val(head->name);
+        // TODO: 暂时只支持单层成员查找，如p.x
+        char *key = expr->as.path.names[1].name;
+        Value *val = hash_get(obj->as.dict->entries, key);
+        return val;
+    }
+    }
+    return new_nil();
+}
+
 // 对表达式求值
 Value *eval(Node *expr) {
     switch (expr->kind) {
@@ -267,7 +303,7 @@ Value *eval(Node *expr) {
     case ND_BOOL:
         return new_bool(expr->as.bul);
     case ND_IDENT:
-        return get_val(get_name(expr));
+        return get_ident_val(expr);
     case ND_NEG:
         return neg_val(eval(expr->as.una.body));
     case ND_NOT:

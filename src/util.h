@@ -39,3 +39,5 @@ int compare_file(char *file1, char *file2);
 char *remove_ext(char *path);
 
 char* sfmt(const char* fmt, char *msg);
+
+char* join_str(char* strings[], char* sep, int count);

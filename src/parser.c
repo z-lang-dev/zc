@@ -151,8 +151,7 @@ static Meta *ident_lookup(Parser *parser, Node *node) {
     }
 }
 
-// 解析一个标识名称；可以是单个名字，如`a`，也可以是多级路径，如`a.b.c`
-static Node *ident(Parser *parser) {
+static Node *new_ident(Parser *parser) {
     Node *node = new_node(ND_IDENT);
     int count = 0;
     char *n = get_text(parser);
@@ -172,6 +171,13 @@ static Node *ident(Parser *parser) {
     }
     node->as.path.len = count;
 
+    return node;
+}
+
+// 解析一个标识名称；可以是单个名字，如`a`，也可以是多级路径，如`a.b.c`
+static Node *ident(Parser *parser) {
+    Node *node = new_ident(parser);
+
     // 从第一个名称开始，一个个查询其元信息
     Meta *m = ident_lookup(parser, node);
     if (m == NULL) {
@@ -181,20 +187,6 @@ static Node *ident(Parser *parser) {
         exit(1);
     }
     node->meta = m;
-
-    // Meta *m = mod_lookup(parser->front, node);
-    // node->meta = m;
-    // print_node(node);
-    // register_use(parser->uses, node);
- 
-    // node->as.str = n;
-    // // scope lookup
-    // Meta *m = scope_lookup(parser->scope, node->as.str);
-    // if (m == NULL) {
-    //     printf("Unknown name: %s\n", node->as.str);
-    //     exit(1);
-    // }
-    // node->meta = m;
     return node;
 }
 
@@ -632,11 +624,21 @@ static Params *params(Parser *parser) {
     return p;
 }
 
+static bool is_method(Node *fname) {
+    return fname->as.path.len > 1;
+}
+
+static char *get_class_name(Node *fname) {
+    return fname->as.path.names[0].name;
+}
+
+// 解析函数的定义
 static Node *fn(Parser *parser) {
     advance(parser); // 跳过'fn'
+    Node *fname = new_ident(parser); // 函数名，可能是简单函数，也可以是`类名.方法名`
     Node *expr = new_node(ND_FN);
-    expr->as.fn.name = get_text(parser);
-    advance(parser); // 跳过函数名
+    expr->as.fn.name = get_full_name(fname);
+    expr->as.fn.fname = fname;
     enter_scope(parser);
     expect(parser, TK_LPAREN);
     Params *p = params(parser);
@@ -644,13 +646,18 @@ static Node *fn(Parser *parser) {
     expect(parser, TK_RPAREN);
     for (int i = 0; i < p->count; i++) {
         Node *param = p->list[i];
-        scope_set(parser->scope, get_name(param), new_meta(param));
+        scope_set(parser->scope, get_full_name(param), new_meta(param));
     }
     // 处理函数类型
     Type *fn_type = calloc(1, sizeof(Type));
     fn_type->kind = TY_FN;
     fn_type->as.fn.param_count = p->count;
     fn_type->as.fn.params = calloc(p->count, sizeof(Type *));
+    if (is_method(fname)) {
+        fn_type->as.fn.is_method = true;
+        char *class_name = get_class_name(fname);
+        fn_type->as.fn.class = type_lookup(parser, class_name);
+    }
     for (int i = 0; i < p->count; i++) {
         fn_type->as.fn.params[i] = p->list[i]->meta->type;
     }

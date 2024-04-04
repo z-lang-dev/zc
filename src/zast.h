@@ -165,7 +165,8 @@ struct Params {
 };
 
 struct Fn {
-    char *name;
+    char *name; // TODO：改用fname节点
+    Node *fname;
     Params *params;
     Node *body;
 };

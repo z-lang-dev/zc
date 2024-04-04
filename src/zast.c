@@ -537,3 +537,34 @@ char *get_name(Node *name) {
         return "<UNKNOWN_NAME_TYPE>";
     }
 }
+
+char *get_full_name(Node *name) {
+    switch (name->kind) {
+    case ND_STR:
+        return name->as.str;
+    case ND_LNAME:
+    case ND_IDENT:
+        if (name->as.path.len == 0) {
+            return "<EMPTY_IDENT_NAME>";
+        } else if (name->as.path.len == 1) {
+            return name->as.path.names[0].name;
+        } else {
+            // return a.b.c
+            char *full_name = calloc(1, 1);
+            for (int i = 0; i < name->as.path.len; i++) {
+                char *n = name->as.path.names[i].name;
+                int len = strlen(full_name) + strlen(n) + 1;
+                full_name = realloc(full_name, len);
+                strcat(full_name, n);
+                if (i < name->as.path.len - 1) {
+                    strcat(full_name, ".");
+                }
+            }
+            return full_name;
+        }
+    case ND_FN:
+        return name->as.fn.name;
+    default:
+        return "<UNKNOWN_NAME_TYPE>";
+    }
+}

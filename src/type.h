@@ -40,6 +40,8 @@ struct TypeFn {
     int param_count;
     Type **params;
     Type *ret;
+    bool is_method;
+    Type *class;
 };
 
 struct TypeArray {

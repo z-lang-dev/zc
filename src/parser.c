@@ -653,6 +653,7 @@ static Node *fn(Parser *parser) {
     fn_type->kind = TY_FN;
     fn_type->as.fn.param_count = p->count;
     fn_type->as.fn.params = calloc(p->count, sizeof(Type *));
+    // 判断是否为方法。即String.len()这种形式
     if (is_method(fname)) {
         fn_type->as.fn.is_method = true;
         char *class_name = get_class_name(fname);

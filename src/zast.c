@@ -538,6 +538,29 @@ char *get_name(Node *name) {
     }
 }
 
+static char *get_concat_name(Node *name) {
+    char* str = NULL;             /* Pointer to the joined strings  */
+    size_t total_length = 0;      /* Total length of joined strings */
+    int i = 0;                    /* Loop counter                   */
+
+    int count = name->as.path.len;
+    size_t sep_len = strlen(".");
+    for (i = 0; i < name->as.path.len; i++) total_length += strlen(name->as.path.names[i].name);
+    total_length++;     /* For joined string terminator */
+    total_length += sep_len * (count - 1); // for seperators
+
+    str = (char*) malloc(total_length);  /* Allocate memory for joined strings */
+    str[0] = '\0';                      /* Empty string we can append to      */
+
+    /* Append all the strings */
+    for (i = 0; i < count; i++) {
+        strcat(str, name->as.path.names[i].name);
+        if (i < (count - 1)) strcat(str, ".");
+    }
+
+    return str;
+}
+
 char *get_full_name(Node *name) {
     switch (name->kind) {
     case ND_STR:
@@ -550,17 +573,7 @@ char *get_full_name(Node *name) {
             return name->as.path.names[0].name;
         } else {
             // return a.b.c
-            char *full_name = calloc(1, 1);
-            for (int i = 0; i < name->as.path.len; i++) {
-                char *n = name->as.path.names[i].name;
-                int len = strlen(full_name) + strlen(n) + 1;
-                full_name = realloc(full_name, len);
-                strcat(full_name, n);
-                if (i < name->as.path.len - 1) {
-                    strcat(full_name, ".");
-                }
-            }
-            return full_name;
+            return get_concat_name(name);
         }
     case ND_FN:
         return name->as.fn.name;

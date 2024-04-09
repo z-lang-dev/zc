@@ -342,7 +342,8 @@ static void gen_obj(FILE *fp, Node *expr) {
         int j = 0;
         while (hash_next(t, i)) {
             char *key = i->key;
-            Node *val = (Node*)i->value;
+            Node *entry = (Node*)i->value;
+            Node *val = entry->as.kv.val;
             fprintf(fp, ".%s = ", key);
             gen_expr(fp, val);
             if (j++ < t->size - 1) {
@@ -359,7 +360,8 @@ static void gen_obj(FILE *fp, Node *expr) {
         int j = 0;
         while (hash_next(t, i)) {
             char *key = i->key;
-            Node *val = (Node*)i->value;
+            Node *entry = (Node*)i->value;
+            Node *val = entry->as.kv.val;
             fprintf(fp, "%s = ", key);
             gen_expr(fp, val);
             if (j++ < t->size - 1) {
@@ -379,7 +381,8 @@ static void gen_obj(FILE *fp, Node *expr) {
         HashIter *i = hash_iter(t);
         int j = 0;
         while (hash_next(t, i)) {
-            Node *val = (Node*)i->value;
+            Node *entry = (Node*)i->value;
+            Node *val = entry->as.kv.val;
             gen_expr(fp, val);
             if (j++ < t->size - 1) {
                 fprintf(fp, ", ");

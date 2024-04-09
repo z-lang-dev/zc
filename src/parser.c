@@ -123,6 +123,21 @@ static Node *new_name(Parser *parser) {
     return node;
 }
 
+static Meta *member_lookup(Parser *parser, char *obj_name, char *mem_name) {
+    Meta *obj = scope_lookup(parser->scope, obj_name);
+    if (obj == NULL) {
+        printf("Error: Unknown object name: %s\n", obj_name);
+        exit(1);
+    }
+    Type *obj_type = obj->type;
+    Meta *mem_meta = hash_get(obj_type->as.user.members, mem_name);
+    if (mem_meta == NULL) {
+        printf("Error: Unknown member name: %s.%s\n", obj_name, mem_name);
+        exit(1);
+    }
+    return mem_meta;
+}
+
 // 注意，暂时只支持两层路径。
 static Meta *ident_lookup(Parser *parser, Node *node) {
     int len = node->as.path.len;
@@ -136,18 +151,7 @@ static Meta *ident_lookup(Parser *parser, Node *node) {
     if (mod != NULL) { // 如果是模块名，就尝试在模块的视野中查找
         return scope_lookup(mod->scope, node->as.path.names[1].name);
     } else { // 如果不是模块名，那么就应当是对象属性的访问
-        Meta *obj = scope_lookup(parser->scope, first);
-        if (obj == NULL) {
-            printf("Error: Unknown object name: %s\n", first);
-            exit(1);
-        }
-        Type *obj_type = obj->type;
-        Meta *mem_meta = hash_get(obj_type->as.user.members, sec);
-        if (mem_meta == NULL) {
-            printf("Error: Unknown member name: %s.%s\n", first, sec);
-            exit(1);
-        }
-        return mem_meta;
+        return member_lookup(parser, first, sec);
     }
 }
 
@@ -443,6 +447,7 @@ static Node *kv(Parser *parser, Node *left) {
     Node *val = expression(parser);
     entry->as.kv.key = left;
     entry->as.kv.val = val;
+    if (entry->meta == NULL) entry->meta = new_meta(entry);
     return entry;
 }
 
@@ -504,7 +509,7 @@ static Node *dict_impl(Parser *parser, bool peeked) {
             Node *val = entry->as.kv.val;
             val_type = infer_type(parser, val);
         }
-        hash_set(d->as.dict.entries, key_name, entry->as.kv.val);
+        hash_set(d->as.dict.entries, key_name, entry);
         expect_sep_dict(parser);
     }
     expect(parser, TK_RBRACE);
@@ -632,33 +637,43 @@ static char *get_class_name(Node *fname) {
     return fname->as.path.names[0].name;
 }
 
+static void enter_method_scope(Parser *parser, Type *class_type) {
+    Scope *scope = new_scope(parser->scope);
+    scope_set(scope, "self", new_type_meta(class_type));
+
+    parser->scope = scope;
+}
+
 // 解析函数的定义
 static Node *fn(Parser *parser) {
     advance(parser); // 跳过'fn'
     Node *fname = new_ident(parser); // 函数名，可能是简单函数，也可以是`类名.方法名`
+    bool is_meth = is_method(fname); 
     Node *expr = new_node(ND_FN);
     expr->as.fn.name = get_full_name(fname);
     expr->as.fn.fname = fname;
-    enter_scope(parser);
+    // 处理函数类型
+    Type *fn_type = calloc(1, sizeof(Type));
+    fn_type->kind = TY_FN;
+    if (is_meth) {
+        fn_type->as.fn.is_method = true;
+        char *class_name = get_class_name(fname);
+        fn_type->as.fn.class = type_lookup(parser, class_name);
+        enter_method_scope(parser, fn_type);
+    } else {
+        enter_scope(parser);
+    }
     expect(parser, TK_LPAREN);
     Params *p = params(parser);
     expr->as.fn.params = p;
     expect(parser, TK_RPAREN);
+    // 在视野中设置参数名称
     for (int i = 0; i < p->count; i++) {
         Node *param = p->list[i];
         scope_set(parser->scope, get_full_name(param), new_meta(param));
     }
-    // 处理函数类型
-    Type *fn_type = calloc(1, sizeof(Type));
-    fn_type->kind = TY_FN;
     fn_type->as.fn.param_count = p->count;
     fn_type->as.fn.params = calloc(p->count, sizeof(Type *));
-    // 判断是否为方法。即String.len()这种形式
-    if (is_method(fname)) {
-        fn_type->as.fn.is_method = true;
-        char *class_name = get_class_name(fname);
-        fn_type->as.fn.class = type_lookup(parser, class_name);
-    }
     for (int i = 0; i < p->count; i++) {
         fn_type->as.fn.params[i] = p->list[i]->meta->type;
     }
@@ -842,6 +857,7 @@ static Node *index(Parser *parser, Node *left) {
 }
 
 
+// 对象字面量，如`Student{name: "zhangsan", age: 18}`
 static Node *object(Parser *parser, Node *left) {
     if (left->kind != ND_IDENT) {
         printf("Error: Object name should be an ident, got instead:");

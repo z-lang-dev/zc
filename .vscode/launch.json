@@ -56,10 +56,10 @@
             "request": "launch",
             "name": "z2js",
             "target": "z",
-            "cwd": "${workspaceFolder}/test/method",
+            "cwd": "${workspaceFolder}/test/type",
             "args": [
                 "js",
-                "method_case.z"
+                "type_case.z"
             ],
             "stopAtEntry": false
         },

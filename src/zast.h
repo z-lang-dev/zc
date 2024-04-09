@@ -259,3 +259,4 @@ void echo_node(Node *node);
 // util
 
 char *get_name(Node *name);
+char *get_full_name(Node *name);

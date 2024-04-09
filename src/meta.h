@@ -7,7 +7,9 @@
 static const int SIZE_INT = 4;
 typedef struct Meta Meta;
 typedef struct Scope Scope;
-
+typedef struct MethodScope MethodScope;
+typedef struct BlockScope BlockScope;
+typedef struct RuntimeScope RuntimeScope;
 
 // TODO: 把Meta改造成tagged-union
 struct Meta {
@@ -21,10 +23,34 @@ struct Meta {
     bool is_def; // self defined function
 };
 
+typedef enum {
+    // TODO: SC_FOR
+    SC_BLOCK,
+    SC_METHOD,
+    SC_Runtime,
+} ScopeKind;
+
+struct MethodScope {
+    Type *type;
+};
+
+struct BlockScope {
+    HashTable *metas;
+};
+
+struct RuntimeScope {
+    HashTable *values;
+};
+
 struct Scope {
-    HashTable *metas; // 元信息表
-    HashTable *values; // 运行时存值表
+    ScopeKind kind;
     Scope *parent;  // 父节点
+    union {
+        MethodScope *method;
+        BlockScope *block;
+        RuntimeScope *runtime;
+    } as;
+    // TODO: 挪到对应的Scope类型中
     int cur_seq;
     int cur_offset;
 };
@@ -34,6 +60,7 @@ Scope *GlobalScope; // 全局视野
 Meta *new_meta(Node *expr);
 Meta *new_type_meta(Type *type);
 
+Scope *make_scope(ScopeKind kind, Scope *parent);
 Scope *new_scope(Scope *parent);
 Meta *scope_lookup(Scope *scope, const char *name);
 bool scope_set(Scope *scope, const char *name, Meta *meta);

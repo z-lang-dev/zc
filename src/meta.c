@@ -20,14 +20,28 @@ int total_meta_size() {
     return GlobalScope->cur_offset;
 }
 
-Scope *new_scope(Scope *parent) {
+Scope *make_scope(ScopeKind kind, Scope *parent) {
     Scope *scope = calloc(1, sizeof(Scope));
+    scope->kind = kind;
     scope->parent = parent;
-    scope->metas = new_hash_table();
-    scope->values = new_hash_table();
-    scope->cur_seq = 0;
-    scope->cur_offset = 0;
+    switch (kind) {
+        case SC_BLOCK:
+            scope->as.block = calloc(1, sizeof(BlockScope));
+            scope->as.block->metas = new_hash_table();
+            break;
+        case SC_METHOD:
+            scope->as.method = calloc(1, sizeof(MethodScope));
+            break;
+        case SC_Runtime:
+            scope->as.runtime = calloc(1, sizeof(RuntimeScope));
+            scope->as.runtime->values = new_hash_table();
+            break;
+    }
     return scope;
+}
+
+Scope *new_scope(Scope *parent) {
+    return make_scope(SC_BLOCK, parent);
 }
 
 Meta *scope_lookup(Scope *scope, const char *name) {

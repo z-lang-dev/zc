@@ -187,6 +187,14 @@ void fecho_node(FILE *fp, Node *node) {
         fprintf(fp, "}");
         break;
     }
+    case ND_KV: {
+        fprintf(fp, "{");
+        fecho_node(fp, node->as.kv.key);
+        fprintf(fp, ": ");
+        fecho_node(fp, node->as.kv.val);
+        fprintf(fp, "}");
+        break;
+    }
     default:
         fprintf(fp, "Unknown node kind: %d", node->kind);
     }
@@ -392,6 +400,14 @@ void fprint_node(FILE *fp, Node *node) {
             fprintf(fp, ", ");
         }
         fprintf(fp, "]}");
+        break;
+    }
+    case ND_KV: {
+        fprintf(fp, "{kind: ND_KV, key: ");
+        fprint_node(fp, node->as.kv.key);
+        fprintf(fp, ", value: ");
+        fprint_node(fp, node->as.kv.val);
+        fprintf(fp, "}");
         break;
     }
     default:

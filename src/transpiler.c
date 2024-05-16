@@ -777,8 +777,8 @@ static void codegen_c_lib(Mod *mod, char *name) {
     // 找到所有的定义，放到头文件中
     FILE *hp = fopen(h_file, "w");
     Scope *scope = mod->scope;
-    HashIter *i = hash_iter(scope->metas);
-    while (hash_next(scope->metas, i)) {
+    HashIter *i = hash_iter(scope->as.block->table);
+    while (hash_next(scope->as.block->table, i)) {
         Meta *meta = (Meta*)i->value;
         switch (meta->kind) {
         case ND_FN: // 暂时只有函数定义需要输出到头文件
@@ -828,6 +828,7 @@ static void codegen_c(Front *front) {
 void trans_c(char *file) {
     log_trace("Transpiling %s to C...\n", file);
     // 新建前端
+    init_global_scope(SC_BLOCK);
     Front *front = new_front();
     // 解析文件并生成模块
     Mod *mod = do_file(front, file);
@@ -906,6 +907,7 @@ static void use_charts() {
 void trans_py(char *file) {
     log_trace("Transpiling %s to Python\n", file);
     // 新建前端
+    init_global_scope(SC_BLOCK);
     Front *front = new_front();
     use_charts();
     // 解析文件并生成模块
@@ -998,6 +1000,7 @@ static void use_js_stdz() {
 void trans_js(char *file) {
     log_trace("Transpiling %s to JS\n", file);
     // 新建前端
+    init_global_scope(SC_BLOCK);
     Front *front = new_front();
     use_js_stdz();
     // 解析文件并生成模块

@@ -5,6 +5,7 @@
 
 void build(char *file) {
     printf("Building %s\n", file);
+    init_global_scope(SC_BLOCK);
     Front *front = new_front();
     Mod *mod = do_file(front, file);
     // TODO: 需要真正的全局视野，而不只是模块视野

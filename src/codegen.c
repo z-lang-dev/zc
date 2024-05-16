@@ -455,7 +455,7 @@ void codegen_linux(Node *prog) {
 }
 
 static bool do_locals(FILE *fp) {
-    HashTable *table = global_scope()->metas;
+    HashTable *table = global_scope()->as.block->table;
     HashIter *i = hash_iter(table);
     bool has_locals = false;
     while (hash_next(table, i)) {

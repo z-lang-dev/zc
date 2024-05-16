@@ -8,19 +8,19 @@
 #include "meta.h"
 
 static void set_val(char *name, Value *val) {
-    hash_set(global_scope()->values, name, val);
+    hash_set(global_scope()->as.runtime->values, name, val);
 }
 
 static Value *get_val(char *name) {
-    return hash_get(global_scope()->values, name);
+    return hash_get(global_scope()->as.runtime->values, name);
 }
 
 static Value *get_mod_val(Mod *mod, char *name) {
-    return hash_get(mod->scope->values, name);
+    return hash_get(mod->scope->as.runtime->values, name);
 }
 
 static void set_mod_val(Mod *mod, char *name, Value *val) {
-    return hash_set(mod->scope->values, name, val);
+    return hash_set(mod->scope->as.runtime->values, name, val);
 }
 
 Value *eval(Node *expr);
@@ -497,6 +497,7 @@ Value *execute(Node *expr) {
 
 // 解释并执行代码
 void interp(char *code) {
+    init_global_scope(SC_Runtime);
     Front *front = new_front();
     interp_once(front, code);
 }

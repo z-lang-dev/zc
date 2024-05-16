@@ -27,17 +27,23 @@ Scope *make_scope(ScopeKind kind, Scope *parent) {
     switch (kind) {
         case SC_BLOCK:
             scope->as.block = calloc(1, sizeof(BlockScope));
-            scope->as.block->metas = new_hash_table();
+            scope->as.block->table = new_hash_table();
             break;
         case SC_METHOD:
             scope->as.method = calloc(1, sizeof(MethodScope));
             break;
         case SC_Runtime:
             scope->as.runtime = calloc(1, sizeof(RuntimeScope));
+            scope->as.runtime->table = new_hash_table();
             scope->as.runtime->values = new_hash_table();
             break;
     }
     return scope;
+}
+
+Scope *init_global_scope(ScopeKind kind) {
+    GlobalScope = make_scope(kind, NULL);
+    return GlobalScope;
 }
 
 Scope *new_scope(Scope *parent) {
@@ -45,7 +51,7 @@ Scope *new_scope(Scope *parent) {
 }
 
 Meta *scope_lookup(Scope *scope, const char *name) {
-    Meta *meta = hash_get(scope->metas, name);
+    Meta *meta = hash_get(scope->as.block->table, name);
     if (meta) return meta;
     if (scope->parent) return scope_lookup(scope->parent, name);
     return NULL;
@@ -59,7 +65,7 @@ bool scope_set(Scope *scope, const char *name, Meta *meta) {
         scope->cur_offset += size;
         meta->seq = scope->cur_seq++;
     }
-    hash_set(scope->metas, name, meta);
+    hash_set(scope->as.block->table, name, meta);
     return true;
 }
 
@@ -70,7 +76,9 @@ Meta *global_lookup(const char *name) {
 
 Scope *global_scope() {
     if (GlobalScope == NULL) {
-        GlobalScope = new_scope(NULL);
+        // GlobalScope = new_scope(NULL);
+        printf("Error: GlobalScope is NULL\n");
+        exit(1);
     }
     return GlobalScope;
 }

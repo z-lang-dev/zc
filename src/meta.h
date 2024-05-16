@@ -35,10 +35,11 @@ struct MethodScope {
 };
 
 struct BlockScope {
-    HashTable *metas;
+    HashTable *table;
 };
 
 struct RuntimeScope {
+    HashTable *table;
     HashTable *values;
 };
 
@@ -46,7 +47,7 @@ struct Scope {
     ScopeKind kind;
     Scope *parent;  // 父节点
     union {
-        MethodScope *method;
+        Type *method;
         BlockScope *block;
         RuntimeScope *runtime;
     } as;
@@ -60,6 +61,7 @@ Scope *GlobalScope; // 全局视野
 Meta *new_meta(Node *expr);
 Meta *new_type_meta(Type *type);
 
+Scope *init_global_scope(ScopeKind kind);
 Scope *make_scope(ScopeKind kind, Scope *parent);
 Scope *new_scope(Scope *parent);
 Meta *scope_lookup(Scope *scope, const char *name);
